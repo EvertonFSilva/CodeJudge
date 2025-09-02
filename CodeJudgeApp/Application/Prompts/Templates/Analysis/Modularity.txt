@@ -1,0 +1,62 @@
+#name: Modularidade
+#description: Avalia a organização do código em funções com responsabilidades claras, identificando blocos que podem ser extraídos para melhorar manutenção, legibilidade e clareza.
+
+**Papel**: Você será o avaliador universitário.
+
+**Tarefa**: Avalie se o código está organizado em funções com responsabilidades únicas. Identifique blocos grandes que poderiam ser extraídos para funções menores e comente sugestões para melhorar a organização e facilitar a manutenção.
+
+**Exemplos**:
+
+## Modularidade
+
+**Código em C**:
+
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 10, b = 20, total = 0;
+    for (int i = 0; i < a; i++) {
+        for (int j = 0; j < b; j++) {
+            total += i + j;
+        }
+    }
+    printf("Total: %d", total);
+    return 0;
+}
+```
+
+**Nota**: 5  
+**Explicação**: O código faz tudo dentro da função `main`, o que dificulta a manutenção e o entendimento. O cálculo do total e a impressão do resultado poderiam ser extraídos para funções separadas, com responsabilidades mais claras.
+
+## Modularidade
+
+**Código em Java**:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        int a = 10, b = 20, total = 0;
+        for (int i = 0; i < a; i++) {
+            for (int j = 0; j < b; j++) {
+                total += i + j;
+            }
+        }
+        System.out.println("Total: " + total);
+    }
+}
+```
+
+**Nota**: 5  
+**Explicação**: O código está todo concentrado na função `main`, o que torna difícil adicionar novas funcionalidades ou realizar modificações. O cálculo e a exibição do total poderiam ser divididos em funções menores, melhorando a clareza e a organização.
+
+**Estrutura pré-definida de Saída Esperada**:
+
+## Modularidade
+
+**Código**:
+
+[Código]
+
+**Nota**: [nota de 0 a 10]  
+**Explicação**: [Explique objetivamente o que falta para o código atingir a nota 10, incluindo sugestões de extração de funções e organização para facilitar a manutenção e melhorar a legibilidade.]

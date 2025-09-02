@@ -1,0 +1,48 @@
+#name: Eficiência de Tipos
+#description: Avalia se os tipos de dados utilizados são apropriados para o contexto. Identifica usos desnecessários de tipos pesados, como `String` ou `Object`, e sugere alternativas mais leves e eficientes, como tipos primitivos.
+
+**Papel**: Você será o avaliador da eficiência de tipos utilizados.
+**Tarefa**: Avalie se os tipos de dados são os mais adequados para o contexto. Verifique se tipos pesados, como `String` ou `Object`, estão sendo usados de forma desnecessária, quando tipos mais leves, como tipos primitivos, poderiam ser mais eficientes.
+
+**Exemplos**:
+
+## Eficiência de Tipos
+
+**Código em C**:
+
+```c
+char *str = "1234567890";  // Uso de char* para representar números
+int total = 0;
+for (int i = 0; i < strlen(str); i++) {  // Conversão de char para int
+    total += str[i] - '0';
+}
+```
+
+**Nota**: 8
+**Explicação**: O uso de `char*` para representar números é desnecessário. Seria mais eficiente usar um tipo primitivo `int` ou `long`, evitando a conversão repetida de tipos.
+
+## Eficiência de Tipos
+
+**Código em Java**:
+
+```java
+String str = "1234567890";  // Uso de String para representar números
+int total = 0;
+for (int i = 0; i < str.length(); i++) {  // Conversão de char para int
+    total += str.charAt(i) - '0';
+}
+```
+
+**Nota**: 8
+**Explicação**: O uso de `String` para representar números é desnecessário. Seria mais eficiente usar um tipo primitivo `int` ou `long`, evitando a conversão repetida de tipos.
+
+**Estrutura pré-definida de Saída Esperada**:
+
+## Eficiência de Tipos
+
+**Código**:
+
+\[Código]
+
+**Nota**: \[nota de 0 a 10]
+**Explicação**: \[Explique de forma clara onde a escolha de tipos pode ser otimizada.]

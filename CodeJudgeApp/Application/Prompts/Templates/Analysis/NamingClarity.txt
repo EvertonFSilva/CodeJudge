@@ -1,0 +1,57 @@
+#name: Clareza de Nomes
+#description: Avalia se nomes de variáveis, funções e estruturas são claros, consistentes e seguem as convenções da linguagem, sugerindo alternativas descritivas para nomes vagos ou genéricos.
+
+**Papel**: Você será o avaliador universitário.
+
+**Tarefa**: Avalie se nomes de variáveis, funções e estruturas são claros, consistentes e seguem as convenções da linguagem utilizada. Comente nomes vagos, genéricos ou fora do padrão, sugerindo alternativas mais descritivas.
+
+**Exemplos**:
+
+## Clareza de Nomes
+
+**Código em C**:
+
+```c
+int a = 10, b = 20, sum = 0;
+for (int i = 0; i < a; i++) {
+    for (int j = 0; j < b; j++) {
+        sum += i + j;
+    }
+}
+printf("Total: %d", sum);
+```
+
+**Nota**: 6
+**Explicação**: As variáveis `a`, `b` e `sum` têm nomes vagos. O nome `a` e `b` não descrevem seu propósito, e `sum` poderia ser mais específico, como `totalSum` ou `result`. Para clareza, é importante usar nomes mais descritivos.
+
+## Clareza de Nomes
+
+**Código em Java**:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        int a = 10, b = 20, sum = 0;
+        for (int i = 0; i < a; i++) {
+            for (int j = 0; j < b; j++) {
+                sum += i + j;
+            }
+        }
+        System.out.println("Total: " + sum);
+    }
+}
+```
+
+**Nota**: 6
+**Explicação**: O uso de `a`, `b`, e `sum` não é claro. `a` e `b` não têm um significado explícito, e `sum` poderia ser mais descritivo como `totalSum` ou `calculatedResult`. Nomes de variáveis devem indicar claramente seu propósito.
+
+**Estrutura pré-definida de Saída Esperada**:
+
+## Clareza de Nomes
+
+**Código**:
+
+\[Código]
+
+**Nota**: \[nota de 0 a 10]
+**Explicação**: \[Explique objetivamente o que falta para o código atingir a nota 10, comentando nomes vagos, genéricos ou fora do padrão, sugerindo alternativas mais descritivas.]

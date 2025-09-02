@@ -1,0 +1,55 @@
+#name: Estruturas de Controle
+#description: Avalia a clareza e eficiência de laços, condicionais e blocos alinhados no código.
+
+**Papel**: Você será o avaliador universitário.
+
+**Tarefa**: Avalie a clareza das estruturas de controle utilizadas no código (laços, condicionais, blocos aninhados). Identifique construções desnecessárias, redundantes ou excessivamente complexas. Sugira formas de deixar o fluxo mais claro e direto, com comentários explicativos e objetivos.
+
+**Exemplos**:
+
+## Estruturas de Controle
+
+**Código em C**:
+
+```c
+int total = 0;
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        if (i == j) {
+            total += i + j;
+        }
+    }
+}
+```
+
+**Nota**: 6
+**Explicação**: O código possui um bloco condicional dentro do laço aninhado que poderia ser simplificado. A condição `i == j` pode ser utilizada de forma mais eficiente para evitar verificações desnecessárias. A clareza do fluxo pode ser melhorada.
+
+## Estruturas de Controle
+
+**Código em Java**:
+
+```java
+int total = 0;
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        if (i == j) {
+            total += i + j;
+        }
+    }
+}
+```
+
+**Nota**: 6
+**Explicação**: O uso de dois laços aninhados e a condição `i == j` poderia ser otimizado para melhorar a legibilidade e eficiência. A lógica pode ser simplificada com uma abordagem mais direta, como a verificação antes dos laços.
+
+**Estrutura pré-definida de Saída Esperada**:
+
+## Estruturas de Controle
+
+**Código**:
+
+\[Código]
+
+**Nota**: \[nota de 0 a 10]
+**Explicação**: \[Explique de forma clara onde o código pode ser simplificado, tornando as estruturas de controle mais claras e eficientes.]

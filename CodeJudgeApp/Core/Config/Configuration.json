@@ -1,0 +1,57 @@
+{
+  "ai": {
+    "default": "gemini",
+    "engines": {
+      "gemini": {
+        "class": "GeminiEngine",
+        "module": "Adapters.Engines.GeminiEngine",
+        "args": {
+          "apiKey": "AIzaSyA09MlWiUecQtuXR0n6scO0ef2mwxbwYxc",
+          "model": "gemini-2.5-flash",
+          "endpoint": ""
+        }
+      }
+    }
+  },
+  "compilers": {
+    "languages": {
+      "c": {
+        "class": "CCompiler",
+        "module": "Adapters.Compilers.CCompiler",
+        "args": {
+          "compilerPath": "gcc"
+        }
+      },
+      "java": {
+        "class": "JavaCompiler",
+        "module": "Adapters.Compilers.JavaCompiler",
+        "args": {
+          "compilerPath": "javac"
+        }
+      }
+    }
+  },
+  "executors": {
+    "languages": {
+      "c": {
+        "class": "CExecutor",
+        "module": "Adapters.Executors.CExecutor",
+        "args": {}
+      },
+      "java": {
+        "class": "JavaExecutor",
+        "module": "Adapters.Executors.JavaExecutor",
+        "args": {}
+      }
+    }
+  },
+  "prompts": {
+    "paths": {
+      "analysis": "./Application/Prompts/Templates/Analysis",
+      "compilation": "./Application/Prompts/Templates/Compilation",
+      "optimization": "./Application/Prompts/Templates/Optimization",
+      "execution": "./Application/Prompts/Templates/Execution",
+      "error": "./Application/Prompts/Templates/Error"
+    }
+  }
+}

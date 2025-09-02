@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Juiz Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">Juiz Online</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-3">
+                        <span id="profileName" class="nav-link text-white"></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prompts.html">Prompts</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html">Perfil</a>
+                    </li>
+                    <li class="nav-item">
+                        <button id="logoutBtn" class="nav-link" style="display: none;">Sair</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="container my-5">
+        <div class="card shadow rounded-4 p-4">
+            <form id="codeSubmissionForm" novalidate>
+                <h2 class="text-center mb-4 fw-bold">Submissão de Código</h2>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="action" class="form-label fw-semibold">Ação</label>
+                        <select class="form-select" id="action" required>
+                            <option value="execute" selected>Executar</option>
+                            <option value="compile">Compilar</option>
+                            <option value="analysis">Analisar</option>
+                            <option value="optimize">Otimizar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="language" class="form-label fw-semibold">Linguagem</label>
+                        <select class="form-select" id="language" required>
+                            <option value="java" selected>Java</option>
+                            <option value="c">C</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="sourceCode" class="form-label fw-semibold">Código Fonte</label>
+                    <textarea class="form-control" id="sourceCode" rows="10" placeholder="Cole seu código aqui..."
+                        required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Arquivos de Teste (opcional)</label>
+                    <p class="text-muted small mb-2">
+                        <strong>Formato:</strong> Cada linha do arquivo de entradas corresponde a um teste; o arquivo de
+                        saídas deve conter os resultados esperados na mesma ordem.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold">Arquivo de Entradas</label>
+                                <input type="file" class="form-control mb-2" id="inputTestFile">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <pre id="inputPreview" class="flex-grow-1 bg-white p-2 rounded m-0"
+                                        style="max-height: 150px; overflow:auto;"></pre>
+                                    <button type="button" id="removeInputFile" class="btn btn-sm btn-danger ms-2"
+                                        style="display:none;">Remover</button>
+                                </div>
+                                <small id="inputLabel" class="text-muted">Nenhum arquivo carregado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold">Arquivo de Saídas Esperadas</label>
+                                <input type="file" class="form-control mb-2" id="expectedOutputFile">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <pre id="outputPreview" class="flex-grow-1 bg-white p-2 rounded m-0"
+                                        style="max-height: 150px; overflow:auto;"></pre>
+                                    <button type="button" id="removeOutputFile" class="btn btn-sm btn-danger ms-2"
+                                        style="display:none;">Remover</button>
+                                </div>
+                                <small id="outputLabel" class="text-muted">Nenhum arquivo carregado</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-3">Submeter Código</button>
+
+                <section class="mt-5">
+                    <h4 class="fw-semibold mb-3">Resultado</h4>
+                    <div id="responseOutput" class="p-3 rounded-3 border bg-white shadow-sm"></div>
+                    <button id="exportBtn" type="button" class="btn btn-warning mt-3 fw-semibold"
+                        style="display:none;">Exportar
+                        Resultado</button>
+                </section>
+
+                <!-- Export Modal -->
+                <div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content rounded-4 shadow">
+                            <div class="modal-header bg-dark text-white">
+                                <h5 class="modal-title fw-bold">Gerar Relatório de Submissão de Código</h5>
+                                <button type="button" class="btn-close btn-close-white"
+                                    data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="exportForm" onsubmit="return false;">
+                                    <input type="text" id="studentName" class="form-control mb-2"
+                                        placeholder="Aluno (a)" readonly>
+                                    <input type="text" id="teacherName" class="form-control mb-2"
+                                        placeholder="Professor (a)">
+                                    <input type="text" id="courseName" class="form-control mb-2" placeholder="Curso">
+                                    <input type="text" id="subjectName" class="form-control mb-2"
+                                        placeholder="Disciplina">
+                                    <input type="text" id="schoolYear" class="form-control mb-2"
+                                        placeholder="Ano Letivo">
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" type="button"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button id="downloadPdfBtn" type="button" class="btn btn-success">Gerar PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="text-center mt-4">
+                <a href="prompts.html" class="btn btn-success fw-semibold">Ir para Prompts</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5 shadow">
+        <p class="mb-0">&copy; 2025 Juiz Online - Everton França e Matheus Braga</p>
+    </footer>
+
+    <script type="module">
+        const { jsPDF } = window.jspdf;
+
+        import { SessionManager } from './assets/js/utils/SessionManager.js';
+        import { ProfileController } from './assets/js/controllers/ProfileController.js';
+        import { CodeController } from './assets/js/controllers/CodeController.js';
+        import { ExportUtils } from './assets/js/utils/ExportUtils.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            SessionManager.checkSessionAndRedirect();
+            const profileController = new ProfileController('profileName', 'logoutBtn');
+            const codeController = new CodeController();
+
+            const profileName = document.getElementById('profileName').textContent;
+            const responseOutput = document.getElementById('responseOutput');
+
+            const inputFile = document.getElementById('inputTestFile');
+            const inputPreview = document.getElementById('inputPreview');
+            const removeInputBtn = document.getElementById('removeInputFile');
+            const inputLabel = document.getElementById('inputLabel');
+            const outputFile = document.getElementById('expectedOutputFile');
+            const outputPreview = document.getElementById('outputPreview');
+            const removeOutputBtn = document.getElementById('removeOutputFile');
+            const outputLabel = document.getElementById('outputLabel');
+
+            inputFile.addEventListener('change', async () => {
+                if (inputFile.files.length > 0) {
+                    const text = await inputFile.files[0].text();
+                    inputPreview.textContent = text;
+                    removeInputBtn.style.display = 'inline-block';
+                    inputLabel.textContent = `Arquivo de entradas carregado: ${inputFile.files[0].name}`;
+                } else {
+                    inputPreview.textContent = '';
+                    removeInputBtn.style.display = 'none';
+                    inputLabel.textContent = 'Nenhum arquivo carregado';
+                }
+            });
+
+            outputFile.addEventListener('change', async () => {
+                if (outputFile.files.length > 0) {
+                    const text = await outputFile.files[0].text();
+                    outputPreview.textContent = text;
+                    removeOutputBtn.style.display = 'inline-block';
+                    outputLabel.textContent = `Arquivo de saídas esperadas carregado: ${outputFile.files[0].name}`;
+                } else {
+                    outputPreview.textContent = '';
+                    removeOutputBtn.style.display = 'none';
+                    outputLabel.textContent = 'Nenhum arquivo carregado';
+                }
+            });
+
+            removeInputBtn.addEventListener('click', () => {
+                inputFile.value = '';
+                inputPreview.textContent = '';
+                removeInputBtn.style.display = 'none';
+                inputLabel.textContent = 'Nenhum arquivo carregado';
+            });
+
+            removeOutputBtn.addEventListener('click', () => {
+                outputFile.value = '';
+                outputPreview.textContent = '';
+                removeOutputBtn.style.display = 'none';
+                outputLabel.textContent = 'Nenhum arquivo carregado';
+            });
+
+            const exportBtn = document.getElementById("exportBtn");
+            exportBtn?.addEventListener("click", (e) => {
+                e.preventDefault();
+                document.getElementById('studentName').value = profileController.getUserName();
+
+                const exportModal = new bootstrap.Modal(document.getElementById("exportModal"));
+                exportModal.show();
+            });
+
+            document.getElementById('downloadPdfBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+
+                const studentName = profileController.getUserName();
+
+                const teacher = document.getElementById('teacherName').value.trim();
+                const course = document.getElementById('courseName').value.trim();
+                const subject = document.getElementById('subjectName').value.trim();
+                const year = document.getElementById('schoolYear').value.trim();
+
+                if (!teacher || !course || !subject || !year) {
+                    alert('Preencha todos os campos antes de gerar o PDF!');
+                    return;
+                }
+
+                const code = document.getElementById('sourceCode').value.trim();
+                const action = document.getElementById('action').value;
+                const language = document.getElementById('language').value;
+
+                ExportUtils.generatePDF(studentName, "responseOutput", code, action, language);
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
