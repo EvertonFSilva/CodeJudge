@@ -46,7 +46,7 @@ class JavaExecutor(ExecutorBase):
             else:
                 proc = subprocess.run(
                     ["java", "-cp", sourcePath, mainClass],
-                    input="\n",
+                    input="",
                     text=True,
                     capture_output=True,
                     timeout=timeout

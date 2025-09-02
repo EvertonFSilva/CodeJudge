@@ -32,7 +32,7 @@ export class CodeController {
     }
 
     async handleSubmit(formData) {
-        if (formData.inputsFile && formData.expectedOutputsFile) {
+        if (formData.inputsFile) { //&& formData.expectedOutputsFile) {
             formData.tests = await this.parseFiles(formData.inputsFile, formData.expectedOutputsFile);
         }
 
@@ -48,10 +48,20 @@ export class CodeController {
     }
 
     async parseFiles(inputFile, outputFile) {
-        const inputs = await readFileAsArray(inputFile);
-        const outputs = await readFileAsArray(outputFile);
-        return inputs.map((input, i) => ({ input, expected: outputs[i] || '' }));
+        const inputs = inputFile ? await readFileAsArray(inputFile) : [];
+        const outputs = outputFile ? await readFileAsArray(outputFile) : [];
+        return inputs.map((input, i) => ({
+            input,
+            expected: outputs[i] || ''
+        }));
     }
+
+    // CASO QUISER OBRIGAR A TER ENTRADA E SAIDA.TXT
+    //    async parseFiles(inputFile, outputFile) {
+    //        const inputs = await readFileAsArray(inputFile);
+    //        const outputs = await readFileAsArray(outputFile);
+    //       return inputs.map((input, i) => ({ input, expected: outputs[i] || '' }));
+    //    }
 
     setupFileInputs() {
         const files = [

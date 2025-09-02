@@ -41,34 +41,41 @@ export class CodeView {
         }
 
         if (formData.action === 'execute') {
-            if (!result.outputs || result.outputs.length === 0 || (result.outputs.length === 1 && result.outputs[0] === '')) {
-                this.responseBox.innerHTML += `
-            <pre style="color: red;">
-Não foi fornecido nenhum arquivo de saídas pelo usuário para comparação.
-            </pre>
-        `;
-            } else if (formData.tests && formData.tests.length > 0 && result.outputs) {
-                const results = result.outputs.map(r => ({
-                    expected: r.expected || '',
-                    actual: r.actual || '',
-                    passed: r.passed
-                }));
-
-                results.forEach(r => {
+            if (formData.tests && formData.tests.length > 0 && result.outputs) {
+                const allExpectedEmpty = formData.tests.every(t => !t.expected || t.expected.trim() === '');
+                if (allExpectedEmpty) {
                     this.responseBox.innerHTML += `
+                    <pre style="color: red;">
+O usuário não colocou nenhum arquivo de saída esperada.
+                    </pre>
+                `;
+                    result.outputs.forEach(r => {
+                        this.responseBox.innerHTML += `<pre><strong>Saída Obtida:</strong> ${r.actual}</pre>`;
+                    });
+                } else {
+
+                    const results = result.outputs.map(r => ({
+                        expected: r.expected || '',
+                        actual: r.actual || '',
+                        passed: r.passed
+                    }));
+
+                    results.forEach(r => {
+                        this.responseBox.innerHTML += `
                     <pre>
 <strong>Saída Esperada:</strong> ${r.expected}
 <strong>Saída Obtida:</strong> ${r.actual}
 <strong>Resultado:</strong> <span style="color:${r.passed ? 'green' : 'red'};">${r.passed ? 'Passou' : 'Não Passou'}</span>
                     </pre>
                     `;
-                });
+                    });
 
-                const successRate = results.length > 0
-                    ? Math.round(results.filter(r => r.passed).length / results.length * 100)
-                    : 0;
+                    const successRate = results.length > 0
+                        ? Math.round(results.filter(r => r.passed).length / results.length * 100)
+                        : 0;
 
-                this.responseBox.innerHTML += `<strong>Taxa de Sucesso: ${successRate}%</strong>`;
+                    this.responseBox.innerHTML += `<strong>Taxa de Sucesso: ${successRate}%</strong>`;
+                }
             }
             else if (result.outputs) {
                 result.outputs.forEach(output => {

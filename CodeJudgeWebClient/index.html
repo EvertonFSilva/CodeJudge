@@ -48,10 +48,10 @@
                     <div class="col-md-6">
                         <label for="action" class="form-label fw-semibold">Ação</label>
                         <select class="form-select" id="action" required>
-                            <option value="execute" selected>Executar</option>
-                            <option value="compile">Compilar</option>
-                            <option value="analysis">Analisar</option>
-                            <option value="optimize">Otimizar</option>
+                            <option value="execute" selected>Executar Código</option>
+                            <option value="compile">Compilar Código</option>
+                            <option value="analysis">Analisar Código</option>
+                            <option value="optimize">Otimizar Código</option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -65,10 +65,28 @@
 
                 <div class="mb-3">
                     <label for="sourceCode" class="form-label fw-semibold">Código Fonte</label>
-                    <textarea class="form-control" id="sourceCode" rows="10" placeholder="Cole seu código aqui..."
-                        required></textarea>
-                </div>
+                    <textarea class="form-control" id="sourceCode" rows="10"
+                        placeholder="Cole seu código aqui ou importe um arquivo..." required></textarea>
 
+                    <div class="mt-2 d-flex gap-2">
+                        <label for="codeFile" class="btn btn-success d-flex align-items-center">
+                            <i class="bi bi-file-earmark-code me-2 fw-semibold"></i>
+                            Importar Código
+                        </label>
+                        <input type="file" id="codeFile" accept=".java,.c,.cpp,.txt,.py" hidden>
+
+                        <button type="button" id="pasteCodeBtn" class="btn btn-primary d-flex align-items-center">
+                            <i class="bi bi-clipboard me-2 fw-semibold"></i>
+                            Colar Código
+                        </button>
+
+                        <button type="button" id="removeCodeFile" class="btn btn-secondary d-flex align-items-center"
+                            style="display:none;">
+                            <i class="bi bi-x-circle me-2 fw-semibold"></i>
+                            Limpar Código
+                        </button>
+                    </div>
+                </div>
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Arquivos de Teste (opcional)</label>
                     <p class="text-muted small mb-2">
@@ -105,7 +123,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mt-3">Submeter Código</button>
+                <button type="submit" class="btn btn-primary w-100 mt-3 fw-semibold">Submeter Código</button>
 
                 <section class="mt-5">
                     <h4 class="fw-semibold mb-3">Resultado</h4>
@@ -182,6 +200,11 @@
             const removeOutputBtn = document.getElementById('removeOutputFile');
             const outputLabel = document.getElementById('outputLabel');
 
+            const codeFile = document.getElementById('codeFile');
+            const sourceCode = document.getElementById('sourceCode');
+            const removeCodeBtn = document.getElementById('removeCodeFile');
+            const pasteCodeBtn = document.getElementById('pasteCodeBtn');
+
             inputFile.addEventListener('change', async () => {
                 if (inputFile.files.length > 0) {
                     const text = await inputFile.files[0].text();
@@ -220,6 +243,38 @@
                 outputPreview.textContent = '';
                 removeOutputBtn.style.display = 'none';
                 outputLabel.textContent = 'Nenhum arquivo carregado';
+            });
+
+            codeFile.addEventListener('change', async () => {
+                if (codeFile.files.length > 0) {
+                    const text = await codeFile.files[0].text();
+                    sourceCode.value = text;
+                    removeCodeBtn.style.display = 'inline-block';
+                } else {
+                    sourceCode.value = '';
+                    removeCodeBtn.style.display = 'none';
+                }
+            });
+
+            removeCodeBtn.addEventListener('click', () => {
+                codeFile.value = '';
+                sourceCode.value = '';
+                removeCodeBtn.style.display = 'none';
+            });
+
+            pasteCodeBtn.addEventListener('click', async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        sourceCode.value = text;
+                        removeCodeBtn.style.display = 'inline-block';
+                    } else {
+                        alert('A área de transferência está vazia!');
+                    }
+                } catch (err) {
+                    console.error('Erro ao colar o código:', err);
+                    alert('Não foi possível acessar a área de transferência.');
+                }
             });
 
             const exportBtn = document.getElementById("exportBtn");

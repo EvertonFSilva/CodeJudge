@@ -40,7 +40,7 @@ class CExecutor(ExecutorBase):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
-                out, err = proc.communicate(input="\n".encode("utf-8"), timeout=timeout)
+                out, err = proc.communicate(input="".encode("utf-8"), timeout=timeout)
                 outputText = (out.decode("utf-8") if out else "").strip()
                 errText = (err.decode("utf-8") if err else "").strip()
 
