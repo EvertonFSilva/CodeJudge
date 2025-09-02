@@ -1,4 +1,4 @@
-# CodeJudge — README
+# CodeJudge
 
 Plataforma modular para **compilar, executar, analisar e otimizar** trechos de código, com **APIs em FastAPI**, **front-end estático** e um **microserviço de autenticação**. O projeto segue um desenho **MVC/MV\*** claro, com registries para _compilers_, _executors_ e _engines_ de IA (atualmente **Gemini**).
 
