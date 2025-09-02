@@ -2,8 +2,6 @@
 
 Plataforma modular para **compilar, executar, analisar e otimizar** trechos de código, com **APIs em FastAPI**, **front-end estático** e um **microserviço de autenticação**. O projeto segue um desenho **MVC/MV\*** claro, com registries para _compilers_, _executors_ e _engines_ de IA (atualmente **Gemini**).
 
-> Este README foca em **instalação, configuração e uso**. Inclui também arquitetura, endpoints e exemplos práticos.
-
 ---
 
 ## Sumário
@@ -405,8 +403,4 @@ python -m http.server 5173
 
 ## Licença
 
-Defina a licença do projeto (ex.: **MIT**).
-
----
-
-> _Gerado em 2025-09-02 03:50:53._
+Este projeto está sob a Licença MIT.
