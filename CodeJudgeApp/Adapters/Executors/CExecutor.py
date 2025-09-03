@@ -7,7 +7,7 @@ class CExecutor(ExecutorBase):
     def __init__(self, settings=None):
         super().__init__(settings or {})
 
-    def execute(self, sourcePath, tests=None, timeout=60):
+    def execute(self, sourcePath, tests=None, timeout=10):
         try:
             if not os.path.isfile(sourcePath):
                 return ExecutionCodeResult(False, "Nenhum executável C encontrado", [], [], 0.0, {})

@@ -16,7 +16,7 @@ class JavaExecutor(ExecutorBase):
                 return match.group(1)
         return "Main"
 
-    def execute(self, sourcePath, tests=None, timeout=30):
+    def execute(self, sourcePath, tests=None, timeout=10):
         try:
             mainClass = self._findMainClass(sourcePath)
             outputs = []

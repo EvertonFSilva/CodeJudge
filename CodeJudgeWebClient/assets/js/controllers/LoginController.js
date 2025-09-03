@@ -14,7 +14,7 @@ export class LoginController {
             const result = await this.loginModel.login(username, password);
 
             if (result.success) {
-                SessionManager.setSession(result.authToken, 30);
+                SessionManager.setSession(result.authToken, 60);
                 window.location.href = 'index.html';
             } else {
                 this.loginView.showMessage(result.message);

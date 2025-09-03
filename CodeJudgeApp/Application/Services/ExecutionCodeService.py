@@ -24,7 +24,7 @@ class ExecutionCodeService:
         if not executor:
             return ExecutionCodeResult(False, "Executor não registrado", [], [], 0.0, {})
 
-        executionResult = executor.execute(compilationResult.getSourcePath(), tests or [], timeout=30)
+        executionResult = executor.execute(compilationResult.getSourcePath(), tests or [], timeout=10)
         if tests and executionResult.getOutputs():
             def _normalize(text): return str(text).replace("\r\n","\n").strip()
             results = []

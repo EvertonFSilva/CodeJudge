@@ -48,10 +48,10 @@
                     <div class="col-md-6">
                         <label for="action" class="form-label fw-semibold">Ação</label>
                         <select class="form-select" id="action" required>
-                            <option value="execute" selected>Executar Código</option>
-                            <option value="compile">Compilar Código</option>
-                            <option value="analysis">Analisar Código</option>
-                            <option value="optimize">Otimizar Código</option>
+                            <option value="execute" selected>Executar</option>
+                            <option value="compile">Compilar</option>
+                            <option value="analysis">Analisar</option>
+                            <option value="optimize">Otimizar</option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -70,19 +70,19 @@
 
                     <div class="mt-2 d-flex gap-2">
                         <label for="codeFile" class="btn btn-success d-flex align-items-center">
-                            <i class="bi bi-file-earmark-code me-2 fw-semibold"></i>
+                            <i class="bi bi-file-earmark-code mt-3 fw-semibold"></i>
                             Importar Código
                         </label>
                         <input type="file" id="codeFile" accept=".java,.c,.cpp,.txt,.py" hidden>
 
                         <button type="button" id="pasteCodeBtn" class="btn btn-primary d-flex align-items-center">
-                            <i class="bi bi-clipboard me-2 fw-semibold"></i>
+                            <i class="bi bi-clipboard mt-3 fw-semibold"></i>
                             Colar Código
                         </button>
 
                         <button type="button" id="removeCodeFile" class="btn btn-secondary d-flex align-items-center"
                             style="display:none;">
-                            <i class="bi bi-x-circle me-2 fw-semibold"></i>
+                            <i class="bi bi-x-circle mt-3 fw-semibold"></i>
                             Limpar Código
                         </button>
                     </div>
