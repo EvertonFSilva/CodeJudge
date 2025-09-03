@@ -95,9 +95,15 @@ export class ExportUtils {
         addField("Curso", course);
         addField("Disciplina", subject);
         addField("Ano Letivo", year);
-        addField("Ação", action, 7);
-        addField("Linguagem", language, 7);
+        addField("Ação", action);
+        addField("Linguagem", language);
         y += 5;
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "normal");
+        pdf.text('Código Enviado:', 20, y);
+        y += 10
 
         // Código enviado
         pdf.setFont("courier", "normal");
