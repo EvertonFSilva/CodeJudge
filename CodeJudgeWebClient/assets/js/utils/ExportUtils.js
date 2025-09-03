@@ -101,7 +101,6 @@ export class ExportUtils {
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(12);
-        pdf.setFont("helvetica", "normal");
         pdf.text('Código Enviado:', 20, y);
         y += 10
 
