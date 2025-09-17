@@ -1,42 +1,57 @@
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+import java.util.Scanner;
 
-int main() {
-    char input[100], invertida[100], letra;
-    int comprimento, contagem = 0, i;
+public class Main {
 
-    scanf("%s", input);
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
 
-    comprimento = strlen(input);
-    printf("Comprimento da string: %d\n", comprimento);
+        String input = scanner.next();
+        int comprimento = input.length();
 
-    for (i = 0; i < comprimento; i++) {
-        invertida[i] = input[comprimento - 1 - i];
-    }
-    invertida[i] = '\0';
-    printf("String invertida: %s\n", invertida);
+        System.out.println("Comprimento da string: " + comprimento);
 
-    int palindromo = 1;
-    for (i = 0; i < comprimento; i++) {
-        if (tolower(input[i]) != tolower(invertida[i])) {
-            palindromo = 0;
-            break;
+        StringBuilder invertida = new StringBuilder(input);
+        invertida.reverse();
+        System.out.println("String invertida: " + invertida);
+
+        boolean palindromo = true;
+        for (int i = 0; i < comprimento; i++) {
+            if (Character.toLowerCase(input.charAt(i)) != Character.toLowerCase(invertida.charAt(i))) {
+                palindromo = false;
+                break;
+            }
         }
-    }
-    if (palindromo) {
-        printf("A string é um palíndromo.\n");
-    } else {
-        printf("A string não é um palíndromo.\n");
-    }
-
-    scanf(" %c", &letra); 
-    for (i = 0; i < comprimento; i++) {
-        if (input[i] == letra) {
-            contagem++;
+        if (palindromo) {
+            System.out.println("A string é um palíndromo.");
+        } else {
+            System.out.println("A string não é um palíndromo.");
         }
-    }
-    printf("A letra '%c' ocorre %d vezes na string.\n", letra, contagem);
 
-    return 0;
+        char letra = scanner.next().charAt(0);
+        int contagem = 0;
+        for (int i = 0; i < comprimento; i++) {
+            if (input.charAt(i) == letra) {
+                contagem++;
+            }
+        }
+        System.out.println("A letra '" + letra + "' ocorre " + contagem + " vezes na string.");
+
+        scanner.close();
+    }
 }
+
+// Erros Detectados
+
+// CodeStructure - Separação lógica da estrutura do código. (entrada,
+// processamento e saída). - Foi sugerido trocar a linha que verifica se é
+// padidromo por uma função nativa do java chamada de equalsIgnoreCase
+
+// CodeStyle - Sugeriu apenas comentar o código, mas não tem problema de
+// identação.
+
+// Modularity - Estrutura do código está totalmente no main. Ele identificou.
+
+// NamingClarity - Apenas recomendou usar inglês.
+
+// Robustness - Tem que fazer verificações de validação no código. Por exemplo,
+// caso não seja um número. - Não identificou

@@ -34,3 +34,26 @@ public class Main {
         scanner.close();
     }
 }
+
+// Erros Detectados
+
+// CodeStructure - Separação lógica da estrutura do código. (entrada,
+// processamento e saída). - Foi sugerido o cálculo da soma das notas e da média
+// de cada aluno pode ser realizado no mesmo laço onde as notas são lidas.
+
+// CodeStyle - Sugeriu apenas comentar o código, mas não tem problema de
+// identação.
+
+// Modularity - Estrutura do código está totalmente no main. Ele identificou.
+
+// NamingClarity - Reclamou sobre os nomes das variaveis e do inglês.
+
+// Robustness - Tem que fazer verificações de validação no código. Por exemplo,
+// caso não seja um número. - Identificou - Ausência de Tratamento de Erros de
+// Entrada: O código assume que todas as entradas serão válidas (números
+// inteiros para n e m, strings para nomes e números decimais para notas). Se o
+// usuário inserir um valor não numérico onde um número é esperado (ex:
+// Integer.parseInt("abc")), o programa irá falhar com um NumberFormatException.
+// Divisão por Zero Potencial: Não há verificação se m (número de notas) é zero.
+// Se m for 0, a operação soma / m resultará em um ArithmeticException (divisão
+// por zero), causando a falha do programa.

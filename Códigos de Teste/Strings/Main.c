@@ -44,3 +44,16 @@ int main() {
 
     return 0;
 }
+
+// CodeStructure - Separação lógica da estrutura do código. (entrada,
+// processamento e saída).
+
+// CodeStyle - Sugeriu apenas comentar o código, mas não tem problema de
+// identação.
+
+// Modularity - Estrutura do código está totalmente no main. Ele identificou.
+
+// NamingClarity - Apenas recomendou usar inglês e deixar uns nomes mais especificos.
+
+// Robustness - Tem que fazer verificações de validação no código. Por exemplo,
+// caso não seja um número. - Não identificou

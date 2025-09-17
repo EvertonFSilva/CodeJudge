@@ -1,16 +1,16 @@
 Explicação do Enunciado:
 
-O enunciado solicita a criação de um algoritmo que calcule o custo final de um carro novo para o consumidor, levando em consideração o custo de fábrica, a comissão do distribuidor e os impostos aplicados ao custo de fábrica.
+O objetivo deste algoritmo é calcular o custo total de um carro para o consumidor, considerando o custo de fábrica, a comissão do distribuidor e os impostos aplicados.
 
-As etapas para o cálculo são as seguintes:
+O cálculo envolve as seguintes etapas:
 
-Custo de fábrica: O preço inicial do carro, sem incluir comissões ou impostos.
+Custo de fábrica: É o valor base do carro, sem adicionar comissões ou impostos.
 
-Comissão do distribuidor: O distribuidor do carro recebe uma comissão de 12% sobre o custo de fábrica.
+Comissão do distribuidor: O distribuidor recebe uma comissão de 12% sobre o custo de fábrica.
 
-Impostos: Há um imposto de 30% sobre o custo de fábrica.
+Impostos: O imposto aplicado sobre o custo de fábrica é de 30%.
 
-Custo final ao consumidor: O custo final ao consumidor será a soma do custo de fábrica, a comissão do distribuidor e os impostos.
+Custo final ao consumidor: O preço final será a soma do custo de fábrica, a comissão do distribuidor e os impostos.
 
 Fórmulas:
 
@@ -22,30 +22,30 @@ Custo final ao consumidor: custo_consumidor = custo_fabrica + comissao + imposto
 
 Entradas Esperadas:
 
-O programa vai pedir ao usuário para inserir o valor do custo de fábrica do carro.
+O programa irá solicitar ao usuário o valor do custo de fábrica do carro.
 
 Saídas Esperadas:
 
-O programa vai calcular e exibir o custo total do carro para o consumidor, já com os acréscimos da comissão do distribuidor e os impostos, formatado com duas casas decimais.
+O programa calculará e exibirá o custo final ao consumidor, incluindo as comissões e impostos, formatado com duas casas decimais.
 
 Exemplo:
 
 Entrada:
 
-Digite o custo de fábrica do carro: R$ 20000
+Custo de fábrica: R$ 20.000
 
 Saída Esperada:
 
-O custo ao consumidor do carro será: R$ 27600.00
+O custo ao consumidor do carro será: R$ 27.600,00
 
 Passo a Passo do Cálculo para o Exemplo:
 
-Custo de fábrica = R$ 20.000
+Custo de fábrica: R$ 20.000
 
-Comissão do distribuidor = 12% de R$ 20.000 = R$ 2.400
+Comissão do distribuidor: 12% de R$ 20.000 = R$ 2.400
 
-Impostos = 30% de R$ 20.000 = R$ 6.000
+Impostos: 30% de R$ 20.000 = R$ 6.000
 
-Custo ao consumidor = R$ 20.000 + R$ 2.400 + R$ 6.000 = R$ 28.400
+Custo ao consumidor: R$ 20.000 + R$ 2.400 + R$ 6.000 = R$ 28.400
 
-Com isso, o custo total ao consumidor será R$ 28.400.
+Portanto, o custo total ao consumidor será R$ 28.400.
