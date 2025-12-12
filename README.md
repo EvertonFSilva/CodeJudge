@@ -292,21 +292,28 @@ python -m http.server 5173
 **Compilar (Java)**
 ```bash
 curl -X POST http://localhost:8000/compilation/run   -H "Content-Type: application/json"   -d @- <<'JSON'
-{{"language":"java","code":"public class Main { public static void main(String[] args){ System.out.println(\"Hello\"); } }"}}
+{{"statement": "Faça um Código de ...", "language":"java","code":"public class Main { public static void main(String[] args){ System.out.println(\"Hello\"); } }"}}
 JSON
 ```
 
 **Executar (C) com 2 testes**
 ```bash
 curl -X POST http://localhost:8000/execution/run   -H "Content-Type: application/json"   -d @- <<'JSON'
-{{"language":"c","code":"#include <stdio.h>\nint main(){int x; if(scanf(\"%d\",&x)==1) printf(\"%d\\n\", x*2); return 0;}", "tests":["21","7"]}}
+{{"statement": "Faça um Código de ...", "language":"c","code":"#include <stdio.h>\nint main(){int x; if(scanf(\"%d\",&x)==1) printf(\"%d\\n\", x*2); return 0;}", "tests":["21","7"]}}
 JSON
 ```
 
 **Analisar (IA)**
 ```bash
 curl -X POST http://localhost:8000/analysis/run   -H "Content-Type: application/json"   -d @- <<'JSON'
-{{"language":"java","code":"public class Main { }"}}
+{{"statement": "Faça um Código de ...", "language":"java","code":"public class Main { }"}}
+JSON
+```
+
+**Otimizar (IA)**
+```bash
+curl -X POST http://localhost:8000/optimization/run   -H "Content-Type: application/json"   -d @- <<'JSON'
+{{"statement": "Faça um Código de ...", "language":"java","code":"public class Main { }"}}
 JSON
 ```
 

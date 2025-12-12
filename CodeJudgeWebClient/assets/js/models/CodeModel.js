@@ -7,7 +7,7 @@ export class CodeModel {
         const response = await fetch(`${this.apiUrl}/execution/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language, code, tests })
+            body: JSON.stringify({ statement: "", language, code, tests })
         });
 
         return await response.json();
@@ -17,7 +17,7 @@ export class CodeModel {
         const response = await fetch(`${this.apiUrl}/compilation/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language, code })
+            body: JSON.stringify({ statement: "", language, code })
         });
 
         return await response.json();
@@ -27,7 +27,7 @@ export class CodeModel {
         const response = await fetch(`${this.apiUrl}/analysis/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language, code })
+            body: JSON.stringify({ statement: "", language, code })
         });
 
         return await response.json();
@@ -37,7 +37,7 @@ export class CodeModel {
         const response = await fetch(`${this.apiUrl}/optimization/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language, code })
+            body: JSON.stringify({ statement: "", language, code })
         });
 
         return await response.json();

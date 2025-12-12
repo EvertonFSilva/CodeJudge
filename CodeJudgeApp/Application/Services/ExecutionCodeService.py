@@ -7,7 +7,7 @@ class ExecutionCodeService:
         self.executorRegistry = executorRegistry
         self.errorService = errorService
 
-    def execute(self, language, code, tests=None):
+    def executeSource(self, statement, language, code, tests=None):
         sourceCode = SourceCode(code)
         compiler = self.compilerRegistry.get(language)
         if not compiler:
@@ -16,7 +16,7 @@ class ExecutionCodeService:
         compilationResult = compiler.compile(sourceCode)
         if not compilationResult.isSuccess():
             if self.errorService:
-                errorResult = self.errorService.generateError(language, code, compilationResult.getMessage(), "compilation")
+                errorResult = self.errorService.analyzeError(statement, language, code, compilationResult.getMessage(), "compilation")
                 return ExecutionCodeResult(False, errorResult.getMessage(), [], [], 0.0, {"error": errorResult.getErrorMessage()})
             return ExecutionCodeResult(False, compilationResult.getMessage(), [], [], 0.0, {})
 
@@ -39,7 +39,7 @@ class ExecutionCodeService:
             executionResult.outputs = results
 
         if not executionResult.isSuccess() and self.errorService:
-            errorResult = self.errorService.generateError(language, code, executionResult.getMessage(), "execution")
+            errorResult = self.errorService.analyzeError(statement, language, code, executionResult.getMessage(), "execution")
             executionResult.message = errorResult.getMessage()
             executionResult.errorMessage = errorResult.getErrorMessage()
         

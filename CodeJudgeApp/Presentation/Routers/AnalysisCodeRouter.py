@@ -15,5 +15,5 @@ def getController():
              description="Recebe um trecho de código e a linguagem, e retorna o resultado da análise.")
 def runAnalysis(request: AnalysisCodeRequest = Body(...),
                 controller: AnalysisCodeController = Depends(getController)):
-    result = controller.analyze(request.language, request.code)
+    result = controller.analyze(request.statement, request.language, request.code)
     return AnalysisCodeResponse(success=result.isSuccess(), message=result.getMessage())

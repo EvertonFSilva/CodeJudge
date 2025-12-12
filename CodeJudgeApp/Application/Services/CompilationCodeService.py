@@ -6,7 +6,7 @@ class CompilationCodeService:
         self.compilerRegistry = compilerRegistry
         self.errorService = errorService
 
-    def compileSource(self, language, code):
+    def compileSource(self, statement, language, code):
         sourceCode = SourceCode(code)
         compiler = self.compilerRegistry.get(language)
         if not compiler:
@@ -14,9 +14,7 @@ class CompilationCodeService:
 
         compilationResult = compiler.compile(sourceCode)
         if not compilationResult.isSuccess() and self.errorService:
-            errorResult = self.errorService.analyzeCompilationError(
-                language, code, compilationResult.getMessage()
-            )
+            errorResult = self.errorService.analyzeError(statement, language, code, compilationResult.getMessage(), "compilation")
             return CompilationCodeResult(
                 False,
                 errorResult.getMessage(),

@@ -5,7 +5,7 @@ class OptimizationCodeService:
         self.engineRegistry = engineRegistry
         self.promptManager = promptManager
 
-    def optimizeSource(self, language, code):
+    def optimizeSource(self, statement, language, code):
         engine = self.engineRegistry.get(language)
         if not engine:
             engine = self.engineRegistry.getDefault()
@@ -14,7 +14,7 @@ class OptimizationCodeService:
         responses = []
 
         for template in templates:
-            prompt = template + "\n" + language + "\n" + code
+            prompt = statement + "\n" + template + "\n" + language + "\n" + code
             responseText = engine.complete(prompt, {})
             if responseText:
                 responses.append(responseText)

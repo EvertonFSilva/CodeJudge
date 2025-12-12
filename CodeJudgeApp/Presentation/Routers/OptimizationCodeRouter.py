@@ -15,5 +15,5 @@ def getController():
              description="Recebe um trecho de código e a linguagem, aplica otimizações e retorna sucesso ou falha.")
 def runOptimization(request: OptimizationCodeRequest = Body(...),
                     controller: OptimizationCodeController = Depends(getController)):
-    result = controller.optimize(request.language, request.code)
+    result = controller.optimize(request.statement, request.language, request.code)
     return OptimizationCodeResponse(success=result.isSuccess(), message=result.getMessage())

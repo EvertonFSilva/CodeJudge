@@ -15,7 +15,7 @@ def getController():
              description="Recebe um trecho de código e a linguagem, compila o código e retorna sucesso ou falha, mensagens, logs e caminho do código compilado.")
 def runCompilation(request: CompilationCodeRequest = Body(...),
                    controller: CompilationCodeController = Depends(getController)):
-    result = controller.compile(request.language, request.code)
+    result = controller.compile(request.statement, request.language, request.code)
     sourcePath = getattr(result, "getSourcePath", lambda: None)()
     logs = getattr(result, "getLogs", lambda: None)()
     return CompilationCodeResponse(success=result.isSuccess(), message=result.getMessage(), sourcePath=sourcePath, logs=logs)
