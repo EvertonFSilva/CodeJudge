@@ -257,19 +257,19 @@ python -m http.server 5173
 
 ### CodeJudgeApp (porta 8000)
 - `POST /compilation/run` — **Compila** código.
-  - **Body**: `{{"language": "c|java", "code": "<string>"}}`
+  - **Body**: `{{"statement": "Faça um Código de ...", "language": "c|java", "code": "<string>"}}`
   - **Response**: `{{"success": bool, "message": str, "sourcePath": str, "logs": str}}`
 
 - `POST /execution/run` — **Executa** programa/classe (roda 1x por teste).
-  - **Body**: `{{"language": "c|java", "code": "<string>", "tests": ["<stdin-1>", "<stdin-2>", ...]}}`
+  - **Body**: `{{"statement": "Faça um Código de ...", "language": "c|java", "code": "<string>", "tests": ["<stdin-1>", "<stdin-2>", ...]}}`
   - **Response**: `{{"success": bool, "message": str, "inputs": [], "outputs": [], "rate": float, "details": {{}}}}`
 
 - `POST /analysis/run` — **Análise** de código (IA).
-  - **Body**: `{{"language": "c|java", "code": "<string>"}}`
+  - **Body**: `{{"statement": "Faça um Código de ...", "language": "c|java", "code": "<string>"}}`
   - **Response**: `{{"success": bool, "message": str}}`
 
 - `POST /optimization/run` — **Sugestões de otimização** (IA).
-  - **Body**: `{{"language": "c|java", "code": "<string>"}}`
+  - **Body**: `{{"statement": "Faça um Código de ...", "language": "c|java", "code": "<string>"}}`
   - **Response**: `{{"success": bool, "message": str}}`
 
 - `GET /prompts/all` — Lista todos os templates + metadados.
