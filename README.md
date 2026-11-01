@@ -14,11 +14,12 @@ O ecossistema é estruturado em três módulos independentes e perfeitamente int
 5. [Padrões de Projeto Aplicados](#padrões-de-projeto-aplicados)
 6. [Suíte de Exemplos para Testes (Examples)](#suíte-de-exemplos-para-testes-examples)
 7. [Pré-requisitos](#pré-requisitos)
-8. [Como Executar](#como-executar)
-9. [Documentação dos Endpoints da API](#documentação-dos-endpoints-da-api)
-10. [Configuração Dinâmica (Configuration.json)](#configuração-dinâmica-configurationjson)
-11. [Diretrizes de Feedback e Aprendizado](#diretrizes-de-feedback-e-aprendizado)
-12. [Autor e Licença](#autor-e-licença)
+8. [Instalação e Configuração do Ollama (IA Local Gratuita)](#instalação-e-configuração-do-ollama-ia-local-gratuita)
+9. [Como Executar](#como-executar)
+10. [Documentação dos Endpoints da API](#documentação-dos-endpoints-da-api)
+11. [Configuração Dinâmica (Configuration.json)](#configuração-dinâmica-configurationjson)
+12. [Diretrizes de Feedback e Aprendizado](#diretrizes-de-feedback-e-aprendizado)
+13. [Autor e Licença](#autor-e-licença)
 
 ---
 
@@ -223,6 +224,94 @@ O diretório [`CodeJudgeApp/Examples`](file:///C:/Users/evert/OneDrive/Desktop/C
 - **Node.js 18+** e **npm**.
 - **Compilador GCC / G++** (opcional, necessário caso vá compilar códigos em C e C++ no Windows).
 - **Chave de API do Google Gemini** (ou serviço local do **Ollama** ativo).
+
+---
+
+## Instalação e Configuração do Ollama (IA Local Gratuita)
+
+O **Ollama** permite executar modelos de linguagem (LLMs) diretamente na sua máquina local de forma 100% gratuita, com privacidade absoluta, sem custos de API e sem necessidade de conexão constante com serviços de nuvem.
+
+### 1. Como Instalar o Ollama
+
+- **Windows**:
+  1. Baixe o instalador oficial em: [ollama.com/download](https://ollama.com/download).
+  2. Execute o arquivo `OllamaSetup.exe` e siga as instruções na tela.
+  3. O serviço iniciará automaticamente em segundo plano (o ícone do Ollama aparecerá na barra de notificações).
+
+- **Linux**:
+  Execute o comando oficial no terminal:
+  ```bash
+  curl -fsSL https://ollama.com/install.sh | sh
+  ```
+
+- **macOS**:
+  Baixe o `.dmg` em [ollama.com/download/mac](https://ollama.com/download/mac) ou instale via Homebrew:
+  ```bash
+  brew install ollama
+  ```
+
+### 2. Modelos Recomendados para Código e Avaliação Didática
+
+Abra o prompt de comando ou terminal da sua máquina e execute o comando correspondente ao modelo desejado. O Ollama fará o download e iniciará o modelo automaticamente:
+
+- **Qwen 2.5 Coder 7B (Altamente Recomendado)**:
+  Excepcional precisão sintática e didática para Java, Python, C e C++:
+  ```bash
+  ollama run qwen2.5-coder:7b
+  ```
+
+- **Qwen 2.5 Coder 1.5B (Versão Leve)**:
+  Ideal para computadores com menor quantidade de memória RAM (4GB a 8GB) ou sem placa de vídeo dedicada (GPU):
+  ```bash
+  ollama run qwen2.5-coder:1.5b
+  ```
+
+- **Outras Excelentes Opções**:
+  ```bash
+  ollama run deepseek-coder:6.7b
+  ollama run codellama
+  ollama run llama3:latest
+  ```
+
+### 3. Verificando se o Ollama está Operacional
+
+Abra no navegador ou execute no terminal:
+```bash
+curl http://localhost:11434
+```
+A resposta esperada deve ser:
+```text
+Ollama is running
+```
+
+### 4. Configurando o CodeJudge para Utilizar o Ollama
+
+No arquivo [`CodeJudgeApp/Configuration.json`](file:///C:/Users/evert/OneDrive/Desktop/CodeJudge/CodeJudgeApp/Configuration.json):
+
+1. Altere o motor padrão de `"gemini"` para `"ollama"`:
+   ```json
+   "ai": {
+     "default": "ollama",
+     ...
+   ```
+
+2. Na seção de argumentos do Ollama, defina o modelo que você baixou (por exemplo, `qwen2.5-coder:7b`):
+   ```json
+   "engines": {
+     "ollama": {
+       "adapter": "OllamaAdapter",
+       "args": {
+         "endpoint": "http://localhost:11434/v1",
+         "model": "qwen2.5-coder:7b",
+         "apiKey": "ollama",
+         "timeoutSeconds": 120
+       }
+     }
+   }
+   ```
+
+> [!NOTE]
+> O CodeJudge já inclui um tempo limite de requisição de **120 segundos** pré-configurado, com tolerância mínima de segurança de 60 segundos no adaptador (`OllamaAdapter.py`), assegurando que modelos executados na CPU tenham tempo suficiente para gerar avaliações completas e o código refatorado final.
 
 ---
 

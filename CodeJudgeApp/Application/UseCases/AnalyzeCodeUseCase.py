@@ -55,13 +55,17 @@ class AnalyzeCodeUseCase:
                 "4. Forneça exemplos práticos de código comparando a abordagem do código com a solução recomendada.\n"
                 "5. Mantenha espaçamento adequado com quebras de linha entre parágrafos e tópicos.\n"
                 "6. NUNCA utilize emojis em qualquer parte do texto.\n"
-                "7. NUNCA utilize termos informais ou clichês genéricos como 'regra de ouro' ou 'dica de ouro'. Empregue terminologia técnica e formal de engenharia de software."
+                "7. NUNCA utilize termos informais ou clichês genéricos como 'regra de ouro' ou 'dica de ouro'. Empregue terminologia técnica e formal de engenharia de software.\n"
+                "8. AO FINAL DA RESPOSTA, VOCÊ DEVE OBRIGATORIAMENTE INCLUIR UMA SEÇÃO DEDICADA:\n"
+                "# Código Completo Refatorado e Recomendado\n"
+                "Forneça a versão final recomendada e completa do código-fonte em um único bloco de código Markdown (```" + language.lower() + " ... ```). O código deve ser 100% completo, sem trechos omitidos ou reticências, compilável, com formatação limpa, nomenclatura semântica, validações defensivas e separação modular pronta para execução."
             )
         else:
             baseGuideline = (
                 "Você é um revisor sênior de código e professor de engenharia de software da plataforma CodeJudge.\n"
                 "Realize uma análise didática, estruturada e detalhada do código considerando estilo, fluxo, modularidade e segurança.\n"
-                "Inicie cada seção com um título '# ' em Markdown, utilize negrito para termos e diagnósticos centrais, forneça exemplos de melhoria e evite emojis ou clichês genéricos."
+                "Inicie cada seção com um título '# ' em Markdown, utilize negrito para termos e diagnósticos centrais, forneça exemplos de melhoria e evite emojis ou clichês genéricos.\n"
+                "Ao final, inclua a seção '# Código Completo Refatorado e Recomendado' com o código final completo em bloco Markdown (```" + language.lower() + ")."
             )
 
         prompt = (

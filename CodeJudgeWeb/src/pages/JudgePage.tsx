@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { UserProfile } from "../types/auth";
 import {
   LanguageItem,
@@ -127,6 +127,59 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
   const [showConsolidatedMd, setShowConsolidatedMd] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copiedImprovedCode, setCopiedImprovedCode] = useState<boolean>(false);
+  const [improvedViewMode, setImprovedViewMode] = useState<"code" | "diff">("code");
+  const [appliedToast, setAppliedToast] = useState<boolean>(false);
+
+  // Extract refactored/improved code block from AI recommendations or feedback
+  const improvedCode = useMemo(() => {
+    const textToSearch = optimizationResult?.recommendations || analysisResult?.feedback;
+    if (!textToSearch) return null;
+
+    // Pattern 1: Heading indicating refactored/improved/recommended code
+    const sectionRegex = /#+.*?(?:Refatorado|Otimizado|Recomendado)[\s\S]*?```([a-zA-Z0-9_+#-]*)\s*\n([\s\S]*?)```/i;
+    const match = sectionRegex.exec(textToSearch);
+    if (match && match[2].trim()) {
+      return {
+        language: match[1] || detectedLang.key,
+        code: match[2].trim()
+      };
+    }
+
+    // Pattern 2: Last substantial code block in markdown
+    const codeBlockRegex = /```([a-zA-Z0-9_+#-]*)\s*\n([\s\S]*?)```/g;
+    let m;
+    let lastMatch: { language: string; code: string } | null = null;
+    while ((m = codeBlockRegex.exec(textToSearch)) !== null) {
+      const raw = m[2].trim();
+      if (raw.split("\n").length >= 2) {
+        lastMatch = {
+          language: m[1] || detectedLang.key,
+          code: raw
+        };
+      }
+    }
+    return lastMatch;
+  }, [optimizationResult, analysisResult, detectedLang.key]);
+
+  const handleApplyImprovedCode = (newCode: string) => {
+    handleCodeChange(newCode);
+    setAppliedToast(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      setAppliedToast(false);
+    }, 6000);
+  };
+
+  const handleCopyImprovedCode = async (codeToCopy: string) => {
+    try {
+      await navigator.clipboard.writeText(codeToCopy);
+      setCopiedImprovedCode(true);
+      setTimeout(() => setCopiedImprovedCode(false), 2500);
+    } catch {
+      // ignore
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -479,6 +532,27 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
       <div className="row g-4">
         {/* Left Column: Code, Active File & Test Inputs */}
         <div className="col-lg-7">
+          {/* Toast alert when improved code is loaded */}
+          {appliedToast && (
+            <div className="alert applied-toast-alert d-flex justify-content-between align-items-center mb-3 shadow-sm py-2 px-3">
+              <div className="d-flex align-items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span className="small">
+                  <strong>Código Otimizado Carregado!</strong> A versão recomendada pela IA foi inserida no editor. Você já pode clicar em <strong>{getModeActionName(mode)}</strong> para testar a nova versão.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-close btn-close-white ms-2"
+                style={{ fontSize: "10px" }}
+                onClick={() => setAppliedToast(false)}
+              ></button>
+            </div>
+          )}
+
           {/* Active File Card with Automatic Language Detection Badge */}
           <div className="active-file-card">
             <div className="file-details">
@@ -912,6 +986,23 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   </svg>
                   <span>Visualizar (.pdf)</span>
                 </button>
+
+                {improvedCode && (
+                  <button
+                    type="button"
+                    className="btn btn-report-action btn-apply-code text-white ms-auto"
+                    onClick={() => {
+                      const el = document.getElementById("improved-code-section");
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <span>Ver Código Otimizado</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1050,6 +1141,150 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 <MarkdownRenderer
                   content={optimizationResult.recommendations || "Sem recomendações de otimização disponíveis."}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* 5. Código Final Recomendado (Refatorado & Otimizado com IA) */}
+          {improvedCode && (
+            <div id="improved-code-section" className="dark-card mb-4 improved-code-card">
+              <div className="dark-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded p-1"
+                    style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="fw-bold text-light small d-block">
+                      Código Final Recomendado (Refatorado & Otimizado)
+                    </span>
+                    <span className="text-secondary" style={{ fontSize: "11px" }}>
+                      Versão gerada pela IA incorporando todas as melhorias de estilo, segurança e ganhos de desempenho
+                    </span>
+                  </div>
+                </div>
+
+                <div className="d-flex align-items-center flex-wrap gap-2">
+                  <div className="d-flex gap-1 me-1">
+                    <button
+                      type="button"
+                      className={`btn-view-toggle ${improvedViewMode === "code" ? "active" : ""}`}
+                      onClick={() => setImprovedViewMode("code")}
+                    >
+                      Código Otimizado
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-view-toggle ${improvedViewMode === "diff" ? "active" : ""}`}
+                      onClick={() => setImprovedViewMode("diff")}
+                    >
+                      Comparar com Original
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-report-action"
+                    onClick={() => handleCopyImprovedCode(improvedCode.code)}
+                    title="Copiar código para a área de transferência"
+                  >
+                    {copiedImprovedCode ? (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span className="text-success">Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copiar Código</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-apply-code"
+                    onClick={() => handleApplyImprovedCode(improvedCode.code)}
+                    title="Carregar esta versão recomendada no editor acima"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Carregar no Editor</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="dark-card-body p-0">
+                {improvedViewMode === "code" ? (
+                  <div className="improved-code-container">
+                    <div className="improved-code-meta px-3 py-2 d-flex justify-content-between align-items-center">
+                      <span className="text-secondary small font-monospace">
+                        {activeFileName} &bull; {improvedCode.language.toUpperCase()} &bull; {improvedCode.code.split("\n").length} linhas
+                      </span>
+                      <span className="badge badge-custom-success">
+                        Versão Final Pronta para Teste
+                      </span>
+                    </div>
+                    <pre className="improved-code-pre mb-0 p-3">
+                      <code>
+                        {improvedCode.code.split("\n").map((line, idx) => (
+                          <div key={idx} className="improved-code-line">
+                            <span className="line-num">{String(idx + 1).padStart(3, " ")}</span>
+                            <span className="line-content">{line || " "}</span>
+                          </div>
+                        ))}
+                      </code>
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="side-by-side-grid">
+                    <div className="diff-pane">
+                      <div className="diff-pane-header text-secondary">
+                        <span>Original Submetido</span>
+                        <span className="badge bg-secondary text-light">{code.split("\n").length} linhas</span>
+                      </div>
+                      <pre className="improved-code-pre mb-0 p-3" style={{ maxHeight: "420px" }}>
+                        <code>
+                          {code.split("\n").map((line, idx) => (
+                            <div key={idx} className="improved-code-line">
+                              <span className="line-num">{String(idx + 1).padStart(3, " ")}</span>
+                              <span className="line-content">{line || " "}</span>
+                            </div>
+                          ))}
+                        </code>
+                      </pre>
+                    </div>
+
+                    <div className="diff-pane">
+                      <div className="diff-pane-header text-success">
+                        <span>Recomendado & Otimizado (IA)</span>
+                        <span className="badge badge-custom-success">{improvedCode.code.split("\n").length} linhas</span>
+                      </div>
+                      <pre className="improved-code-pre mb-0 p-3" style={{ maxHeight: "420px" }}>
+                        <code>
+                          {improvedCode.code.split("\n").map((line, idx) => (
+                            <div key={idx} className="improved-code-line">
+                              <span className="line-num">{String(idx + 1).padStart(3, " ")}</span>
+                              <span className="line-content">{line || " "}</span>
+                            </div>
+                          ))}
+                        </code>
+                      </pre>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

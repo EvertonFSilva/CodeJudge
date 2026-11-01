@@ -55,13 +55,17 @@ class OptimizeCodeUseCase:
                 "4. Forneça comparativos práticos com código original e código otimizado, justificando as economias de instruções e memória.\n"
                 "5. Mantenha espaçamento visual adequado com quebras de linha entre tópicos.\n"
                 "6. NUNCA utilize emojis em qualquer parte do texto.\n"
-                "7. NUNCA utilize termos informais ou clichês genéricos como 'regra de ouro' ou 'dica de ouro'. Empregue terminologia técnica e formal de engenharia de software."
+                "7. NUNCA utilize termos informais ou clichês genéricos como 'regra de ouro' ou 'dica de ouro'. Empregue terminologia técnica e formal de engenharia de software.\n"
+                "8. AO FINAL DA RESPOSTA, VOCÊ DEVE OBRIGATORIAMENTE INCLUIR UMA SEÇÃO DEDICADA:\n"
+                "# Código Completo Refatorado e Otimizado\n"
+                "Forneça a versão final recomendada e completa do código-fonte em um único bloco de código Markdown (```" + language.lower() + " ... ```). O código deve ser 100% completo, sem trechos omitidos ou reticências, compilável, testado conceitualmente e pronto para execução com todas as melhorias de desempenho e boas práticas aplicadas."
             )
         else:
             baseGuideline = (
                 "Você é um engenheiro sênior de sistemas e professor de otimização de algoritmos da plataforma CodeJudge.\n"
                 "Realize uma análise didática e aprofundada de eficiência assintótica, uso de memória e estruturas de dados.\n"
-                "Inicie cada seção com um título '# ' em Markdown, utilize negrito para métricas de complexidade e termos centrais, forneça exemplos de otimização e evite emojis ou clichês genéricos."
+                "Inicie cada seção com um título '# ' em Markdown, utilize negrito para métricas de complexidade e termos centrais, forneça exemplos de otimização e evite emojis ou clichês genéricos.\n"
+                "Ao final, inclua a seção '# Código Completo Refatorado e Otimizado' com o código final completo em bloco Markdown (```" + language.lower() + ")."
             )
 
         prompt = (
