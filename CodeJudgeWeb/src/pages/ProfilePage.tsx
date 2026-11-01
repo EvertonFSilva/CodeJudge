@@ -24,7 +24,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
   return (
     <div className="container py-4 fade-in">
       <div
-        className="d-flex justify-content-between align-items-center mb-4 pb-3"
+        className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 pb-3 gap-3"
         style={{ borderBottom: "1px solid var(--border-color)" }}
       >
         <div>
@@ -41,18 +41,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
         </div>
 
         <button
-          className="btn btn-sm d-flex align-items-center gap-1.5 py-1 px-3"
-          style={{
-            background: "rgba(248, 81, 73, 0.1)",
-            color: "#ff7b72",
-            border: "1px solid rgba(248, 81, 73, 0.3)",
-            borderRadius: "6px",
-            fontWeight: 500,
-            transition: "all 0.2s"
-          }}
+          className="logout-nav-btn m-0"
           onClick={onLogout}
+          title="Encerrar sessão no Moodle IFF"
         >
-          <i className="bi bi-box-arrow-right"></i>
+          <i className="bi bi-box-arrow-right fs-6"></i>
           <span>Encerrar Sessão</span>
         </button>
       </div>
@@ -89,21 +82,33 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
               className="pt-3 text-start small"
               style={{ borderTop: "1px solid var(--border-subtle)" }}
             >
-              <div className="d-flex justify-content-between py-1">
-                <span className="text-secondary">Cidade:</span>
-                <span className="text-light">{user.city || "Não informada"}</span>
+              <div className="d-flex justify-content-between align-items-center py-2">
+                <span className="text-secondary d-flex align-items-center gap-2">
+                  <i className="bi bi-geo-alt text-success"></i>
+                  <span>Cidade:</span>
+                </span>
+                <span className="text-light fw-medium">{user.city || "Não informada"}</span>
               </div>
-              <div className="d-flex justify-content-between py-1">
-                <span className="text-secondary">País:</span>
-                <span className="text-light">{user.country || "Brasil"}</span>
+              <div className="d-flex justify-content-between align-items-center py-2">
+                <span className="text-secondary d-flex align-items-center gap-2">
+                  <i className="bi bi-globe-americas text-success"></i>
+                  <span>País:</span>
+                </span>
+                <span className="text-light fw-medium">{user.country || "Brasil"}</span>
               </div>
-              <div className="d-flex justify-content-between py-1">
-                <span className="text-secondary">Primeiro Acesso:</span>
-                <span className="text-light">{user.firstAccess || "N/A"}</span>
+              <div className="d-flex justify-content-between align-items-center py-2">
+                <span className="text-secondary d-flex align-items-center gap-2">
+                  <i className="bi bi-calendar-check text-success"></i>
+                  <span>Primeiro Acesso:</span>
+                </span>
+                <span className="text-light fw-medium">{user.firstAccess || "N/A"}</span>
               </div>
-              <div className="d-flex justify-content-between py-1">
-                <span className="text-secondary">Último Acesso:</span>
-                <span className="text-light">{user.lastAccess || "N/A"}</span>
+              <div className="d-flex justify-content-between align-items-center py-2">
+                <span className="text-secondary d-flex align-items-center gap-2">
+                  <i className="bi bi-clock-history text-success"></i>
+                  <span>Último Acesso:</span>
+                </span>
+                <span className="text-light fw-medium">{user.lastAccess || "N/A"}</span>
               </div>
             </div>
 
@@ -112,9 +117,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                 href={user.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="btn btn-report-action btn-sm w-100 mt-3 justify-content-center"
+                className="btn btn-report-action btn-sm w-100 mt-3 justify-content-center gap-2"
               >
-                <i className="bi bi-box-arrow-up-right me-1"></i>
+                <i className="bi bi-box-arrow-up-right"></i>
                 <span>Acessar Moodle IFF</span>
               </a>
             )}
@@ -165,15 +170,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                     >
                       <div className="d-flex align-items-center gap-3">
                         <div
-                          className="rounded-circle p-2 d-flex align-items-center justify-content-center"
+                          className="rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0"
                           style={{
                             backgroundColor: "var(--emerald-subtle)",
                             color: "var(--emerald-accent)",
-                            width: "36px",
-                            height: "36px"
+                            width: "38px",
+                            height: "38px"
                           }}
                         >
-                          <i className="bi bi-journal-bookmark-fill"></i>
+                          <i className="bi bi-journal-bookmark-fill fs-6"></i>
                         </div>
                         <div>
                           <div className="fw-semibold text-white">{course}</div>
@@ -188,7 +193,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                 </div>
               ) : (
                 <div className="text-center py-4 text-secondary">
-                  <i className="bi bi-journal-x display-6 mb-2"></i>
+                  <i className="bi bi-journal-x display-6 mb-2 d-block"></i>
                   <p className="mb-0 small">Nenhuma disciplina pública listada no seu perfil do Moodle IFF.</p>
                 </div>
               )}

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { PromptDocument } from "../types/prompts";
 import { PromptService } from "../services/PromptService";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import { CustomDropdown, DropdownOption } from "../components/CustomDropdown";
 
 export const PromptsPage: React.FC = () => {
   const [prompts, setPrompts] = useState<PromptDocument[]>([]);
@@ -67,7 +68,7 @@ export const PromptsPage: React.FC = () => {
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            Catálogo de Prompts e Modelos de IA
+            Prompts
           </h4>
           <p className="text-secondary small mb-0">
             Modelos estruturados para apoiar sua prática de programação com diagnósticos conceituais e otimizações.
@@ -100,22 +101,23 @@ export const PromptsPage: React.FC = () => {
       <div className="dark-card mb-4 p-3">
         <div className="row g-3 align-items-center">
           <div className="col-md-7">
-            <div className="input-group">
-              <span className="input-group-text dark-input text-secondary border-end-0">
+            <div className="custom-search-wrapper">
+              <span className="custom-search-icon">
                 <i className="bi bi-search"></i>
               </span>
               <input
                 type="text"
-                className="form-control dark-input border-start-0"
+                className="custom-search-input"
                 placeholder="Pesquisar por nome ou finalidade do prompt..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
                 <button
-                  className="btn btn-report-action"
+                  className="custom-search-clear-btn"
                   type="button"
                   onClick={() => setSearchQuery("")}
+                  title="Limpar pesquisa"
                 >
                   <i className="bi bi-x-lg"></i>
                 </button>
@@ -128,17 +130,22 @@ export const PromptsPage: React.FC = () => {
               <label className="form-label mb-0 small fw-semibold text-secondary flex-shrink-0">
                 Categoria:
               </label>
-              <select
-                className="form-select form-select-sm dark-input"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === "all" ? "Todas as Categorias" : cat.toUpperCase()}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-grow-1">
+                <CustomDropdown
+                  options={categories.map((cat) => ({
+                    value: cat,
+                    label: cat === "all" ? "Todas as Categorias" : cat.toUpperCase(),
+                    icon: (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                      </svg>
+                    )
+                  }))}
+                  value={selectedCategory}
+                  onChange={(val) => setSelectedCategory(val)}
+                />
+              </div>
             </div>
           </div>
         </div>

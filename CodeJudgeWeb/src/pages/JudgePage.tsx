@@ -13,6 +13,7 @@ import { LanguageDetectionService } from "../services/LanguageDetectionService";
 import { PdfExportService } from "../services/PdfExportService";
 import { TestResultsTable } from "../components/TestResultsTable";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import { CustomDropdown, DropdownOption } from "../components/CustomDropdown";
 
 interface JudgePageProps {
   user: UserProfile | null;
@@ -20,6 +21,66 @@ interface JudgePageProps {
 
 type OperationMode = "full" | "compile" | "execute" | "analyze" | "optimize";
 type StepStatus = "pending" | "running" | "success" | "failed";
+
+const MODE_OPTIONS: DropdownOption[] = [
+  {
+    value: "full",
+    label: "Processamento Completo",
+    description: "Compilar, executar, analisar e otimizar",
+    group: "Recomendado",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+    )
+  },
+  {
+    value: "compile",
+    label: "Apenas Compilar",
+    description: "Verificar erros de sintaxe do código",
+    group: "Opções Individuais",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M16 18l6-6-6-6"></path>
+        <path d="M8 6l-6 6 6 6"></path>
+      </svg>
+    )
+  },
+  {
+    value: "execute",
+    label: "Apenas Executar",
+    description: "Executar o código e validar saídas",
+    group: "Opções Individuais",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+    )
+  },
+  {
+    value: "analyze",
+    label: "Apenas Análise do código",
+    description: "Revisão de qualidade e boas práticas",
+    group: "Opções Individuais",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    )
+  },
+  {
+    value: "optimize",
+    label: "Apenas Otimização",
+    description: "Análise de complexidade e desempenho",
+    group: "Opções Individuais",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+      </svg>
+    )
+  }
+];
 
 export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [availableLanguages, setAvailableLanguages] = useState<LanguageItem[]>([]);
@@ -315,7 +376,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
   return (
     <div className="container-fluid px-3 px-md-4 py-4 fade-in">
-      {/* Top Bar with Title and Prominent PDF Export Button */}
+      {/* Top Bar with Title */}
       <div
         className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 pb-3"
         style={{ borderBottom: "1px solid var(--border-color)" }}
@@ -325,29 +386,11 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
-            Bancada de Processamento
+            Processamento de Código
           </h4>
           <p className="text-secondary small mb-0">
             Compilação, execução, análise do código e otimização automatizada com IA.
           </p>
-        </div>
-
-        <div className="d-flex align-items-center gap-2">
-          {hasAnyResult && (
-            <button
-              type="button"
-              className="btn btn-report-action-pdf shadow-sm d-flex align-items-center gap-2"
-              onClick={handleExportPdf}
-              title="Gerar e fazer download do relatório completo em PDF"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Gerar Relatório (.pdf)</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -389,24 +432,19 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           {/* Operation Mode Selector */}
           <div className="dark-card mb-4">
             <div className="dark-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-              <div className="d-flex align-items-center gap-2">
-                <span className="fw-semibold text-light small">Modo de Operação:</span>
-                <select
-                  className="form-select form-select-sm dark-input"
-                  style={{ width: "auto" }}
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value as OperationMode)}
-                  disabled={isProcessing}
-                >
-                  <option value="full">Processamento Completo (Recomendado)</option>
-                  <option value="compile">Apenas Compilar</option>
-                  <option value="execute">Apenas Executar</option>
-                  <option value="analyze">Apenas Análise do código</option>
-                  <option value="optimize">Apenas Otimização</option>
-                </select>
+              <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: "420px" }}>
+                <span className="fw-semibold text-light small flex-shrink-0">Modo de Operação:</span>
+                <div className="flex-grow-1">
+                  <CustomDropdown
+                    options={MODE_OPTIONS}
+                    value={mode}
+                    onChange={(val) => setMode(val as OperationMode)}
+                    disabled={isProcessing}
+                  />
+                </div>
               </div>
 
-              <div className="d-flex align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2 flex-wrap">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -416,7 +454,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 />
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
+                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1.5"
                   onClick={() => fileInputRef.current?.click()}
                   title="Carregar arquivo de código"
                 >
@@ -426,7 +464,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
+                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1.5"
                   onClick={copyCodeToClipboard}
                   title="Copiar código"
                 >
@@ -436,7 +474,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1"
+                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
                   onClick={() => handleCodeChange("")}
                   title="Limpar código"
                 >
@@ -446,28 +484,30 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
 
             {/* Problem Statement Accordion (Optional) */}
-            <div style={{ backgroundColor: "var(--bg-input)", borderBottom: "1px solid var(--border-color)" }}>
+            <div style={{ backgroundColor: "#0d1117", borderBottom: "1px solid var(--border-color)" }}>
               <button
                 type="button"
-                className="w-100 p-2 px-3 border-0 bg-transparent text-secondary small d-flex justify-content-between align-items-center"
+                className="statement-accordion-header"
                 onClick={() => setIsStatementOpen(!isStatementOpen)}
               >
                 <div className="d-flex align-items-center gap-2">
-                  <i className="bi bi-journal-text text-success"></i>
-                  <span>Enunciado da Questão (Opcional)</span>
+                  <i className="bi bi-journal-text text-success fs-6"></i>
+                  <span>Enunciado da Questão</span>
+                  <span className="text-secondary small fw-normal">(Opcional)</span>
                 </div>
-                <i className={`bi bi-chevron-${isStatementOpen ? "up" : "down"} small`}></i>
+                <i className={`bi bi-chevron-${isStatementOpen ? "up" : "down"} text-secondary`}></i>
               </button>
 
               {isStatementOpen && (
-                <div className="p-3 pt-0">
+                <div className="p-3 pt-2">
                   <textarea
                     className="form-control dark-textarea small"
-                    rows={2}
+                    rows={3}
                     placeholder="Cole aqui o enunciado ou requisitos da questão para contextualizar o relatório e a IA..."
                     value={statement}
                     onChange={(e) => setStatement(e.target.value)}
                     disabled={isProcessing}
+                    style={{ lineHeight: "1.5" }}
                   ></textarea>
                 </div>
               )}

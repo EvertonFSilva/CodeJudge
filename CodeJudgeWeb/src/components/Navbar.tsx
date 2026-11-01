@@ -42,9 +42,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="app-header sticky-top">
-      <div className="container-fluid px-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div className="container-fluid px-2 px-md-3 d-flex flex-wrap align-items-center justify-content-between gap-2 gap-md-3">
         {/* Brand */}
-        <div className="d-flex align-items-center gap-4">
+        <div className="d-flex align-items-center gap-3 gap-md-4">
           <div className="brand-wrapper" onClick={() => onTabChange("judge")}>
             <CodeJudgeLogo size={32} />
             <div className="d-flex align-items-center">
@@ -53,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Navigation Tabs */}
+          {/* Navigation Tabs (Desktop) */}
           <nav className="d-none d-md-flex align-items-center gap-2">
             <button
               type="button"
@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Right side controls */}
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center gap-2 gap-md-3">
           {/* Mobile navigation selector */}
           <div className="d-md-none">
             <select
@@ -108,11 +108,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Backend Status indicator */}
-          <div className="api-status-chip" title="Status da API de processamento do CodeJudgeApp">
+          <div
+            className="api-status-chip"
+            title={
+              isBackendOnline === true
+                ? "Conexão ativa com o serviço CodeJudgeApp"
+                : isBackendOnline === false
+                ? "Servidor offline ou inacessível na porta 8000"
+                : "Verificando status de conectividade..."
+            }
+          >
             <span
-              className={`status-dot ${isBackendOnline === true ? "online" : isBackendOnline === false ? "offline" : ""}`}
+              className={`status-dot ${
+                isBackendOnline === true
+                  ? "online"
+                  : isBackendOnline === false
+                  ? "offline"
+                  : ""
+              }`}
             ></span>
-            <span>{isBackendOnline === true ? "API Online" : isBackendOnline === false ? "API Offline" : "Conectando..."}</span>
+            <span>
+              {isBackendOnline === true
+                ? "Servidor Conectado"
+                : isBackendOnline === false
+                ? "Servidor Desconectado"
+                : "Conectando ao Servidor..."}
+            </span>
           </div>
 
           {/* User Chip */}
@@ -123,23 +144,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {/* Logout */}
+          {/* Logout Button */}
           <button
             type="button"
-            className="btn btn-sm d-flex align-items-center gap-1.5 py-1 px-2.5"
-            style={{
-              background: "rgba(248, 81, 73, 0.1)",
-              color: "#ff7b72",
-              border: "1px solid rgba(248, 81, 73, 0.3)",
-              borderRadius: "6px",
-              fontWeight: 500,
-              fontSize: "12px",
-              transition: "all 0.2s"
-            }}
+            className="logout-nav-btn"
             onClick={onLogout}
             title="Encerrar sessão no Moodle IFF"
           >
-            <i className="bi bi-box-arrow-right"></i>
+            <i className="bi bi-box-arrow-right fs-6"></i>
             <span className="d-none d-sm-inline">Sair</span>
           </button>
         </div>
