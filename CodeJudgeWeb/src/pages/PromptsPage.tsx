@@ -97,7 +97,6 @@ export const PromptsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter and Search Bar */}
       <div className="dark-card dropdown-host-card mb-4 p-3">
         <div className="row g-3 align-items-center">
           <div className="col-md-7">
@@ -151,7 +150,6 @@ export const PromptsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Prompts Cards */}
       {isLoading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-success" role="status"></div>
@@ -214,7 +212,6 @@ export const PromptsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Prompt View Modal */}
       {activePrompt && (
         <div
           className="modal fade show d-block"

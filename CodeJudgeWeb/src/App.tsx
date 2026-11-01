@@ -22,12 +22,9 @@ export const App: React.FC = () => {
       if (token && cached) {
         setUserProfile(cached);
         setIsAuthenticated(true);
-        // refresh in background
         AuthService.fetchProfile()
           .then((fresh) => setUserProfile(fresh))
-          .catch(() => {
-            // keep cached if offline
-          });
+          .catch(() => {});
       } else if (token) {
         try {
           const profile = await AuthService.fetchProfile();

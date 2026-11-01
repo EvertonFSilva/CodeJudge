@@ -19,7 +19,7 @@
           "endpoint": "http://localhost:11434/v1",
           "model": "llama3:latest",
           "apiKey": "ollama",
-          "timeoutSeconds": 120
+          "timeoutSeconds": 300
         }
       }
     }

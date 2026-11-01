@@ -6,7 +6,6 @@ export const Footer: React.FC = () => {
     <footer className="app-footer mt-auto">
       <div className="container-fluid px-3 px-md-4 py-3">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-          {/* Left: Brand & Institution Info */}
           <div className="d-flex align-items-center gap-3 flex-wrap text-center text-md-start">
             <div className="d-flex align-items-center gap-2">
               <CodeJudgeLogo size={24} />
@@ -32,7 +31,6 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Author */}
           <div className="d-flex align-items-center gap-3 flex-wrap justify-content-center">
             <div className="text-secondary small">
               Desenvolvido por <strong style={{ color: "var(--emerald-accent)" }}>Everton</strong>

@@ -94,7 +94,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [mode, setMode] = useState<OperationMode>("full");
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
-  // Detected language (automatically determined, never forced upon the user)
   const [detectedLang, setDetectedLang] = useState<LanguageItem>({
     key: "java",
     name: "Java",
@@ -103,7 +102,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     needsCompilation: true
   });
 
-  // Optional Test cases accordion and files (initially empty and optional like the extension)
   const [isTestsOpen, setIsTestsOpen] = useState<boolean>(false);
   const [inputsFileText, setInputsFileText] = useState<string>("");
   const [outputsFileText, setOutputsFileText] = useState<string>("");
@@ -112,7 +110,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [showInputPreview, setShowInputPreview] = useState<boolean>(false);
   const [showOutputPreview, setShowOutputPreview] = useState<boolean>(false);
 
-  // Stepper state
   const [stepCompileStatus, setStepCompileStatus] = useState<StepStatus>("pending");
   const [stepExecuteStatus, setStepExecuteStatus] = useState<StepStatus>("pending");
   const [stepAnalyzeStatus, setStepAnalyzeStatus] = useState<StepStatus>("pending");
@@ -120,7 +117,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processGlobalStatus, setProcessGlobalStatus] = useState<string>("Aguardando...");
 
-  // Results
   const [compilationResult, setCompilationResult] = useState<CompilationResult | null>(null);
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -131,12 +127,10 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [improvedViewMode, setImprovedViewMode] = useState<"code" | "diff">("code");
   const [appliedToast, setAppliedToast] = useState<boolean>(false);
 
-  // Extract refactored/improved code block from AI recommendations or feedback
   const improvedCode = useMemo(() => {
     const textToSearch = optimizationResult?.recommendations || analysisResult?.feedback;
     if (!textToSearch) return null;
 
-    // Pattern 1: Heading indicating refactored/improved/recommended code
     const sectionRegex = /#+.*?(?:Refatorado|Otimizado|Recomendado)[\s\S]*?```([a-zA-Z0-9_+#-]*)\s*\n([\s\S]*?)```/i;
     const match = sectionRegex.exec(textToSearch);
     if (match && match[2].trim()) {
@@ -146,7 +140,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
       };
     }
 
-    // Pattern 2: Last substantial code block in markdown
     const codeBlockRegex = /```([a-zA-Z0-9_+#-]*)\s*\n([\s\S]*?)```/g;
     let m;
     let lastMatch: { language: string; code: string } | null = null;
@@ -177,7 +170,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
       setCopiedImprovedCode(true);
       setTimeout(() => setCopiedImprovedCode(false), 2500);
     } catch {
-      // ignore
     }
   };
 
@@ -193,7 +185,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         const auto = LanguageDetectionService.detectFromCode(code, langs);
         setDetectedLang(auto);
       } catch {
-        // Fallback default languages available
       }
     };
     fetchLanguages();
@@ -314,7 +305,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     setOptimizationResult(null);
     setShowConsolidatedMd(false);
 
-    // Reset steppers
     setStepCompileStatus(detectedLang.needsCompilation ? "pending" : "success");
     setStepExecuteStatus("pending");
     setStepAnalyzeStatus("pending");
@@ -324,7 +314,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     try {
       const tests = parseTestCases();
 
-      // 1. COMPILAÇÃO
       if (mode === "full" || mode === "compile") {
         if (detectedLang.needsCompilation) {
           setStepCompileStatus("running");
@@ -344,7 +333,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         }
       }
 
-      // 2. EXECUÇÃO
       if (mode === "full" || mode === "execute") {
         setStepExecuteStatus("running");
         setProcessGlobalStatus("Execução em andamento...");
@@ -353,7 +341,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         setStepExecuteStatus(execRes.success ? "success" : "failed");
       }
 
-      // 3. ANÁLISE DO CÓDIGO
       if (mode === "full" || mode === "analyze") {
         setStepAnalyzeStatus("running");
         setProcessGlobalStatus("Análise do código em andamento...");
@@ -362,7 +349,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         setStepAnalyzeStatus(anaRes.success ? "success" : "failed");
       }
 
-      // 4. OTIMIZAÇÃO
       if (mode === "full" || mode === "optimize") {
         setStepOptimizeStatus("running");
         setProcessGlobalStatus("Otimização em andamento...");
@@ -454,9 +440,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     if (!hasAnyResult) return false;
 
     if (mode === "full") {
-      // If compilation failed, stages stopped at compilation.
       if (stepCompileStatus === "failed") return true;
-      // Otherwise, full mode is ONLY completed when optimization has finished (succeeded or failed)
       return stepOptimizeStatus === "success" || stepOptimizeStatus === "failed";
     }
 
@@ -511,7 +495,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
   return (
     <div className="container-fluid px-3 px-md-4 py-4 fade-in">
-      {/* Top Bar with Title */}
       <div
         className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 pb-3"
         style={{ borderBottom: "1px solid var(--border-color)" }}
@@ -545,9 +528,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
       )}
 
       <div className="row g-4">
-        {/* Left Column: Code, Active File & Test Inputs */}
         <div className="col-lg-7">
-          {/* Toast alert when improved code is loaded */}
           {appliedToast && (
             <div className="alert applied-toast-alert d-flex justify-content-between align-items-center mb-3 shadow-sm py-2 px-3">
               <div className="d-flex align-items-center gap-2">
@@ -568,7 +549,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Active File Card with Automatic Language Detection Badge */}
           <div className="active-file-card">
             <div className="file-details">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -585,7 +565,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Operation Mode Selector */}
           <div className="dark-card dropdown-host-card mb-4">
             <div className="dark-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: "420px" }}>
@@ -640,7 +619,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               </div>
             </div>
 
-            {/* Problem Statement Accordion (Optional) */}
             <div style={{ backgroundColor: "#0d1117", borderBottom: "1px solid var(--border-color)" }}>
               <button
                 type="button"
@@ -670,12 +648,11 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               )}
             </div>
 
-            {/* Source Code Editor */}
             <div className="p-0">
               <textarea
                 className="code-editor-area"
                 rows={15}
-                placeholder="// Digite ou cole seu código-fonte aqui... A linguagem é identificada automaticamente!"
+                placeholder="Digite ou cole seu código-fonte aqui... A linguagem é identificada automaticamente!"
                 value={code}
                 onChange={(e) => handleCodeChange(e.target.value)}
                 disabled={isProcessing}
@@ -683,7 +660,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               ></textarea>
             </div>
 
-            {/* Execute Button */}
             <div
               className="p-3 d-flex justify-content-between align-items-center"
               style={{ borderTop: "1px solid var(--border-color)" }}
@@ -715,7 +691,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Optional Test Cases Accordion (inputs.txt and outputs.txt) */}
           {(mode === "full" || mode === "execute") && (
             <div className="optional-accordion">
               <button
@@ -750,7 +725,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   </div>
 
                   <div className="row g-3">
-                    {/* Inputs */}
                     <div className="col-md-6">
                       <div className="mb-2">
                         <span className="small text-secondary fw-semibold">Arquivo de Entrada (.txt)</span>
@@ -809,7 +783,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                       )}
                     </div>
 
-                    {/* Outputs */}
                     <div className="col-md-6">
                       <div className="mb-2">
                         <span className="small text-secondary fw-semibold">Gabarito de Saída (.txt)</span>
@@ -874,9 +847,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           )}
         </div>
 
-        {/* Right Column: Stepper, Summary Banner, Results & Feedback */}
         <div className="col-lg-5">
-          {/* Stepper Card */}
           <div className="stepper-card">
             <div className="stepper-header">
               <span>Progresso das Etapas</span>
@@ -960,7 +931,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Summary Banner when completed or failed */}
           {isProcessCompleted && (
             <div className="summary-banner">
               <div className="d-flex justify-content-between align-items-center">
@@ -1022,7 +992,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Consolidated Markdown Modal or View */}
           {showConsolidatedMd && (
             <div className="dark-card mt-4 mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -1041,7 +1010,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* 1. Compilação Result */}
           {compilationResult && (
             <div className="dark-card mt-4 mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -1064,7 +1032,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* 2. Execução Result */}
           {executionResult && (
             <div className="mt-4">
               {hasTestBattery ? (
@@ -1113,7 +1080,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* 3. Análise do código Result */}
           {analysisResult && (
             <div className="dark-card mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -1136,7 +1102,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* 4. Otimização Result */}
           {optimizationResult && (
             <div className="dark-card mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -1160,7 +1125,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* 5. Código Final Recomendado (Refatorado & Otimizado com IA) */}
           {improvedCode && (
             <div id="improved-code-section" className="dark-card mb-4 improved-code-card">
               <div className="dark-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -1304,7 +1268,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Placeholder if no process run yet */}
           {!isProcessing && !hasAnyResult && (
             <div className="dark-card text-center py-5 px-3 mt-4">
               <div className="text-secondary display-6 mb-3">

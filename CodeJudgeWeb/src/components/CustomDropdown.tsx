@@ -32,7 +32,6 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  // Group options if any option has group defined
   const groupedOptions = options.reduce<Record<string, DropdownOption[]>>((acc, opt) => {
     const grp = opt.group || "__nogroup__";
     if (!acc[grp]) acc[grp] = [];

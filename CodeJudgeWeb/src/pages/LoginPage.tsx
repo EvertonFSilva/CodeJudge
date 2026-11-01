@@ -38,7 +38,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   return (
     <div className="login-page-wrapper">
       <div className="login-card-container fade-in">
-        {/* Brand Header */}
         <div className="text-center mb-4">
           <div className="login-logo-glow mb-3">
             <CodeJudgeLogo size={54} />
@@ -52,7 +51,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </p>
         </div>
 
-        {/* Institutional Notice */}
         <div className="institutional-notice mb-4">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" className="flex-shrink-0">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -62,7 +60,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {/* Error Alert */}
         {errorMessage && (
           <div className="error-alert-box mb-4" role="alert">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f85149" strokeWidth="2" className="flex-shrink-0">
@@ -74,7 +71,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-field-group mb-3">
             <label className="field-label" htmlFor="username">
@@ -168,7 +164,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        {/* Footer info */}
         <div className="login-card-footer mt-4">
           <span>Desenvolvido por </span>
           <strong className="author-highlight">Everton</strong>

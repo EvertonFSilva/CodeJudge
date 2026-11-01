@@ -51,7 +51,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
       </div>
 
       <div className="row g-4">
-        {/* User Card */}
         <div className="col-lg-4">
           <div className="dark-card text-center p-4">
             <div className="mb-3">
@@ -125,7 +124,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
             )}
           </div>
 
-          {/* Session Token Card */}
           <div className="dark-card mt-3 p-3">
             <div className="d-flex align-items-center gap-2 mb-2">
               <span className="status-dot online"></span>
@@ -140,7 +138,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
           </div>
         </div>
 
-        {/* Courses & Academic Details */}
         <div className="col-lg-8">
           <div className="dark-card">
             <div className="dark-card-header d-flex justify-content-between align-items-center">

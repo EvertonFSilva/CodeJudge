@@ -6,11 +6,12 @@ from Infrastructure.Logging.Logger import Logger
 
 class OllamaAdapter(IAiEngine):
     def __init__(self, args: Dict[str, Any]):
+        self.isLocal = True
         self.endpoint = (os.environ.get("OLLAMA_ENDPOINT") or args.get("endpoint") or "").rstrip("/")
         self.model = os.environ.get("OLLAMA_MODEL") or args.get("model", "llama3:latest")
         self.apiKey = os.environ.get("OLLAMA_API_KEY") or args.get("apiKey", "")
-        configuredTimeout = float(os.environ.get("OLLAMA_TIMEOUT_SECONDS") or args.get("timeoutSeconds", 120.0))
-        self.timeoutSeconds = max(configuredTimeout, 60.0)
+        configuredTimeout = float(os.environ.get("OLLAMA_TIMEOUT_SECONDS") or args.get("timeoutSeconds", 300.0))
+        self.timeoutSeconds = max(configuredTimeout, 180.0)
         self.logger = Logger.get()
         self.logger.info(f"OllamaAdapter initialized with endpoint '{self.endpoint}', model '{self.model}', timeout: {self.timeoutSeconds}s.")
 
@@ -32,7 +33,8 @@ class OllamaAdapter(IAiEngine):
         self.logger.debug(f"Dispatching prompt to Ollama ({chatUrl}), model: {self.model}.")
 
         try:
-            with httpx.Client(timeout=self.timeoutSeconds) as client:
+            timeoutConfig = httpx.Timeout(self.timeoutSeconds, connect=15.0)
+            with httpx.Client(timeout=timeoutConfig) as client:
                 response = client.post(chatUrl, json=payload, headers=headers)
 
                 if response.status_code == 200:

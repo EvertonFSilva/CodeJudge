@@ -75,15 +75,32 @@ class ExecuteCodeUseCase:
                 timeoutSeconds=timeout
             )
 
-            if not executionReport.success and (not scenarios or len(scenarios) == 0):
-                feedback = self.diagnoseErrorUseCase.diagnoseExecutionError(
-                    statement=statement,
-                    language=language,
-                    code=code,
-                    errorMessage=executionReport.message
-                )
-                if feedback:
-                    executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
+            if not executionReport.success:
+                if not scenarios or len(scenarios) == 0:
+                    feedback = self.diagnoseErrorUseCase.diagnoseExecutionError(
+                        statement=statement,
+                        language=language,
+                        code=code,
+                        errorMessage=executionReport.message
+                    )
+                    if feedback:
+                        executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
+                else:
+                    mismatches = []
+                    for idx, res in enumerate(executionReport.testResults or []):
+                        if not res.get("passed", False):
+                            mismatches.append(
+                                f"Caso #{idx + 1}: Entrada='{res.get('input', '')}' | Esperado='{res.get('expected', '')}' | Obtido='{res.get('actual', '')}'"
+                            )
+                    details = "\n".join(mismatches) if mismatches else executionReport.message
+                    feedback = self.diagnoseErrorUseCase.diagnoseLogicMismatch(
+                        statement=statement,
+                        language=language,
+                        code=code,
+                        mismatchDetails=details
+                    )
+                    if feedback:
+                        executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
 
             return executionReport
 

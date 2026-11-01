@@ -41,7 +41,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
   }, []);
 
-  // Click outside listener for profile dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -64,7 +63,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="app-header sticky-top">
       <div className="container-fluid px-2 px-md-3 d-flex align-items-center justify-content-between gap-2 gap-md-3">
-        {/* Brand Area */}
         <div className="d-flex align-items-center gap-3">
           <div className="brand-wrapper" onClick={() => onTabChange("judge")}>
             <CodeJudgeLogo size={32} />
@@ -76,7 +74,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div className="header-divider d-none d-md-block"></div>
 
-          {/* Segmented Navigation (Desktop) - Meu Perfil removed, now on the far right profile menu */}
           <nav className="d-none d-md-flex align-items-center nav-segments-container">
             <button
               type="button"
@@ -103,9 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        {/* Right side controls */}
         <div className="d-flex align-items-center gap-2 gap-md-3">
-          {/* Backend Status indicator */}
           <div
             className="api-status-chip d-none d-sm-flex"
             title={
@@ -134,7 +129,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </div>
 
-          {/* Profile Dropdown Trigger (Far Right: Meu Perfil + Sair) */}
           {user && (
             <div className="position-relative d-none d-md-block" ref={profileDropdownRef}>
               <button
@@ -162,7 +156,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </svg>
               </button>
 
-              {/* Profile Dropdown Menu */}
               {isProfileDropdownOpen && (
                 <div className="profile-dropdown-menu">
                   <div className="profile-menu-header">
@@ -202,7 +195,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {/* Mobile Hamburger Button */}
           <button
             type="button"
             className="navbar-toggler-btn d-md-none"
@@ -214,7 +206,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Collapsible Navigation Menu (Bootstrap style) */}
       {isMobileMenuOpen && (
         <div className="mobile-nav-collapse d-md-none px-3 py-3">
           <div className="d-flex flex-column gap-1 mb-3">
@@ -248,7 +239,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* User profile & actions in mobile */}
           {user && (
             <div className="pt-2 border-top" style={{ borderColor: "#21262d" }}>
               <div className="d-flex align-items-center gap-2 px-2 py-2 mb-2">
@@ -289,7 +279,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {/* Mobile Server Status */}
           <div className="pt-2 mt-2 border-top d-flex align-items-center justify-content-between px-2" style={{ borderColor: "#21262d" }}>
             <span className="text-secondary small">Status do Servidor:</span>
             <div className="d-flex align-items-center gap-1.5 small text-secondary">

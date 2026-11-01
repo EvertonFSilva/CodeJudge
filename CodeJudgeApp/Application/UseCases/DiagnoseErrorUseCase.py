@@ -12,15 +12,12 @@ class DiagnoseErrorUseCase:
     def diagnoseCompilationError(self, statement: str, language: str, code: str, logs: str) -> str:
         self.logger.info(f"Generating diagnostic feedback for {language.upper()} compilation error.")
         document = self.promptRepository.getTemplate("error", "compilation")
-        guideline = document.content if document else (
-            "Você é um tutor acadêmico rigoroso e focado no aprendizado do estudante.\n"
-            "DIRETRIZ INEGOCIÁVEL: NUNCA forneça a resposta pronta, NUNCA exiba código corrigido e NUNCA altere o código pelo usuário.\n"
-            "Seu papel é exclusivamente orientar: explique o conceito sintático/semântico violado, "
-            "indique onde ele deve concentrar a atenção e formule perguntas reflexivas para guiá-lo na descoberta da solução."
-        )
+        if not document or not document.content.strip():
+            self.logger.error("Prompt template 'error/compilation' not found in repository.")
+            return "Diagnóstico indisponível: template 'error/compilation' não foi localizado no diretório de templates."
 
         prompt = (
-            PromptBuilder(guideline)
+            PromptBuilder(document.content.strip())
             .withLabeledContext("Enunciado da Tarefa", statement or "Não informado")
             .withLabeledContext("Linguagem de Programação", language.upper())
             .withCodeBlock(language, code)
@@ -32,15 +29,12 @@ class DiagnoseErrorUseCase:
     def diagnoseExecutionError(self, statement: str, language: str, code: str, errorMessage: str) -> str:
         self.logger.info(f"Generating diagnostic feedback for {language.upper()} execution failure.")
         document = self.promptRepository.getTemplate("error", "execution")
-        guideline = document.content if document else (
-            "Você é um tutor acadêmico rigoroso e focado no aprendizado do estudante.\n"
-            "DIRETRIZ INEGOCIÁVEL: NUNCA forneça a resposta pronta, NUNCA exiba código corrigido e NUNCA altere o código pelo usuário.\n"
-            "Explique o provável motivo da falha em tempo de execução (estouro de limites, ponteiro nulo, divisão por zero ou tempo limite), "
-            "ajude o estudante a rastrear o estado das variáveis e formule perguntas reflexivas para que ele descubra a correção sozinho."
-        )
+        if not document or not document.content.strip():
+            self.logger.error("Prompt template 'error/execution' not found in repository.")
+            return "Diagnóstico indisponível: template 'error/execution' não foi localizado no diretório de templates."
 
         prompt = (
-            PromptBuilder(guideline)
+            PromptBuilder(document.content.strip())
             .withLabeledContext("Enunciado da Tarefa", statement or "Não informado")
             .withLabeledContext("Linguagem de Programação", language.upper())
             .withCodeBlock(language, code)
@@ -52,15 +46,12 @@ class DiagnoseErrorUseCase:
     def diagnoseLogicMismatch(self, statement: str, language: str, code: str, mismatchDetails: str) -> str:
         self.logger.info(f"Generating diagnostic feedback for {language.upper()} logic mismatch.")
         document = self.promptRepository.getTemplate("error", "logicmismatch")
-        guideline = document.content if document else (
-            "Você é um tutor acadêmico focado no raciocínio do estudante.\n"
-            "DIRETRIZ INEGOCIÁVEL: NUNCA entregue a resposta pronta nem o código corrigido.\n"
-            "Ajude o estudante a refletir sobre por que o resultado produzido pelo seu algoritmo divergiu do esperado, "
-            "orientando-o a analisar o fluxo lógico e as condições de contorno."
-        )
+        if not document or not document.content.strip():
+            self.logger.error("Prompt template 'error/logicmismatch' not found in repository.")
+            return "Diagnóstico indisponível: template 'error/logicmismatch' não foi localizado no diretório de templates."
 
         prompt = (
-            PromptBuilder(guideline)
+            PromptBuilder(document.content.strip())
             .withLabeledContext("Enunciado da Tarefa", statement or "Não informado")
             .withLabeledContext("Linguagem de Programação", language.upper())
             .withCodeBlock(language, code)

@@ -38,7 +38,6 @@ export class LanguageDetectionService {
       return languages.find((l) => l.key === "java") || languages[0];
     }
 
-    // Java check
     if (
       trimmed.includes("public class") ||
       trimmed.includes("System.out.print") ||
@@ -49,7 +48,6 @@ export class LanguageDetectionService {
       if (java) return java;
     }
 
-    // C++ check
     if (
       trimmed.includes("#include <iostream>") ||
       trimmed.includes("std::cout") ||
@@ -62,7 +60,6 @@ export class LanguageDetectionService {
       if (cpp) return cpp;
     }
 
-    // C check
     if (
       trimmed.includes("#include <stdio.h>") ||
       trimmed.includes("#include <stdlib.h>") ||
@@ -73,7 +70,6 @@ export class LanguageDetectionService {
       if (c) return c;
     }
 
-    // Python check
     if (
       trimmed.includes("def ") ||
       trimmed.includes("import ") ||
@@ -87,7 +83,6 @@ export class LanguageDetectionService {
       if (py) return py;
     }
 
-    // Fallback: search main entrypoint pattern
     if (trimmed.includes("int main") || trimmed.includes("void main")) {
       return languages.find((l) => l.key === "c") || languages[0];
     }

@@ -79,7 +79,6 @@ export class AuthService {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch {
-        // silently clear local storage
       }
     }
     this.clearSession();

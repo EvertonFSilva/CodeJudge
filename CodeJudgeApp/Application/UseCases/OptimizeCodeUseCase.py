@@ -44,21 +44,32 @@ class OptimizeCodeUseCase:
         templates = self.promptRepository.getByCategory("optimization")
         if templates:
             orderedDocs = list(templates.values())
-            workerCount = min(len(orderedDocs), 4)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=workerCount) as executor:
-                futureToDoc = {
-                    executor.submit(self._executePromptTemplate, doc, statement, language, code): doc
-                    for doc in orderedDocs
-                }
-                results = []
-                for future in futureToDoc:
+            isLocalEngine = "ollama" in self.aiEngine.__class__.__name__.lower() or getattr(self.aiEngine, "isLocal", False)
+            results = []
+            if isLocalEngine:
+                for idx, doc in enumerate(orderedDocs):
                     try:
-                        res = future.result()
+                        self.logger.info(f"Processing optimization prompt [{idx + 1}/{len(orderedDocs)}]: '{doc.name}'...")
+                        res = self._executePromptTemplate(doc, statement, language, code)
                         if res and res.strip():
                             results.append(res.strip())
                     except Exception as err:
-                        doc = futureToDoc[future]
                         self.logger.error(f"Error executing template '{doc.name}': {str(err)}", err)
+            else:
+                workerCount = min(len(orderedDocs), 4)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=workerCount) as executor:
+                    futureToDoc = {
+                        executor.submit(self._executePromptTemplate, doc, statement, language, code): doc
+                        for doc in orderedDocs
+                    }
+                    for future in futureToDoc:
+                        try:
+                            res = future.result()
+                            if res and res.strip():
+                                results.append(res.strip())
+                        except Exception as err:
+                            doc = futureToDoc[future]
+                            self.logger.error(f"Error executing template '{doc.name}': {str(err)}", err)
 
             recommendations = "\n\n---\n\n".join(results)
         else:

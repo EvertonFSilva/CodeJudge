@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -39,6 +41,23 @@ from Presentation.Routers.LanguageRouter import createLanguageRouter
 
 from Domain.Exceptions.DomainException import DomainException
 
+class UvicornAccessFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return False
+
+logging.getLogger("uvicorn.access").addFilter(UvicornAccessFilter())
+logging.getLogger("uvicorn.access").disabled = True
+logging.getLogger("uvicorn.access").propagate = False
+logging.getLogger("uvicorn").setLevel(logging.WARNING)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.getLogger("uvicorn.access").addFilter(UvicornAccessFilter())
+    logging.getLogger("uvicorn.access").disabled = True
+    logging.getLogger("uvicorn.access").propagate = False
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    yield
+
 def createApp() -> FastAPI:
     config = ConfigurationManager.get()
     logger = Logger.get()
@@ -47,7 +66,8 @@ def createApp() -> FastAPI:
     app = FastAPI(
         title="CodeJudge Code Assessment API",
         version="2.2.0",
-        description="Backend engine for compilation, execution, and AI feedback developed by Everton."
+        description="Backend engine for compilation, execution, and AI feedback developed by Everton.",
+        lifespan=lifespan
     )
 
     app.add_middleware(
@@ -147,4 +167,4 @@ def createApp() -> FastAPI:
 app = createApp()
 
 if __name__ == "__main__":
-    uvicorn.run("Main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("Main:app", host="0.0.0.0", port=8000, reload=True, access_log=False)
