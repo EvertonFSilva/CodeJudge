@@ -5,6 +5,7 @@ export interface LoginResult {
   success: boolean;
   message: string;
   authToken?: string;
+  token?: string;
   profile?: Record<string, any>;
 }
 
@@ -14,21 +15,12 @@ export class MoodleAuthService {
 
   private extractCookieString(setCookieHeaders: string[]): string {
     return setCookieHeaders
-      .map(c => c.split(';')[0].trim())
+      .map(c => (c || '').split(';')[0].trim())
+      .filter(Boolean)
       .join('; ');
   }
 
   public async authenticate(username: string, password: string): Promise<LoginResult> {
-    const existing = TokenManager.findSessionByUsername(username);
-    if (existing) {
-      return {
-        success: true,
-        message: 'Sessão já ativa',
-        authToken: existing.token,
-        profile: existing.session.profile
-      };
-    }
-
     try {
       const getResponse = await fetch(this.loginUrl, {
         method: 'GET',
@@ -39,7 +31,7 @@ export class MoodleAuthService {
       });
 
       if (!getResponse.ok) {
-        return { success: false, message: 'Não foi possível conectar ao Moodle' };
+        return { success: false, message: 'Não foi possível conectar ao Moodle IFF.' };
       }
 
       const getHtml = await getResponse.text();
@@ -47,11 +39,11 @@ export class MoodleAuthService {
       const loginToken = $get('input[name="logintoken"]').val() as string;
 
       if (!loginToken) {
-        return { success: false, message: 'Falha ao obter token de login do Moodle' };
+        return { success: false, message: 'Falha ao obter token de login do Moodle IFF.' };
       }
 
-      const initialCookies = getResponse.headers.getSetCookie 
-        ? getResponse.headers.getSetCookie() 
+      const initialCookies = getResponse.headers.getSetCookie
+        ? getResponse.headers.getSetCookie()
         : [getResponse.headers.get('set-cookie') || ''];
       
       let cookieHeader = this.extractCookieString(initialCookies);
@@ -74,8 +66,13 @@ export class MoodleAuthService {
         redirect: 'manual'
       });
 
-      const postCookies = postResponse.headers.getSetCookie 
-        ? postResponse.headers.getSetCookie() 
+      const redirectLocation = postResponse.headers.get('location') || '';
+      if (redirectLocation.includes('/login/') || redirectLocation.includes('loginredirect')) {
+        return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+      }
+
+      const postCookies = postResponse.headers.getSetCookie
+        ? postResponse.headers.getSetCookie()
         : [postResponse.headers.get('set-cookie') || ''];
       
       if (postCookies.length > 0 && postCookies[0]) {
@@ -83,9 +80,8 @@ export class MoodleAuthService {
       }
 
       const postHtml = await postResponse.text();
-
       if (postHtml.includes('loginerrormessage')) {
-        return { success: false, message: 'Usuário ou senha inválidos no Moodle' };
+        return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
       }
 
       const profileResponse = await fetch(this.profileUrl, {
@@ -94,34 +90,56 @@ export class MoodleAuthService {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
           'Referer': this.loginUrl,
           'Cookie': cookieHeader
-        }
+        },
+        redirect: 'manual'
       });
 
+      if (profileResponse.status === 302 || profileResponse.status === 303) {
+        const profLoc = profileResponse.headers.get('location') || '';
+        if (profLoc.includes('/login/')) {
+          return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+        }
+      }
+
       const profileHtml = await profileResponse.text();
+      if (!profileHtml.includes('card-profile')) {
+        return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+      }
+
       const profileData = this.parseProfile(profileHtml, username);
+      if (!profileData || !profileData.name || profileData.name === username) {
+        return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+      }
 
       const authToken = TokenManager.createSession(username, profileData);
 
       return {
         success: true,
-        message: 'Login realizado com sucesso via Moodle',
+        message: 'Login realizado com sucesso via Moodle IFF.',
         authToken,
+        token: authToken,
         profile: profileData
       };
     } catch (err: any) {
       return {
         success: false,
-        message: `Erro na comunicação com o Moodle: ${err?.message || err}`
+        message: `Erro na comunicação com o Moodle IFF: ${err?.message || err}`
       };
     }
   }
 
-  public parseProfile(html: string, fallbackUsername: string): Record<string, any> {
+  public parseProfile(html: string, fallbackUsername: string): Record<string, any> | null {
     const $ = cheerio.load(html);
     const profileDiv = $('div.card.card-body.card-profile');
+    if (profileDiv.length === 0) {
+      return null;
+    }
 
     const nameTag = profileDiv.find('h3');
-    const name = nameTag.length > 0 ? nameTag.text().trim().split(' [')[0] : fallbackUsername;
+    const name = nameTag.length > 0 ? nameTag.text().trim().split(' [')[0] : '';
+    if (!name) {
+      return null;
+    }
 
     const emailTag = profileDiv.find('a[href^="mailto:"]');
     const email = emailTag.length > 0 ? emailTag.text().trim() : '';
@@ -146,11 +164,29 @@ export class MoodleAuthService {
       });
     });
 
+    const courses: string[] = [];
+    $('div.profile_tree section, section.node_category').each((_, sec) => {
+      const headerText = $(sec).find('h3').text().toLowerCase();
+      if (headerText.includes('curso') || headerText.includes('detalhes do curso')) {
+        $(sec).find('li a, dd a').each((_, link) => {
+          const courseTitle = $(link).text().trim();
+          if (courseTitle && !courses.includes(courseTitle)) {
+            courses.push(courseTitle);
+          }
+        });
+      }
+    });
+
     return {
       name,
       email,
-      username: fallbackUsername,
-      ...details
+      campus: details['campus'] || details['instituicao'] || 'Instituto Federal Fluminense (IFF)',
+      city: details['cidade_municipio'] || details['cidade'] || '',
+      country: details['pais'] || 'Brasil',
+      firstAccess: details['primeiro_acesso_ao_site'] || '',
+      lastAccess: details['ultimo_acesso_ao_site'] || '',
+      profileUrl: this.profileUrl,
+      courses
     };
   }
 }

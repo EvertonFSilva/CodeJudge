@@ -2,15 +2,18 @@ import React from "react";
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-white border-top py-3 mt-auto">
-      <div className="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small">
-        <div>
-          <strong>CodeJudge</strong> &copy; {new Date().getFullYear()} &bull; Desenvolvido por <span className="text-dark fw-semibold">Everton</span>
+    <footer className="app-footer mt-auto">
+      <div className="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2">
+          <span className="text-light fw-semibold">CodeJudge</span>
+          <span>&bull;</span>
+          <span>Desenvolvido por <strong className="text-light">Everton</strong></span>
         </div>
-        <div className="mt-2 mt-md-0 d-flex gap-3">
+
+        <div className="d-flex align-items-center gap-3">
           <span>Ambiente de Avaliação Automática e Diagnóstico com IA</span>
           <span>&bull;</span>
-          <span>Moodle IFFar / IFF</span>
+          <span className="text-success-emphasis">Moodle IFF</span>
         </div>
       </div>
     </footer>

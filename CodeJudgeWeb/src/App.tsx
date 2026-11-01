@@ -58,10 +58,10 @@ export const App: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="min-vh-100 d-flex justify-content-center align-items-center bg-light">
+      <div className="min-vh-100 d-flex justify-content-center align-items-center">
         <div className="text-center">
-          <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}></div>
-          <p className="mt-3 text-muted small fw-semibold">Inicializando ambiente CodeJudge...</p>
+          <div className="spinner-border text-success" role="status" style={{ width: "3rem", height: "3rem" }}></div>
+          <p className="mt-3 text-secondary small fw-semibold">Inicializando ambiente CodeJudge...</p>
         </div>
       </div>
     );
@@ -72,7 +72,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-vh-100 d-flex flex-column bg-light">
+    <div className="min-vh-100 d-flex flex-column">
       <Navbar
         currentTab={currentTab}
         onTabChange={(tab) => setCurrentTab(tab)}

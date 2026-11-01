@@ -1,4 +1,5 @@
 export interface PromptDocument {
+  key: string;
   name: string;
   description: string;
   category: string;
@@ -6,5 +7,17 @@ export interface PromptDocument {
 }
 
 export interface PromptListResponse {
-  templates: PromptDocument[];
+  templates: Record<
+    string,
+    Record<
+      string,
+      {
+        metadata: {
+          name: string;
+          description: string;
+        };
+        content: string;
+      }
+    >
+  >;
 }

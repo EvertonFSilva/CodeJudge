@@ -29,15 +29,23 @@ export class AuthService {
       body: JSON.stringify({ username, password })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Falha na autenticação via Moodle.");
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || data.error || "Falha na autenticação via Moodle IFF.");
     }
 
-    const data: LoginResponse = await response.json();
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
-    return data;
+    const token = data.token || data.authToken;
+    const profile = data.profile;
+
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+
+    return {
+      token,
+      username,
+      profile
+    };
   }
 
   static async fetchProfile(): Promise<UserProfile> {
@@ -50,12 +58,14 @@ export class AuthService {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
       this.clearSession();
-      throw new Error("Sessão expirada ou inválida.");
+      throw new Error(data.message || "Sessão expirada ou inválida no Moodle IFF.");
     }
 
-    const profile: UserProfile = await response.json();
+    const profile: UserProfile = data.profile || data;
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     return profile;
   }

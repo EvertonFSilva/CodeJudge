@@ -17,7 +17,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
   return (
     <div
-      className={`markdown-body p-3 bg-light rounded border ${className}`}
+      className={`dark-markdown-body p-3 rounded ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
