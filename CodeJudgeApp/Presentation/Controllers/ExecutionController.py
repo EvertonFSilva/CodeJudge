@@ -13,10 +13,13 @@ class ExecutionController:
         if request.tests:
             for item in request.tests:
                 if isinstance(item, dict):
-                    scenarios.append(TestScenario(
-                        input=str(item.get("input", "")),
-                        expected=str(item.get("expected", ""))
-                    ))
+                    inVal = str(item.get("input", "")).strip()
+                    expVal = str(item.get("expected", "")).strip()
+                    if inVal or expVal:
+                        scenarios.append(TestScenario(
+                            input=str(item.get("input", "")),
+                            expected=str(item.get("expected", ""))
+                        ))
 
         report = self.executeCodeUseCase.execute(
             statement=request.statement or "",

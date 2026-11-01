@@ -284,12 +284,18 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     const outList = outputsFileText.split(outSeparator).map((s) => s.trim()).filter((s) => s.length > 0);
 
     const maxLen = Math.max(inList.length, outList.length);
+    if (maxLen === 0) return [];
+
     const tests: TestCase[] = [];
     for (let i = 0; i < maxLen; i++) {
-      tests.push({
-        input: inList[i] || "",
-        expected: outList[i] || ""
-      });
+      const inp = inList[i] || "";
+      const exp = outList[i] || "";
+      if (inp.trim() || exp.trim()) {
+        tests.push({
+          input: inp,
+          expected: exp
+        });
+      }
     }
     return tests;
   };
@@ -437,19 +443,30 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     executionResult.rate !== undefined &&
     Array.isArray(executionResult.outputs) &&
     executionResult.outputs.length > 0 &&
-    typeof executionResult.outputs[0] === "object"
+    typeof executionResult.outputs[0] === "object" &&
+    executionResult.outputs.some((o: any) => (o.input && o.input.trim()) || (o.expected && o.expected.trim()))
   );
 
-  const isProcessCompleted =
-    !isProcessing &&
-    Boolean(
-      (mode === "full" && (optimizationResult || stepCompileStatus === "failed" || stepExecuteStatus === "failed")) ||
-      (mode === "compile" && compilationResult) ||
-      (mode === "execute" && executionResult) ||
-      (mode === "analyze" && analysisResult) ||
-      (mode === "optimize" && optimizationResult) ||
-      (errorMessage && (compilationResult || executionResult || analysisResult || optimizationResult))
-    );
+  const hasAnyResult = Boolean(compilationResult || executionResult || analysisResult || optimizationResult);
+
+  const isProcessCompleted = useMemo(() => {
+    if (isProcessing) return false;
+    if (!hasAnyResult) return false;
+
+    if (mode === "full") {
+      // If compilation failed, stages stopped at compilation.
+      if (stepCompileStatus === "failed") return true;
+      // Otherwise, full mode is ONLY completed when optimization has finished (succeeded or failed)
+      return stepOptimizeStatus === "success" || stepOptimizeStatus === "failed";
+    }
+
+    if (mode === "compile") return stepCompileStatus === "success" || stepCompileStatus === "failed";
+    if (mode === "execute") return stepExecuteStatus === "success" || stepExecuteStatus === "failed";
+    if (mode === "analyze") return stepAnalyzeStatus === "success" || stepAnalyzeStatus === "failed";
+    if (mode === "optimize") return stepOptimizeStatus === "success" || stepOptimizeStatus === "failed";
+
+    return false;
+  }, [isProcessing, hasAnyResult, mode, stepCompileStatus, stepExecuteStatus, stepAnalyzeStatus, stepOptimizeStatus]);
 
   const hasFailed =
     stepCompileStatus === "failed" ||
@@ -457,8 +474,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     stepAnalyzeStatus === "failed" ||
     stepOptimizeStatus === "failed" ||
     errorMessage !== null;
-
-  const hasAnyResult = Boolean(compilationResult || executionResult || analysisResult || optimizationResult);
 
   const getModeActionName = (selectedMode: OperationMode): string => {
     switch (selectedMode) {

@@ -34,16 +34,77 @@
 }
 
 .empty-val-chip {
-  color: #e6edf3 !important;
+  color: #94a3b8 !important;
   font-style: italic;
   font-size: 11.5px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 8px;
-  border-radius: 5px;
-  border: 1px dashed rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06) !important;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.22) !important;
   display: inline-block;
   letter-spacing: 0.3px;
   font-weight: 500;
+}
+
+/* Custom Results Table */
+.custom-results-table {
+  background-color: transparent !important;
+  color: #e6edf3 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.custom-results-table thead tr {
+  background-color: #161b22 !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+.custom-results-table th {
+  background-color: #161b22 !important;
+  color: #f0f6fc !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border: none !important;
+}
+
+.custom-results-table tbody tr {
+  background-color: #0d1117 !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  transition: background-color 0.15s ease;
+}
+
+.custom-results-table tbody tr:hover {
+  background-color: #161b22 !important;
+}
+
+.custom-results-table td {
+  background-color: transparent !important;
+  color: #e6edf3 !important;
+  padding: 10px 14px;
+  border: none !important;
+}
+
+.test-cell-container {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.test-cell-pre {
+  background-color: #161b22 !important;
+  border: 1px solid #30363d !important;
+  color: #f0f6fc !important;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  margin-bottom: 0;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  width: 100%;
 }
 
 /* Table Dark Overrides */

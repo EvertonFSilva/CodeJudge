@@ -551,7 +551,8 @@ export class PdfExportService {
         payload.execution.rate !== null &&
         Array.isArray(payload.execution.outputs) &&
         payload.execution.outputs.length > 0 &&
-        typeof payload.execution.outputs[0] === "object";
+        typeof payload.execution.outputs[0] === "object" &&
+        payload.execution.outputs.some((o: any) => (o.input && o.input.trim()) || (o.expected && o.expected.trim()));
 
       // Section Card
       doc.setFillColor(241, 245, 249);

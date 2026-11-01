@@ -53,55 +53,46 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
       </div>
 
       <div className="table-responsive">
-        <table className="table table-dark table-hover align-middle mb-0" style={{ backgroundColor: "transparent" }}>
+        <table className="table align-middle mb-0 custom-results-table">
           <thead>
-            <tr style={{ borderColor: "var(--border-color)" }}>
-              <th style={{ width: "60px" }} className="text-center text-light small fw-bold">#</th>
-              <th className="text-light small fw-bold">Entrada (stdin)</th>
-              <th className="text-light small fw-bold">Saída Esperada</th>
-              <th className="text-light small fw-bold">Saída Obtida</th>
-              <th style={{ width: "120px" }} className="text-center text-light small fw-bold">Veredito</th>
+            <tr>
+              <th style={{ width: "55px" }} className="text-center">#</th>
+              <th>Entrada (stdin)</th>
+              <th>Saída Esperada</th>
+              <th>Saída Obtida</th>
+              <th style={{ width: "125px" }} className="text-center">Veredito</th>
             </tr>
           </thead>
           <tbody>
             {outcomes.map((outcome, idx) => (
-              <tr key={idx} style={{ borderColor: "var(--border-subtle)" }}>
+              <tr key={idx}>
                 <td className="text-center fw-bold text-light">{idx + 1}</td>
                 <td>
-                  <pre
-                    className="mb-0 p-2 rounded text-white small font-monospace"
-                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
-                  >
+                  <div className="test-cell-container">
                     {outcome.input && outcome.input.trim().length > 0 ? (
-                      outcome.input
+                      <pre className="test-cell-pre">{outcome.input}</pre>
                     ) : (
                       <span className="empty-val-chip">(vazia)</span>
                     )}
-                  </pre>
+                  </div>
                 </td>
                 <td>
-                  <pre
-                    className="mb-0 p-2 rounded text-white small font-monospace"
-                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
-                  >
+                  <div className="test-cell-container">
                     {outcome.expected && outcome.expected.trim().length > 0 ? (
-                      outcome.expected
+                      <pre className="test-cell-pre">{outcome.expected}</pre>
                     ) : (
                       <span className="empty-val-chip">(vazia)</span>
                     )}
-                  </pre>
+                  </div>
                 </td>
                 <td>
-                  <pre
-                    className="mb-0 p-2 rounded text-white small font-monospace"
-                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
-                  >
+                  <div className="test-cell-container">
                     {outcome.actual && outcome.actual.trim().length > 0 ? (
-                      outcome.actual
+                      <pre className="test-cell-pre">{outcome.actual}</pre>
                     ) : (
                       <span className="empty-val-chip">(vazia)</span>
                     )}
-                  </pre>
+                  </div>
                 </td>
                 <td className="text-center">
                   {outcome.passed ? (

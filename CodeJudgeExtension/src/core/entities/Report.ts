@@ -78,7 +78,10 @@ export class Report {
 
     if (execution) {
       lines.push(`\n### 2. Execução`);
-      const hasRealTests = Boolean(hasTests) && Boolean(execution.testResults && execution.testResults.length > 0);
+      const hasRealTests =
+        Boolean(hasTests) &&
+        Boolean(execution.testResults && execution.testResults.length > 0) &&
+        Boolean(execution.testResults?.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0)));
 
       if (hasRealTests && execution.testResults) {
         const tests = execution.testResults;

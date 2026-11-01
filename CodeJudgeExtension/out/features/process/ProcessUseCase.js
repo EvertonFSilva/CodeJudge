@@ -118,7 +118,7 @@ class ProcessUseCase {
                 });
                 try {
                     executionResult = await this.executeUseCase.execute(language, code, tests, statement);
-                    const hasTests = tests.length > 0;
+                    const hasTests = tests.length > 0 && tests.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0));
                     const isSuccess = Boolean(executionResult.success);
                     notify({
                         stage: 'execute',
@@ -201,7 +201,7 @@ class ProcessUseCase {
                 }
             }
         }
-        const hasTests = tests.length > 0;
+        const hasTests = tests.length > 0 && tests.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0));
         const executionSuccessful = !executionResult || Boolean(executionResult.success);
         const allSucceeded = (!compilationResult || compilationResult.success) &&
             executionSuccessful &&
