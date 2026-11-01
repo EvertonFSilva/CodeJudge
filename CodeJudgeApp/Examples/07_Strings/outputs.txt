@@ -1,0 +1,5 @@
+Tam=5 Invertida=radar Palindromo=SIM
+Tam=5 Invertida=arara Palindromo=SIM
+Tam=10 Invertida=rodatupmoc Palindromo=NAO
+Tam=3 Invertida=anA Palindromo=SIM
+Tam=9 Invertida=egduJedoC Palindromo=NAO

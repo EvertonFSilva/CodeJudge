@@ -1,0 +1,4 @@
+Principal=5 Secundaria=5
+Principal=15 Secundaria=15
+Principal=15 Secundaria=5
+Principal=10 Secundaria=10

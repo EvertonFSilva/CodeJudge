@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeJudge</title>
+  <style>
+    /* {{STYLE_PLACEHOLDER}} */
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <div class="brand">
+      <svg class="brand-logo-svg" viewBox="0 0 32 32" fill="none">
+        <path d="M10 10L5 16L10 22" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 10L27 16L22 22" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 8L14 24" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-title">CodeJudge</span>
+    </div>
+    <div class="api-status" id="apiStatusBtn" title="Verificar conectividade com a API">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Conectando...</span>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <button type="button" class="tab-btn active" id="tabProcessBtn">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      <span>Processamento</span>
+    </button>
+    <button type="button" class="tab-btn" id="tabPromptsBtn">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      <span>Prompts</span>
+    </button>
+  </div>
+
+  <div class="tab-pane active" id="paneProcess">
+    <div class="active-file-card" id="activeFileCard">
+      <div class="file-details">
+        <svg class="file-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span class="file-name" id="fileName">Nenhum arquivo aberto</span>
+      </div>
+      <span class="lang-badge" id="langBadge">Sem Editor</span>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">
+        <span>Modo de Operação</span>
+        <span class="form-hint">Selecione as etapas</span>
+      </div>
+
+      <div class="custom-dropdown-container" id="dropdownContainer">
+        <button type="button" class="dropdown-trigger-btn" id="dropdownTriggerBtn">
+          <div class="dropdown-trigger-left">
+            <svg class="dropdown-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span id="dropdownCurrentLabel">Processamento Completo</span>
+          </div>
+          <svg class="dropdown-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="dropdown-popover" id="dropdownPopover">
+          <div class="dropdown-section-title">Recomendado</div>
+          <div class="dropdown-option selected" data-value="full">
+            <div class="dropdown-option-header">
+              <span>Processamento Completo</span>
+              <svg class="option-check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="dropdown-option-desc">Compilar, executar, analisar e otimizar</div>
+          </div>
+
+          <div class="dropdown-section-title">Opções Individuais</div>
+          <div class="dropdown-option" data-value="compile">
+            <div class="dropdown-option-header">
+              <span>Apenas Compilar</span>
+              <svg class="option-check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="dropdown-option-desc">Verificar erros de sintaxe do código</div>
+          </div>
+
+          <div class="dropdown-option" data-value="execute">
+            <div class="dropdown-option-header">
+              <span>Apenas Executar</span>
+              <svg class="option-check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="dropdown-option-desc">Executar o código e validar saídas</div>
+          </div>
+
+          <div class="dropdown-option" data-value="analyze">
+            <div class="dropdown-option-header">
+              <span>Apenas Analisar Código</span>
+              <svg class="option-check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="dropdown-option-desc">Revisão de qualidade e boas práticas</div>
+          </div>
+
+          <div class="dropdown-option" data-value="optimize">
+            <div class="dropdown-option-header">
+              <span>Apenas Otimizar Código</span>
+              <svg class="option-check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="dropdown-option-desc">Análise de complexidade e desempenho</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">
+        <span>Enunciado da Questão</span>
+        <span class="form-hint">Opcional</span>
+      </div>
+      <textarea id="statementInput" placeholder="Cole aqui o enunciado ou requisitos da questão para contextualizar o relatório..."></textarea>
+    </div>
+
+    <div class="optional-accordion" id="testsAccordion">
+      <div class="accordion-header" id="testsAccordionHeader">
+        <div class="accordion-header-left">
+          <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>Entradas e Saídas</span>
+          <span class="form-hint">(Opcional)</span>
+        </div>
+        <svg class="chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="accordion-content">
+        <div class="optional-note">
+          Os arquivos são opcionais. Forneça arquivos <code>.txt</code> se desejar simular entradas de terminal e comparar com o gabarito.
+        </div>
+
+        <div style="margin-bottom: 8px;">
+          <div class="form-label">
+            <span>Arquivo de Entrada (.txt)</span>
+          </div>
+          <div class="dropzone" id="inputDropzone">
+            <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Selecionar ou soltar arquivo de entrada</span>
+            <input type="file" id="inputFile" accept=".txt" style="display:none">
+          </div>
+          <div class="file-badge" id="inputFileBadge">
+            <span id="inputFileName">inputs.txt</span>
+            <div class="file-badge-actions">
+              <button type="button" class="btn-file-action" id="toggleInputPreviewBtn">Ver conteúdo</button>
+              <button type="button" class="btn-file-action btn-file-remove" id="removeInputBtn" title="Remover">Remover</button>
+            </div>
+          </div>
+          <pre class="file-content-preview" id="inputContentPreview"></pre>
+        </div>
+
+        <div>
+          <div class="form-label">
+            <span>Gabarito de Saída (.txt)</span>
+          </div>
+          <div class="dropzone" id="outputDropzone">
+            <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Selecionar ou soltar gabarito esperado</span>
+            <input type="file" id="outputFile" accept=".txt" style="display:none">
+          </div>
+          <div class="file-badge" id="outputFileBadge">
+            <span id="outputFileName">outputs.txt</span>
+            <div class="file-badge-actions">
+              <button type="button" class="btn-file-action" id="toggleOutputPreviewBtn">Ver conteúdo</button>
+              <button type="button" class="btn-file-action btn-file-remove" id="removeOutputBtn" title="Remover">Remover</button>
+            </div>
+          </div>
+          <pre class="file-content-preview" id="outputContentPreview"></pre>
+        </div>
+      </div>
+    </div>
+
+    <button class="main-execute-btn" id="mainExecuteBtn">
+      <svg class="play-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      <svg class="spinner-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+      </svg>
+      <span id="btnText">Processar Código</span>
+    </button>
+
+    <div class="stepper-card" id="stepperCard">
+      <div class="stepper-header">
+        <span>Progresso das Etapas</span>
+        <span id="stepperGlobalStatus" style="color:var(--text-muted); font-size:10px; font-weight:normal">Aguardando...</span>
+      </div>
+      <div class="stepper-list">
+        <div class="step-item" id="step-compile">
+          <span class="step-label">
+            <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 18l6-6-6-6"></path>
+              <path d="M8 6l-6 6 6 6"></path>
+            </svg>
+            1. Compilação
+          </span>
+          <span class="step-status-tag pending" id="tag-compile">Pendente</span>
+        </div>
+        <div class="step-item" id="step-execute">
+          <span class="step-label">
+            <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            2. Execução
+          </span>
+          <span class="step-status-tag pending" id="tag-execute">Pendente</span>
+        </div>
+        <div class="step-item" id="step-analyze">
+          <span class="step-label">
+            <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            3. Análise
+          </span>
+          <span class="step-status-tag pending" id="tag-analyze">Pendente</span>
+        </div>
+        <div class="step-item" id="step-optimize">
+          <span class="step-label">
+            <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            4. Otimização
+          </span>
+          <span class="step-status-tag pending" id="tag-optimize">Pendente</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-banner" id="summaryBanner">
+      <div class="summary-header" id="summaryHeader">Processamento Concluído</div>
+      <div class="summary-text" id="summaryText">O relatório foi gerado. Escolha como deseja visualizá-lo:</div>
+      <div class="report-actions-container">
+        <button type="button" class="btn-report-action" id="openReportMdBtn">
+          <svg class="report-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span>Visualizar (.md)</span>
+        </button>
+        <button type="button" class="btn-report-action btn-report-action-pdf" id="openReportPdfBtn">
+          <svg class="report-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Visualizar (.pdf)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="panePrompts">
+    <div class="prompts-container">
+      <div class="prompts-intro">Modelos pedagógicos estruturados para apoiar sua prática de programação:</div>
+      <div id="promptsListContainer">
+        <div class="prompts-loading-text" id="promptsLoadingText">Carregando catálogo de prompts...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="errorModal">
+    <div class="modal-card">
+      <svg class="modal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <div class="modal-title" id="modalTitle">Tempo Limite Excedido</div>
+      <div class="modal-message" id="modalMessage">O processamento demorou mais que o esperado para responder. O botão foi reativado para você tentar novamente.</div>
+      <button type="button" class="btn-modal-close" id="btnModalClose">Entendido</button>
+    </div>
+  </div>
+
+  <div class="footer-credit">
+    CodeJudge • Desenvolvido por Everton
+  </div>
+
+  <script>
+    // {{SCRIPT_PLACEHOLDER}}
+  </script>
+</body>
+</html>

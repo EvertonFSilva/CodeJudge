@@ -1,0 +1,91 @@
+{
+  "ai": {
+    "default": "gemini",
+    "adapters": {
+      "GeminiAdapter": "Infrastructure.Engines.GeminiAdapter.GeminiAdapter",
+      "OllamaAdapter": "Infrastructure.Engines.OllamaAdapter.OllamaAdapter"
+    },
+    "engines": {
+      "gemini": {
+        "adapter": "GeminiAdapter",
+        "args": {
+          "apiKey": "AIzaSyA09MlWiUecQtuXR0n6scO0ef2mwxbwYxc",
+          "model": "gemini-2.5-flash"
+        }
+      },
+      "ollama": {
+        "adapter": "OllamaAdapter",
+        "args": {
+          "endpoint": "http://localhost:11434/v1",
+          "model": "llama3:latest",
+          "apiKey": "ollama",
+          "timeoutSeconds": 10
+        }
+      }
+    }
+  },
+  "languages": {
+    "c": {
+      "name": "C",
+      "sourceExtension": ".c",
+      "targetExtension": ".exe",
+      "entryNamingStrategy": "fixed",
+      "compiler": {
+        "command": "gcc",
+        "arguments": ["{source}", "-o", "{target}", "-O2", "-Wall"]
+      },
+      "executor": {
+        "command": "{target}",
+        "arguments": []
+      }
+    },
+    "cpp": {
+      "name": "C++",
+      "sourceExtension": ".cpp",
+      "targetExtension": ".exe",
+      "entryNamingStrategy": "fixed",
+      "compiler": {
+        "command": "g++",
+        "arguments": ["{source}", "-o", "{target}", "-O2", "-Wall"]
+      },
+      "executor": {
+        "command": "{target}",
+        "arguments": []
+      }
+    },
+    "java": {
+      "name": "Java",
+      "sourceExtension": ".java",
+      "targetExtension": ".class",
+      "entryNamingStrategy": "className",
+      "compiler": {
+        "command": "javac",
+        "arguments": ["-encoding", "UTF-8", "{source}"]
+      },
+      "executor": {
+        "command": "java",
+        "arguments": ["-cp", "{workspace}", "{entryClass}"]
+      }
+    },
+    "python": {
+      "name": "Python",
+      "sourceExtension": ".py",
+      "targetExtension": "",
+      "entryNamingStrategy": "fixed",
+      "compiler": {
+        "command": "",
+        "arguments": []
+      },
+      "executor": {
+        "command": "python",
+        "arguments": ["{source}"]
+      }
+    }
+  },
+  "execution": {
+    "timeoutSeconds": 10
+  },
+  "templates": {
+    "directory": "./Infrastructure/Templates"
+  }
+}

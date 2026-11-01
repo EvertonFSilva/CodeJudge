@@ -1,0 +1,90 @@
+{
+  "name": "codejudge",
+  "displayName": "CodeJudge",
+  "description": "Ambiente de apoio ao aprendizado de programação com compilação, execução, análise e otimização por IA. Identificação automática de linguagens sincronizadas dinamicamente com o backend. Desenvolvido por Everton.",
+  "version": "2.0.0",
+  "publisher": "everton",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Education",
+    "Linters"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codejudge-sidebar",
+          "title": "Code Judge",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codejudge-sidebar": [
+        {
+          "type": "webview",
+          "id": "codejudge.sidebarView",
+          "name": "CodeJudge",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codejudge.exportPdf",
+        "title": "CodeJudge: Exportar Relatório para PDF",
+        "category": "CodeJudge"
+      },
+      {
+        "command": "codejudge.refreshWebview",
+        "title": "CodeJudge: Recarregar Interface",
+        "category": "CodeJudge",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "codejudge.refreshWebview",
+          "when": "view == codejudge.sidebarView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Code Judge",
+      "properties": {
+        "codejudge.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "URL base do servidor do CodeJudge."
+        },
+        "codejudge.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 45,
+          "description": "Tempo limite em segundos para requisições com IA ou compilação."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/pdfkit": "^0.17.6",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "pdfkit": "^0.19.1"
+  }
+}

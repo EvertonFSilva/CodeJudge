@@ -1,0 +1,4 @@
+Soma=150 Media=30.00 Maior=50 Menor=10
+Soma=18 Media=4.50 Maior=9 Menor=1
+Soma=42 Media=42.00 Maior=42 Menor=42
+Soma=14 Media=2.33 Maior=10 Menor=-5
