@@ -71,7 +71,7 @@ class AnalyzeCodeUseCase:
                             doc = futureToDoc[future]
                             self.logger.error(f"Error executing template '{doc.name}': {str(err)}", err)
 
-            feedback = "\n\n---\n\n".join(results)
+            feedback = PromptBuilder.normalizeCodeFences("\n\n---\n\n".join(results))
         else:
             feedback = "Nenhum template de prompt de análise encontrado no repositório."
 

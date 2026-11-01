@@ -13,7 +13,7 @@ import { CodeJudgeService } from "../services/CodeJudgeService";
 import { LanguageDetectionService } from "../services/LanguageDetectionService";
 import { PdfExportService } from "../services/PdfExportService";
 import { TestResultsTable } from "../components/TestResultsTable";
-import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import { MarkdownRenderer, normalizeMarkdownCodeFences } from "../components/MarkdownRenderer";
 import { CustomDropdown, DropdownOption } from "../components/CustomDropdown";
 
 interface JudgePageProps {
@@ -128,8 +128,9 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [appliedToast, setAppliedToast] = useState<boolean>(false);
 
   const improvedCode = useMemo(() => {
-    const textToSearch = optimizationResult?.recommendations || analysisResult?.feedback;
-    if (!textToSearch) return null;
+    const rawText = optimizationResult?.recommendations || analysisResult?.feedback;
+    if (!rawText) return null;
+    const textToSearch = normalizeMarkdownCodeFences(rawText);
 
     const sectionRegex = /#+.*?(?:Refatorado|Otimizado|Recomendado)[\s\S]*?```([a-zA-Z0-9_+#-]*)\s*\n([\s\S]*?)```/i;
     const match = sectionRegex.exec(textToSearch);

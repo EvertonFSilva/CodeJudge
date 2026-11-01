@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { ExecutionResult, CompilationResult, AnalysisResult, OptimizationResult } from "../types/codejudge";
 import { UserProfile } from "../types/auth";
+import { normalizeMarkdownCodeFences } from "../components/MarkdownRenderer";
 
 export interface FullReportPayload {
   userProfile?: UserProfile | null;
@@ -195,7 +196,8 @@ export class PdfExportService {
       doc.text(sectionTitle, margin + 6, y + 5.5);
       y += 13;
 
-      const rawLines = rawMarkdown.split("\n");
+      const normalizedMarkdown = normalizeMarkdownCodeFences(rawMarkdown);
+      const rawLines = normalizedMarkdown.split("\n");
       let inCodeBlock = false;
       const codeBlockLines: string[] = [];
 

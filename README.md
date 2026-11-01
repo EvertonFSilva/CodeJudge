@@ -156,6 +156,8 @@ O **CodeJudgeWeb** unifica todo o ecossistema web em uma aplicação única, mod
   - Botões de ação do editor ("Carregar", "Copiar", "Limpar") com alinhamento visual, mesma cor base e micro-interações dinâmicas.
 - **Exportação de Relatórios em PDF:**
   - Geração instantânea de relatório técnico em PDF com carimbo institucional, código-fonte analisado, métricas de execução e parecer formativo da IA.
+- **Normalização e Renderização Robusta de Markdown:**
+  - Motor de renderização com algoritmo adaptativo de cercas de código (`normalizeMarkdownCodeFences`). Trata e isola blocos colados a textos contextuais emitidos pela IA (ex: `Trecho Atual: ```java`), garantindo que tanto a visualização em tela quanto o relatório exportado em PDF exibam blocos de código formatados com syntax styling, espaçamento monoespaçado e quebras de linha preservadas.
 
 ---
 
@@ -175,7 +177,10 @@ A extensão para o VS Code transforma o editor em uma bancada de aprendizado int
   - Execução linha a linha com tabela comparativa e taxa percentual de sucesso.
 - **Exportação e Visualização:**
   - Visualizador de relatórios técnicos em Markdown dentro do próprio editor.
-  - Exportação direta do relatório consolidado para PDF.
+  - Exportação direta do relatório consolidado para PDF via motor nativo de geração documental.
+- **Suporte Integral a Múltiplos Prompts e Resiliência Local:**
+  - Timeout de comunicação calibrado para 300 segundos, permitindo a execução completa e sequencial de todas as baterias de prompts sem interrupções prematuras.
+  - Normalização de cercas de código em Markdown (`normalizeMarkdownCodeFences`) integrada ao pipeline de geração de relatórios, garantindo que o preview nativo do VS Code e o PDFKit processem perfeitamente blocos de código com identificadores de linguagem (`java`, `python`, `c`, `cpp`).
 
 ---
 
@@ -447,7 +452,7 @@ O comportamento dos motores de IA e das linguagens é 100% configurável sem alt
           "endpoint": "http://localhost:11434/v1",
           "model": "llama3:latest",
           "apiKey": "ollama",
-          "timeoutSeconds": 10
+          "timeoutSeconds": 300
         }
       }
     }

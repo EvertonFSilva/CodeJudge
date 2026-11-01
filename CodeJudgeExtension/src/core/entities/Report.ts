@@ -1,3 +1,12 @@
+export function normalizeMarkdownCodeFences(text: string): string {
+  if (!text) return '';
+  let str = text;
+  str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)$/gm, '$1\n$2');
+  str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)[ 	]+([^\r\n]+)$/gm, '$1\n$2\n$3');
+  str = str.replace(/^(?!```)(.+?)[ 	]*(```\s*)$/gm, '$1\n```');
+  return str;
+}
+
 import { TestCaseResult } from './TestCase';
 
 export interface StageExecutionResult {
@@ -73,7 +82,7 @@ export class Report {
 
     if (stoppedEarly) {
       lines.push(`\n> **Aviso:** Como o código não compilou, as etapas seguintes foram pausadas.`);
-      return lines.join('\n');
+      return normalizeMarkdownCodeFences(lines.join('\n'));
     }
 
     if (execution) {
@@ -125,6 +134,6 @@ export class Report {
     lines.push(`\n---`);
     lines.push(`\n*CodeJudge • Desenvolvido por Everton*`);
 
-    return lines.join('\n');
+    return normalizeMarkdownCodeFences(lines.join('\n'));
   }
 }

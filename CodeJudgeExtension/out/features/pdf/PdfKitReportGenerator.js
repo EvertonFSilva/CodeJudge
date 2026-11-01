@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PdfKitReportGenerator = void 0;
+const Report_1 = require("../../core/entities/Report");
 const fs = __importStar(require("fs"));
 const pdfkit_1 = __importDefault(require("pdfkit"));
 function cleanMarkdown(text) {
@@ -107,7 +108,8 @@ class PdfKitReportGenerator {
                     .font('Helvetica')
                     .text('Relatório Técnico de Execução e Análise de Código', 52, 68, { width: 490 });
                 doc.y = 100;
-                const sanitized = sanitizeForPdf(markdownContent);
+                const normalized = (0, Report_1.normalizeMarkdownCodeFences)(markdownContent);
+                const sanitized = sanitizeForPdf(normalized);
                 const rawLines = sanitized.split('\n');
                 let fileMeta = '';
                 let statusMeta = '';

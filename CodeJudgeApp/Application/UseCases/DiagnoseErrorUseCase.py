@@ -24,7 +24,7 @@ class DiagnoseErrorUseCase:
             .withSection("Mensagem do Compilador", logs)
             .build()
         )
-        return self.aiEngine.complete(prompt)
+        return PromptBuilder.normalizeCodeFences(self.aiEngine.complete(prompt))
 
     def diagnoseExecutionError(self, statement: str, language: str, code: str, errorMessage: str) -> str:
         self.logger.info(f"Generating diagnostic feedback for {language.upper()} execution failure.")
@@ -41,7 +41,7 @@ class DiagnoseErrorUseCase:
             .withSection("Erro em Tempo de Execução", errorMessage)
             .build()
         )
-        return self.aiEngine.complete(prompt)
+        return PromptBuilder.normalizeCodeFences(self.aiEngine.complete(prompt))
 
     def diagnoseLogicMismatch(self, statement: str, language: str, code: str, mismatchDetails: str) -> str:
         self.logger.info(f"Generating diagnostic feedback for {language.upper()} logic mismatch.")
@@ -58,4 +58,4 @@ class DiagnoseErrorUseCase:
             .withSection("Divergência nos Casos de Teste", mismatchDetails)
             .build()
         )
-        return self.aiEngine.complete(prompt)
+        return PromptBuilder.normalizeCodeFences(self.aiEngine.complete(prompt))

@@ -1,6 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Report = void 0;
+exports.normalizeMarkdownCodeFences = normalizeMarkdownCodeFences;
+function normalizeMarkdownCodeFences(text) {
+    if (!text)
+        return '';
+    let str = text;
+    str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)$/gm, '$1\n$2');
+    str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)[ 	]+([^\r\n]+)$/gm, '$1\n$2\n$3');
+    str = str.replace(/^(?!```)(.+?)[ 	]*(```\s*)$/gm, '$1\n```');
+    return str;
+}
 class Report {
     props;
     constructor(props) {
@@ -35,7 +45,7 @@ class Report {
         }
         if (stoppedEarly) {
             lines.push(`\n> **Aviso:** Como o código não compilou, as etapas seguintes foram pausadas.`);
-            return lines.join('\n');
+            return normalizeMarkdownCodeFences(lines.join('\n'));
         }
         if (execution) {
             lines.push(`\n### 2. Execução`);
@@ -80,7 +90,7 @@ class Report {
         }
         lines.push(`\n---`);
         lines.push(`\n*CodeJudge • Desenvolvido por Everton*`);
-        return lines.join('\n');
+        return normalizeMarkdownCodeFences(lines.join('\n'));
     }
 }
 exports.Report = Report;

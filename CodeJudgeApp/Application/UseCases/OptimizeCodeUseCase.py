@@ -71,7 +71,7 @@ class OptimizeCodeUseCase:
                             doc = futureToDoc[future]
                             self.logger.error(f"Error executing template '{doc.name}': {str(err)}", err)
 
-            recommendations = "\n\n---\n\n".join(results)
+            recommendations = PromptBuilder.normalizeCodeFences("\n\n---\n\n".join(results))
         else:
             recommendations = "Nenhum template de prompt de otimização encontrado no repositório."
 

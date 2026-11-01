@@ -1,4 +1,5 @@
 import { IPdfGenerator } from './IPdfGenerator';
+import { normalizeMarkdownCodeFences } from '../../core/entities/Report';
 import * as fs from 'fs';
 import PDFDocument from 'pdfkit';
 
@@ -81,7 +82,8 @@ export class PdfKitReportGenerator implements IPdfGenerator {
 
         doc.y = 100;
 
-        const sanitized = sanitizeForPdf(markdownContent);
+        const normalized = normalizeMarkdownCodeFences(markdownContent);
+        const sanitized = sanitizeForPdf(normalized);
         const rawLines = sanitized.split('\n');
 
         let fileMeta = '';
