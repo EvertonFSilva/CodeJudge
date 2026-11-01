@@ -56,39 +56,51 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
         <table className="table table-dark table-hover align-middle mb-0" style={{ backgroundColor: "transparent" }}>
           <thead>
             <tr style={{ borderColor: "var(--border-color)" }}>
-              <th style={{ width: "60px" }} className="text-center text-secondary small">#</th>
-              <th className="text-secondary small">Entrada (stdin)</th>
-              <th className="text-secondary small">Saída Esperada</th>
-              <th className="text-secondary small">Saída Obtida</th>
-              <th style={{ width: "120px" }} className="text-center text-secondary small">Veredito</th>
+              <th style={{ width: "60px" }} className="text-center text-light small fw-bold">#</th>
+              <th className="text-light small fw-bold">Entrada (stdin)</th>
+              <th className="text-light small fw-bold">Saída Esperada</th>
+              <th className="text-light small fw-bold">Saída Obtida</th>
+              <th style={{ width: "120px" }} className="text-center text-light small fw-bold">Veredito</th>
             </tr>
           </thead>
           <tbody>
             {outcomes.map((outcome, idx) => (
               <tr key={idx} style={{ borderColor: "var(--border-subtle)" }}>
-                <td className="text-center fw-semibold text-secondary">{idx + 1}</td>
+                <td className="text-center fw-bold text-light">{idx + 1}</td>
                 <td>
                   <pre
-                    className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
+                    className="mb-0 p-2 rounded text-white small font-monospace"
+                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.input || <span className="text-muted fst-italic">(vazia)</span>}
+                    {outcome.input && outcome.input.trim().length > 0 ? (
+                      outcome.input
+                    ) : (
+                      <span className="empty-val-chip">(vazia)</span>
+                    )}
                   </pre>
                 </td>
                 <td>
                   <pre
-                    className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
+                    className="mb-0 p-2 rounded text-white small font-monospace"
+                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.expected || <span className="text-muted fst-italic">(vazia)</span>}
+                    {outcome.expected && outcome.expected.trim().length > 0 ? (
+                      outcome.expected
+                    ) : (
+                      <span className="empty-val-chip">(vazia)</span>
+                    )}
                   </pre>
                 </td>
                 <td>
                   <pre
-                    className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
+                    className="mb-0 p-2 rounded text-white small font-monospace"
+                    style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.actual || <span className="text-muted fst-italic">(vazia)</span>}
+                    {outcome.actual && outcome.actual.trim().length > 0 ? (
+                      outcome.actual
+                    ) : (
+                      <span className="empty-val-chip">(vazia)</span>
+                    )}
                   </pre>
                 </td>
                 <td className="text-center">

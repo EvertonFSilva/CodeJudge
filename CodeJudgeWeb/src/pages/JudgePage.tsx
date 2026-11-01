@@ -3,6 +3,7 @@ import { UserProfile } from "../types/auth";
 import {
   LanguageItem,
   TestCase,
+  ScenarioOutcome,
   ExecutionResult,
   CompilationResult,
   AnalysisResult,
@@ -356,7 +357,11 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
     if (executionResult) {
       md += `## 2. Execução\n`;
-      md += `Taxa de Acerto: **${executionResult.rate !== null && executionResult.rate !== undefined ? `${executionResult.rate}%` : "Executado"}**\n`;
+      if (hasTestBattery) {
+        md += `Taxa de Acerto: **${executionResult.rate}%**\n\n`;
+      } else {
+        md += `Status: **${executionResult.success ? "Executado com Sucesso (Sem bateria de testes)" : "Falha na Execução"}**\n\n`;
+      }
       if (executionResult.rawOutput) {
         md += `\`\`\`text\n${executionResult.rawOutput}\n\`\`\`\n\n`;
       }
@@ -372,6 +377,33 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
     return md;
   };
+
+  const hasTestBattery = Boolean(
+    executionResult &&
+    executionResult.rate !== null &&
+    executionResult.rate !== undefined &&
+    Array.isArray(executionResult.outputs) &&
+    executionResult.outputs.length > 0 &&
+    typeof executionResult.outputs[0] === "object"
+  );
+
+  const isProcessCompleted =
+    !isProcessing &&
+    Boolean(
+      (mode === "full" && (optimizationResult || stepCompileStatus === "failed" || stepExecuteStatus === "failed")) ||
+      (mode === "compile" && compilationResult) ||
+      (mode === "execute" && executionResult) ||
+      (mode === "analyze" && analysisResult) ||
+      (mode === "optimize" && optimizationResult) ||
+      (errorMessage && (compilationResult || executionResult || analysisResult || optimizationResult))
+    );
+
+  const hasFailed =
+    stepCompileStatus === "failed" ||
+    stepExecuteStatus === "failed" ||
+    stepAnalyzeStatus === "failed" ||
+    stepOptimizeStatus === "failed" ||
+    errorMessage !== null;
 
   const hasAnyResult = Boolean(compilationResult || executionResult || analysisResult || optimizationResult);
 
@@ -839,14 +871,18 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Summary Banner when completed */}
-          {hasAnyResult && (
+          {/* Summary Banner when completed or failed */}
+          {isProcessCompleted && (
             <div className="summary-banner">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <div className="fw-bold text-white fs-6">Processamento Concluído</div>
+                  <div className="fw-bold text-white fs-6">
+                    {hasFailed ? "Processamento Interrompido por Falha" : "Processamento Concluído com Sucesso"}
+                  </div>
                   <div className="text-secondary small">
-                    O relatório foi gerado. Escolha como deseja visualizá-lo:
+                    {hasFailed
+                      ? "Ocorreram erros durante o processamento. Consulte os detalhes no relatório abaixo:"
+                      : "Todas as etapas da opção selecionada foram concluídas. Escolha como deseja visualizar o relatório:"}
                   </div>
                 </div>
               </div>
@@ -925,31 +961,44 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           {/* 2. Execução Result */}
           {executionResult && (
             <div className="mt-4">
-              {executionResult.outputs && executionResult.outputs.length > 0 ? (
+              {hasTestBattery ? (
                 <TestResultsTable
-                  outcomes={executionResult.outputs}
+                  outcomes={(executionResult.outputs || []) as ScenarioOutcome[]}
                   rate={executionResult.rate}
                   durationMs={executionResult.durationMs}
                 />
               ) : (
                 <div className="dark-card mb-4">
                   <div className="dark-card-header d-flex justify-content-between align-items-center">
-                    <span className="fw-bold text-light small">2. Execução</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      <span className="fw-bold text-light small">2. Execução</span>
+                    </div>
                     <span className={`badge ${executionResult.success ? "badge-custom-success" : "badge-custom-danger"}`}>
-                      {executionResult.success ? "Sucesso" : "Falha"}
+                      {executionResult.success ? "Sucesso" : "Falha na Execução"}
                     </span>
                   </div>
                   <div className="dark-card-body">
-                    <p className="mb-2 text-light small">{executionResult.message}</p>
-                    {executionResult.rawOutput && (
+                    <p className="mb-2 text-light small">
+                      {executionResult.success
+                        ? "Código executado com sucesso no sandbox (sem bateria de testes)."
+                        : executionResult.message}
+                    </p>
+                    {executionResult.rawOutput ? (
                       <div>
-                        <span className="text-secondary small d-block mb-1">Saída do Processo:</span>
+                        <span className="text-secondary small d-block mb-1">Saída do Terminal:</span>
                         <pre
-                          className="p-3 rounded text-light font-monospace small mb-0"
-                          style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "200px", overflowY: "auto" }}
+                          className="p-3 rounded text-white font-monospace small mb-0"
+                          style={{ backgroundColor: "#11161d", border: "1px solid #30363d", maxHeight: "200px", overflowY: "auto" }}
                         >
                           {executionResult.rawOutput}
                         </pre>
+                      </div>
+                    ) : (
+                      <div className="text-secondary small fst-italic">
+                        Programa finalizado sem saída impressa no terminal (stdout vazio).
                       </div>
                     )}
                   </div>

@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Dict, Any
 import httpx
 from Domain.Contracts.IAiEngine import IAiEngine
@@ -5,12 +6,13 @@ from Infrastructure.Logging.Logger import Logger
 
 class OllamaAdapter(IAiEngine):
     def __init__(self, args: Dict[str, Any]):
-        self.endpoint = (args.get("endpoint") or "").rstrip("/")
-        self.model = args.get("model", "")
-        self.apiKey = args.get("apiKey", "")
-        self.timeoutSeconds = float(args.get("timeoutSeconds", 30.0))
+        self.endpoint = (os.environ.get("OLLAMA_ENDPOINT") or args.get("endpoint") or "").rstrip("/")
+        self.model = os.environ.get("OLLAMA_MODEL") or args.get("model", "llama3:latest")
+        self.apiKey = os.environ.get("OLLAMA_API_KEY") or args.get("apiKey", "")
+        configuredTimeout = float(os.environ.get("OLLAMA_TIMEOUT_SECONDS") or args.get("timeoutSeconds", 120.0))
+        self.timeoutSeconds = max(configuredTimeout, 60.0)
         self.logger = Logger.get()
-        self.logger.info(f"OllamaAdapter initialized with endpoint '{self.endpoint}', model '{self.model}'.")
+        self.logger.info(f"OllamaAdapter initialized with endpoint '{self.endpoint}', model '{self.model}', timeout: {self.timeoutSeconds}s.")
 
     def complete(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
         if not self.endpoint or not self.model:
@@ -64,7 +66,7 @@ class OllamaAdapter(IAiEngine):
             self.logger.warning(message)
             return message
         except httpx.TimeoutException:
-            message = f"Ollama response timed out after {self.timeoutSeconds}s."
+            message = f"Ollama demorou mais de {self.timeoutSeconds}s para responder (timeout). O modelo local '{self.model}' pode estar gerando os tokens em velocidade reduzida. Tente novamente ou aguarde a conclusão."
             self.logger.error(message)
             return message
         except Exception as error:

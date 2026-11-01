@@ -7,7 +7,7 @@ class Report {
         this.props = props;
     }
     toMarkdown() {
-        const { fileName, language, statement, compilation, execution, analysis, optimization, hasTests, allSucceeded, stoppedEarly } = this.props;
+        const { fileName, language, code, statement, compilation, execution, analysis, optimization, hasTests, allSucceeded, stoppedEarly } = this.props;
         const lines = [];
         lines.push(`# CodeJudge`);
         lines.push(`## Relatório Técnico de Execução`);
@@ -16,6 +16,10 @@ class Report {
         if (statement && statement.trim()) {
             lines.push(`\n### Enunciado / Requisitos`);
             lines.push(`> ${statement.trim().replace(/\n/g, '\n> ')}`);
+        }
+        if (code && code.trim()) {
+            lines.push(`\n### Código-Fonte Processado (\`${language.toUpperCase()}\`)`);
+            lines.push(`\`\`\`${language}\n${code.trim()}\n\`\`\``);
         }
         lines.push(`\n---`);
         if (compilation) {

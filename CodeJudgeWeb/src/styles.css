@@ -24,6 +24,46 @@
   --warning: #d29922;
 }
 
+/* High-Contrast Typography & Text Overrides */
+.text-secondary {
+  color: #c9d1d9 !important;
+}
+
+.text-muted {
+  color: #a3b1bf !important;
+}
+
+.empty-val-chip {
+  color: #e6edf3 !important;
+  font-style: italic;
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px dashed rgba(255, 255, 255, 0.28);
+  display: inline-block;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+
+/* Table Dark Overrides */
+.table-dark {
+  --bs-table-bg: transparent;
+  --bs-table-color: #f0f6fc;
+  --bs-table-border-color: #30363d;
+}
+
+.table-dark th {
+  color: #f0f6fc !important;
+  border-bottom: 2px solid #30363d !important;
+  padding: 10px 14px;
+}
+
+.table-dark td {
+  color: #f0f6fc !important;
+  padding: 10px 14px;
+}
+
 /* Custom Dark Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -1137,20 +1177,88 @@ body {
 
 /* Markdown Container */
 .dark-markdown-body {
-  color: var(--text-secondary);
+  color: #e2e8f0;
   font-size: 13.5px;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
-.dark-markdown-body h1, .dark-markdown-body h2, .dark-markdown-body h3, .dark-markdown-body h4 {
+.dark-markdown-body h1 {
+  color: #5eead4;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 26px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-markdown-body h2 {
   color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.dark-markdown-body h3 {
+  color: #cbd5e1;
+  font-size: 1rem;
+  font-weight: 600;
   margin-top: 16px;
   margin-bottom: 8px;
+}
+
+.dark-markdown-body h4 {
+  color: #94a3b8;
+  font-size: 0.95rem;
   font-weight: 600;
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.dark-markdown-body strong {
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .dark-markdown-body p {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  color: #e2e8f0;
+}
+
+.dark-markdown-body ul, .dark-markdown-body ol {
+  padding-left: 22px;
+  margin-bottom: 14px;
+}
+
+.dark-markdown-body li {
+  margin-bottom: 6px;
+  color: #e2e8f0;
+}
+
+.dark-markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dark-markdown-body th, .dark-markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+}
+
+.dark-markdown-body th {
+  background: rgba(16, 185, 129, 0.12);
+  color: #5eead4;
+  font-weight: 600;
+}
+
+.dark-markdown-body td {
+  background: rgba(13, 17, 23, 0.55);
+  color: #e2e8f0;
 }
 
 .dark-markdown-body code {
@@ -1302,7 +1410,7 @@ body {
 }
 
 .custom-form-input::placeholder {
-  color: #484f58;
+  color: #8b949e;
 }
 
 /* Autofill background fix */

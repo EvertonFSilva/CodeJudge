@@ -231,11 +231,27 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             doc.addPage();
           }
 
-          if (line.startsWith('### ')) {
-            doc.moveDown(0.5);
+          if (line.startsWith('# ')) {
+            doc.moveDown(0.6);
             doc
               .fillColor(primaryColor)
-              .fontSize(11)
+              .fontSize(12)
+              .font('Helvetica-Bold')
+              .text(cleanMarkdown(line.replace('# ', '')));
+            doc.moveDown(0.2);
+          } else if (line.startsWith('## ')) {
+            doc.moveDown(0.4);
+            doc
+              .fillColor(textDark)
+              .fontSize(10.5)
+              .font('Helvetica-Bold')
+              .text(cleanMarkdown(line.replace('## ', '')));
+            doc.moveDown(0.2);
+          } else if (line.startsWith('### ')) {
+            doc.moveDown(0.3);
+            doc
+              .fillColor(primaryColor)
+              .fontSize(9.5)
               .font('Helvetica-Bold')
               .text(cleanMarkdown(line.replace('### ', '')));
             doc.moveDown(0.2);

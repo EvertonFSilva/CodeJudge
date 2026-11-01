@@ -10,6 +10,7 @@ export interface StageExecutionResult {
 export interface ReportProps {
   fileName: string;
   language: string;
+  code?: string;
   statement?: string;
   compilation?: StageExecutionResult;
   execution?: StageExecutionResult & { testResults?: TestCaseResult[]; successRate?: number };
@@ -29,6 +30,7 @@ export class Report {
     const {
       fileName,
       language,
+      code,
       statement,
       compilation,
       execution,
@@ -49,6 +51,11 @@ export class Report {
     if (statement && statement.trim()) {
       lines.push(`\n### Enunciado / Requisitos`);
       lines.push(`> ${statement.trim().replace(/\n/g, '\n> ')}`);
+    }
+
+    if (code && code.trim()) {
+      lines.push(`\n### Código-Fonte Processado (\`${language.toUpperCase()}\`)`);
+      lines.push(`\`\`\`${language}\n${code.trim()}\n\`\`\``);
     }
 
     lines.push(`\n---`);

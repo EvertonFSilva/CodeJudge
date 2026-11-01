@@ -139,14 +139,14 @@ export class ProcessUseCase {
           executionResult = await this.executeUseCase.execute(language, code, tests, statement);
 
           const hasTests = tests.length > 0;
-          const isSuccess = hasTests ? executionResult.success : executionResult.data?.success !== false;
+          const isSuccess = Boolean(executionResult.success);
 
           notify({
             stage: 'execute',
             status: isSuccess ? 'success' : 'failed',
             title: isSuccess
-              ? 'Execucao concluida com sucesso'
-              : 'Divergencias encontradas na execucao',
+              ? (hasTests ? 'Execução concluída com sucesso' : 'Execução concluída com sucesso (sem testes)')
+              : 'Divergências encontradas na execução',
             durationMs: executionResult.durationMs,
             message: executionResult.message
           });
@@ -225,7 +225,7 @@ export class ProcessUseCase {
     }
 
     const hasTests = tests.length > 0;
-    const executionSuccessful = !executionResult || (hasTests ? executionResult.success : executionResult.data?.success !== false);
+    const executionSuccessful = !executionResult || Boolean(executionResult.success);
 
     const allSucceeded =
       (!compilationResult || compilationResult.success) &&
@@ -236,6 +236,7 @@ export class ProcessUseCase {
     const report = new Report({
       fileName,
       language,
+      code,
       statement,
       compilation: compilationResult,
       execution: executionResult,

@@ -32,11 +32,37 @@ class AnalyzeCodeUseCase:
         self.logger.info(f"Initiating code analysis for {language.upper()} source code.")
 
         templates = self.promptRepository.getByCategory("analysis")
-        baseGuideline = next((item.content for item in templates.values()), (
-            "Você é um avaliador sênior de código e boas práticas com foco em precisão técnica e rigor acadêmico.\n"
-            "Avalie o código considerando legibilidade, manutenibilidade, conformidade com padrões idiomáticos e segurança.\n"
-            "Apresente uma nota de 0 a 10 e forneça um diagnóstico técnico aprofundado com justificativas claras."
-        ))
+        if templates:
+            guidelineBlocks = []
+            for key, doc in templates.items():
+                title = doc.name or key
+                desc = doc.description or ""
+                guidelineBlocks.append(
+                    f"## Diretriz: {title}\n"
+                    f"**Objetivo**: {desc}\n\n"
+                    f"{doc.content.strip()}"
+                )
+            baseGuideline = (
+                "Você é um revisor sênior de código e professor de engenharia de software da plataforma CodeJudge.\n"
+                "Sua missão é realizar uma análise detalhada, altamente instrutiva e didática do código-fonte para iniciantes.\n"
+                "Avalie OBRIGATORIAMENTE CADA UMA das seguintes dimensões de qualidade sem omitir nenhuma:\n\n"
+                + "\n\n---\n\n".join(guidelineBlocks)
+                + "\n\n"
+                "Diretrizes Obrigatórias de Formatação e Conteúdo:\n"
+                "1. Para cada dimensão analisada, inicie a seção com um título de nível 1 em Markdown ('# [Título da Dimensão]') para que o título fique grande e destacado na saída.\n"
+                "2. Explique os conceitos teóricos de maneira simples, clara e detalhada para quem está aprendendo a programar.\n"
+                "3. Utilize negrito ('**...**') para destacar rótulos, notas, diagnósticos, identificadores e conceitos centrais.\n"
+                "4. Forneça exemplos práticos de código comparando a abordagem do código com a solução recomendada.\n"
+                "5. Mantenha espaçamento adequado com quebras de linha entre parágrafos e tópicos.\n"
+                "6. NUNCA utilize emojis em qualquer parte do texto.\n"
+                "7. NUNCA utilize termos informais ou clichês genéricos como 'regra de ouro' ou 'dica de ouro'. Empregue terminologia técnica e formal de engenharia de software."
+            )
+        else:
+            baseGuideline = (
+                "Você é um revisor sênior de código e professor de engenharia de software da plataforma CodeJudge.\n"
+                "Realize uma análise didática, estruturada e detalhada do código considerando estilo, fluxo, modularidade e segurança.\n"
+                "Inicie cada seção com um título '# ' em Markdown, utilize negrito para termos e diagnósticos centrais, forneça exemplos de melhoria e evite emojis ou clichês genéricos."
+            )
 
         prompt = (
             PromptBuilder(baseGuideline)
