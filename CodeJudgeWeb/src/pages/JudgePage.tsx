@@ -28,7 +28,9 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     '#include <stdio.h>\n\nint main() {\n    printf("Olá, CodeJudge!\\n");\n    return 0;\n}\n'
   );
   const [statement, setStatement] = useState<string>("");
+  const [isStatementOpen, setIsStatementOpen] = useState<boolean>(false);
   const [mode, setMode] = useState<OperationMode>("full");
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   // Detected language (automatically determined, never forced upon the user)
   const [detectedLang, setDetectedLang] = useState<LanguageItem>({
@@ -148,6 +150,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     setOutputsFileName(null);
     setOutputsFileText("");
     setShowOutputPreview(false);
+  };
+
+  const copyCodeToClipboard = () => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   const parseTestCases = (): TestCase[] => {
@@ -308,7 +316,10 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   return (
     <div className="container-fluid px-3 px-md-4 py-4 fade-in">
       {/* Top Bar with Title and Prominent PDF Export Button */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom border-secondary-subtle pb-3">
+      <div
+        className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 pb-3"
+        style={{ borderBottom: "1px solid var(--border-color)" }}
+      >
         <div>
           <h4 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
@@ -405,17 +416,27 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 />
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
                   onClick={() => fileInputRef.current?.click()}
                   title="Carregar arquivo de código"
                 >
                   <i className="bi bi-upload"></i>
-                  <span>Carregar Arquivo</span>
+                  <span>Carregar</span>
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
+                  onClick={copyCodeToClipboard}
+                  title="Copiar código"
+                >
+                  <i className={`bi ${copiedCode ? "bi-check-lg text-success" : "bi-clipboard"}`}></i>
+                  <span>{copiedCode ? "Copiado!" : "Copiar"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-report-action btn-sm py-1"
                   onClick={() => handleCodeChange("")}
                   title="Limpar código"
                 >
@@ -424,22 +445,32 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               </div>
             </div>
 
-            {/* Problem Statement (Optional) */}
-            <div className="p-3 border-bottom border-secondary-subtle" style={{ backgroundColor: "var(--bg-input)" }}>
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <label className="form-label small fw-semibold text-secondary mb-0">
-                  Enunciado da Questão
-                </label>
-                <span className="text-muted small">Opcional</span>
-              </div>
-              <textarea
-                className="form-control dark-textarea small"
-                rows={2}
-                placeholder="Cole aqui o enunciado ou requisitos da questão para contextualizar o relatório e a IA..."
-                value={statement}
-                onChange={(e) => setStatement(e.target.value)}
-                disabled={isProcessing}
-              ></textarea>
+            {/* Problem Statement Accordion (Optional) */}
+            <div style={{ backgroundColor: "var(--bg-input)", borderBottom: "1px solid var(--border-color)" }}>
+              <button
+                type="button"
+                className="w-100 p-2 px-3 border-0 bg-transparent text-secondary small d-flex justify-content-between align-items-center"
+                onClick={() => setIsStatementOpen(!isStatementOpen)}
+              >
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-journal-text text-success"></i>
+                  <span>Enunciado da Questão (Opcional)</span>
+                </div>
+                <i className={`bi bi-chevron-${isStatementOpen ? "up" : "down"} small`}></i>
+              </button>
+
+              {isStatementOpen && (
+                <div className="p-3 pt-0">
+                  <textarea
+                    className="form-control dark-textarea small"
+                    rows={2}
+                    placeholder="Cole aqui o enunciado ou requisitos da questão para contextualizar o relatório e a IA..."
+                    value={statement}
+                    onChange={(e) => setStatement(e.target.value)}
+                    disabled={isProcessing}
+                  ></textarea>
+                </div>
+              )}
             </div>
 
             {/* Source Code Editor */}
@@ -456,8 +487,11 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
 
             {/* Execute Button */}
-            <div className="p-3 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
-              <span className="text-secondary small">
+            <div
+              className="p-3 d-flex justify-content-between align-items-center"
+              style={{ borderTop: "1px solid var(--border-color)" }}
+            >
+              <span className="text-secondary small font-monospace">
                 {code.split("\n").length} linhas &bull; {code.length} caracteres
               </span>
 
@@ -523,7 +557,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               </button>
 
               {isTestsOpen && (
-                <div className="p-3 border-top border-secondary-subtle">
+                <div className="p-3" style={{ borderTop: "1px solid var(--border-color)" }}>
                   <div className="optional-note">
                     Os arquivos são opcionais. Forneça arquivos <code>.txt</code> se desejar simular entradas de terminal e comparar com o gabarito.
                   </div>
@@ -787,7 +821,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 <span className="fw-bold text-light small">Relatório Consolidado (.md)</span>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-secondary py-0"
+                  className="btn btn-sm btn-report-action py-0.5 px-2"
                   onClick={() => setShowConsolidatedMd(false)}
                 >
                   Fechar
@@ -804,7 +838,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             <div className="dark-card mt-4 mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
                 <span className="fw-bold text-light small">1. Compilação</span>
-                <span className={`badge ${compilationResult.success ? "bg-success" : "bg-danger"}`}>
+                <span className={`badge ${compilationResult.success ? "badge-custom-success" : "badge-custom-danger"}`}>
                   {compilationResult.success ? "Sucesso" : "Erro Sintático"}
                 </span>
               </div>
@@ -813,7 +847,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 {compilationResult.logs && (
                   <pre
                     className="p-3 rounded text-danger-emphasis font-monospace small mb-0"
-                    style={{ backgroundColor: "var(--bg-input)", maxHeight: "200px", overflowY: "auto" }}
+                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "200px", overflowY: "auto" }}
                   >
                     {compilationResult.logs}
                   </pre>
@@ -835,7 +869,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 <div className="dark-card mb-4">
                   <div className="dark-card-header d-flex justify-content-between align-items-center">
                     <span className="fw-bold text-light small">2. Execução</span>
-                    <span className={`badge ${executionResult.success ? "bg-success" : "bg-danger"}`}>
+                    <span className={`badge ${executionResult.success ? "badge-custom-success" : "badge-custom-danger"}`}>
                       {executionResult.success ? "Sucesso" : "Falha"}
                     </span>
                   </div>
@@ -846,7 +880,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                         <span className="text-secondary small d-block mb-1">Saída do Processo:</span>
                         <pre
                           className="p-3 rounded text-light font-monospace small mb-0"
-                          style={{ backgroundColor: "var(--bg-input)", maxHeight: "200px", overflowY: "auto" }}
+                          style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "200px", overflowY: "auto" }}
                         >
                           {executionResult.rawOutput}
                         </pre>
@@ -870,7 +904,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <span className="fw-bold text-light small">3. Análise do código</span>
                 </div>
                 {analysisResult.durationMs !== undefined && analysisResult.durationMs !== null && (
-                  <span className="badge bg-secondary-subtle text-secondary small">
+                  <span className="badge badge-subtle-duration font-monospace">
                     {analysisResult.durationMs.toFixed(1)} ms
                   </span>
                 )}
@@ -892,7 +926,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <span className="fw-bold text-light small">4. Otimização</span>
                 </div>
                 {optimizationResult.durationMs !== undefined && optimizationResult.durationMs !== null && (
-                  <span className="badge bg-secondary-subtle text-secondary small">
+                  <span className="badge badge-subtle-duration font-monospace">
                     {optimizationResult.durationMs.toFixed(1)} ms
                   </span>
                 )}

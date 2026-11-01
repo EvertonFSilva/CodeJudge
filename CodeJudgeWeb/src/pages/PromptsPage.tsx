@@ -57,7 +57,10 @@ export const PromptsPage: React.FC = () => {
 
   return (
     <div className="container-fluid px-3 px-md-4 py-4 fade-in">
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom border-secondary-subtle pb-3">
+      <div
+        className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 pb-3"
+        style={{ borderBottom: "1px solid var(--border-color)" }}
+      >
         <div>
           <h4 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
@@ -79,8 +82,16 @@ export const PromptsPage: React.FC = () => {
       </div>
 
       {errorMessage && (
-        <div className="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
-          <i className="bi bi-exclamation-triangle-fill fs-5"></i>
+        <div
+          className="p-3 rounded small d-flex align-items-center gap-2 mb-4"
+          style={{
+            backgroundColor: "rgba(248, 81, 73, 0.12)",
+            border: "1px solid rgba(248, 81, 73, 0.35)",
+            color: "#ff7b72"
+          }}
+          role="alert"
+        >
+          <i className="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0"></i>
           <div>{errorMessage}</div>
         </div>
       )}
@@ -102,7 +113,7 @@ export const PromptsPage: React.FC = () => {
               />
               {searchQuery && (
                 <button
-                  className="btn btn-outline-secondary"
+                  className="btn btn-report-action"
                   type="button"
                   onClick={() => setSearchQuery("")}
                 >
@@ -165,7 +176,10 @@ export const PromptsPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center pt-3 border-top border-secondary-subtle">
+                <div
+                  className="d-flex justify-content-between align-items-center pt-3"
+                  style={{ borderTop: "1px solid var(--border-subtle)" }}
+                >
                   <button
                     type="button"
                     className="btn btn-report-action py-1 px-3"
@@ -177,7 +191,7 @@ export const PromptsPage: React.FC = () => {
 
                   <button
                     type="button"
-                    className="btn btn-outline-secondary btn-sm py-1 px-2"
+                    className="btn btn-report-action py-1 px-2.5"
                     onClick={() => handleCopy(prompt.content)}
                     title="Copiar template"
                   >
@@ -195,15 +209,21 @@ export const PromptsPage: React.FC = () => {
         <div
           className="modal fade show d-block"
           tabIndex={-1}
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)", backdropFilter: "blur(4px)" }}
           onClick={() => setActivePrompt(null)}
         >
           <div
             className="modal-dialog modal-lg modal-dialog-scrollable"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-content dark-card border-secondary">
-              <div className="modal-header border-bottom border-secondary-subtle">
+            <div
+              className="modal-content dark-card"
+              style={{ border: "1px solid var(--border-color)", background: "var(--bg-card)" }}
+            >
+              <div
+                className="modal-header"
+                style={{ borderBottom: "1px solid var(--border-color)", background: "var(--bg-card-secondary)" }}
+              >
                 <div className="d-flex align-items-center gap-2">
                   <span className="lang-badge">{activePrompt.category}</span>
                   <h5 className="modal-title fw-bold text-white mb-0">{activePrompt.name}</h5>
@@ -236,10 +256,13 @@ export const PromptsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="modal-footer border-top border-secondary-subtle">
+              <div
+                className="modal-footer"
+                style={{ borderTop: "1px solid var(--border-color)", background: "var(--bg-card-secondary)" }}
+              >
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-report-action btn-sm"
                   onClick={() => setActivePrompt(null)}
                 >
                   Fechar

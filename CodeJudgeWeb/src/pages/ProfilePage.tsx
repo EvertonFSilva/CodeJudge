@@ -23,7 +23,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
 
   return (
     <div className="container py-4 fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary-subtle pb-3">
+      <div
+        className="d-flex justify-content-between align-items-center mb-4 pb-3"
+        style={{ borderBottom: "1px solid var(--border-color)" }}
+      >
         <div>
           <h4 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
@@ -38,7 +41,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
         </div>
 
         <button
-          className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1"
+          className="btn btn-sm d-flex align-items-center gap-1.5 py-1 px-3"
+          style={{
+            background: "rgba(248, 81, 73, 0.1)",
+            color: "#ff7b72",
+            border: "1px solid rgba(248, 81, 73, 0.3)",
+            borderRadius: "6px",
+            fontWeight: 500,
+            transition: "all 0.2s"
+          }}
           onClick={onLogout}
         >
           <i className="bi bi-box-arrow-right"></i>
@@ -58,8 +69,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                   height: "86px",
                   fontSize: "32px",
                   fontWeight: "bold",
-                  backgroundColor: "var(--green-primary)",
-                  border: "2px solid var(--green-accent)"
+                  background: "linear-gradient(135deg, var(--emerald-primary), var(--emerald-accent))",
+                  border: "2px solid var(--emerald-accent)",
+                  boxShadow: "0 4px 16px var(--emerald-glow)"
                 }}
               >
                 {userInitial}
@@ -73,7 +85,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
               {user.campus || "Instituto Federal Fluminense (IFF)"}
             </div>
 
-            <div className="border-top border-secondary-subtle pt-3 text-start small">
+            <div
+              className="pt-3 text-start small"
+              style={{ borderTop: "1px solid var(--border-subtle)" }}
+            >
               <div className="d-flex justify-content-between py-1">
                 <span className="text-secondary">Cidade:</span>
                 <span className="text-light">{user.city || "Não informada"}</span>
@@ -97,9 +112,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                 href={user.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="btn btn-outline-secondary btn-sm w-100 mt-3 d-flex align-items-center justify-content-center gap-1"
+                className="btn btn-report-action btn-sm w-100 mt-3 justify-content-center"
               >
-                <i className="bi bi-box-arrow-up-right"></i>
+                <i className="bi bi-box-arrow-up-right me-1"></i>
                 <span>Acessar Moodle IFF</span>
               </a>
             )}
@@ -113,7 +128,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
             </div>
             <div
               className="p-2 rounded text-secondary font-monospace small text-break"
-              style={{ backgroundColor: "var(--bg-input)" }}
+              style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)" }}
             >
               {token ? `${token.substring(0, 26)}...` : "Nenhum token ativo"}
             </div>
@@ -133,7 +148,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                   Disciplinas e Turmas Matriculadas ({user.courses ? user.courses.length : 0})
                 </span>
               </div>
-              <span className="badge bg-secondary-subtle text-secondary small">Moodle IFF</span>
+              <span className="badge badge-custom-success small">Moodle IFF</span>
             </div>
 
             <div className="dark-card-body">
@@ -142,13 +157,21 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                   {user.courses.map((course, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded border border-secondary-subtle d-flex justify-content-between align-items-center"
-                      style={{ backgroundColor: "rgba(255, 255, 255, 0.02)" }}
+                      className="p-3 rounded d-flex justify-content-between align-items-center"
+                      style={{
+                        backgroundColor: "var(--bg-input)",
+                        border: "1px solid var(--border-subtle)"
+                      }}
                     >
                       <div className="d-flex align-items-center gap-3">
                         <div
                           className="rounded-circle p-2 d-flex align-items-center justify-content-center"
-                          style={{ backgroundColor: "var(--green-subtle)", color: "var(--green-accent)" }}
+                          style={{
+                            backgroundColor: "var(--emerald-subtle)",
+                            color: "var(--emerald-accent)",
+                            width: "36px",
+                            height: "36px"
+                          }}
                         >
                           <i className="bi bi-journal-bookmark-fill"></i>
                         </div>
@@ -157,7 +180,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
                           <span className="text-secondary small">Ambiente Virtual Moodle</span>
                         </div>
                       </div>
-                      <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+                      <span className="badge badge-custom-success px-2 py-1 small">
                         Inscrito
                       </span>
                     </div>

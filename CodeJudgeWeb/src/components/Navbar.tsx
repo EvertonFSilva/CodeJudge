@@ -46,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Brand */}
         <div className="d-flex align-items-center gap-4">
           <div className="brand-wrapper" onClick={() => onTabChange("judge")}>
-            <CodeJudgeLogo size={28} />
+            <CodeJudgeLogo size={32} />
             <div className="d-flex align-items-center">
               <span className="brand-title">CodeJudge</span>
               <span className="brand-subtitle">IFF</span>
@@ -126,7 +126,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logout */}
           <button
             type="button"
-            className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 py-1 px-2"
+            className="btn btn-sm d-flex align-items-center gap-1.5 py-1 px-2.5"
+            style={{
+              background: "rgba(248, 81, 73, 0.1)",
+              color: "#ff7b72",
+              border: "1px solid rgba(248, 81, 73, 0.3)",
+              borderRadius: "6px",
+              fontWeight: 500,
+              fontSize: "12px",
+              transition: "all 0.2s"
+            }}
             onClick={onLogout}
             title="Encerrar sessão no Moodle IFF"
           >

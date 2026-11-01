@@ -6,12 +6,20 @@ interface CodeJudgeLogoProps {
 }
 
 export const CodeJudgeLogo: React.FC<CodeJudgeLogoProps> = ({ size = 28, className = "" }) => {
+  const borderRadius = Math.max(6, Math.round(size * 0.22));
+  const padding = Math.max(2, Math.round(size * 0.1));
+
   return (
     <svg
       viewBox="0 0 32 32"
       fill="none"
       className={`brand-logo-svg ${className}`}
-      style={{ width: `${size}px`, height: `${size}px` }}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: `${borderRadius}px`,
+        padding: `${padding}px`
+      }}
       xmlns="http://www.w3.org/2000/svg"
     >
       <path

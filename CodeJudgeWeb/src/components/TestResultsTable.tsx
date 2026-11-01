@@ -36,16 +36,16 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
           <span
             className={`badge px-3 py-1 font-monospace ${
               computedRate === 100
-                ? "bg-success text-white"
+                ? "badge-custom-success"
                 : computedRate > 0
-                ? "bg-warning text-dark"
-                : "bg-danger text-white"
+                ? "badge-custom-warning"
+                : "badge-custom-danger"
             }`}
           >
             Taxa de Acerto: {computedRate}% ({passedCount}/{totalCount})
           </span>
           {durationMs !== undefined && durationMs !== null && (
-            <span className="badge bg-secondary-subtle text-light border border-secondary px-2 py-1 font-monospace">
+            <span className="badge badge-subtle-duration px-2 py-1 font-monospace">
               {durationMs.toFixed(1)} ms
             </span>
           )}
@@ -56,11 +56,11 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
         <table className="table table-dark table-hover align-middle mb-0" style={{ backgroundColor: "transparent" }}>
           <thead>
             <tr style={{ borderColor: "var(--border-color)" }}>
-              <th style={{ width: "70px" }} className="text-center text-secondary small">#</th>
+              <th style={{ width: "60px" }} className="text-center text-secondary small">#</th>
               <th className="text-secondary small">Entrada (stdin)</th>
               <th className="text-secondary small">Saída Esperada</th>
               <th className="text-secondary small">Saída Obtida</th>
-              <th style={{ width: "110px" }} className="text-center text-secondary small">Veredito</th>
+              <th style={{ width: "120px" }} className="text-center text-secondary small">Veredito</th>
             </tr>
           </thead>
           <tbody>
@@ -72,7 +72,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
                     className="mb-0 p-2 rounded text-light small font-monospace"
                     style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.input || <span className="text-secondary fst-italic">(vazia)</span>}
+                    {outcome.input || <span className="text-muted fst-italic">(vazia)</span>}
                   </pre>
                 </td>
                 <td>
@@ -80,7 +80,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
                     className="mb-0 p-2 rounded text-light small font-monospace"
                     style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.expected || <span className="text-secondary fst-italic">(vazia)</span>}
+                    {outcome.expected || <span className="text-muted fst-italic">(vazia)</span>}
                   </pre>
                 </td>
                 <td>
@@ -88,16 +88,16 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
                     className="mb-0 p-2 rounded text-light small font-monospace"
                     style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
-                    {outcome.actual || <span className="text-secondary fst-italic">(vazia)</span>}
+                    {outcome.actual || <span className="text-muted fst-italic">(vazia)</span>}
                   </pre>
                 </td>
                 <td className="text-center">
                   {outcome.passed ? (
-                    <span className="badge bg-success-subtle text-success border border-success px-2 py-1">
+                    <span className="badge badge-custom-success px-2.5 py-1">
                       <i className="bi bi-check-circle-fill me-1"></i> Passou
                     </span>
                   ) : (
-                    <span className="badge bg-danger-subtle text-danger border border-danger px-2 py-1">
+                    <span className="badge badge-custom-danger px-2.5 py-1">
                       <i className="bi bi-x-circle-fill me-1"></i> Falhou
                     </span>
                   )}
