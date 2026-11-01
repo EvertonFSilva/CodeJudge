@@ -1,0 +1,33 @@
+{
+  "name": "codejudge-web",
+  "version": "2.0.0",
+  "description": "Interface Web unificada do CodeJudge com autenticação Moodle, avaliação de código e catálogo de prompts.",
+  "author": "Everton",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server/server.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "NODE_ENV=production tsx server/server.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "cheerio": "^1.0.0",
+    "express": "^4.21.2",
+    "jspdf": "^2.5.2",
+    "marked": "^15.0.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}

@@ -28,8 +28,8 @@ O repositório é composto por módulos independentes e desacoplados:
 - **`CodeJudgeApp/`**: Backend em FastAPI rodando na porta **8000**. Processa a compilação, execução isolada em sandbox, diagnósticos formativos de erros, relatórios de boas práticas e otimização assintótica com IA (Gemini ou Ollama local).
 - **`CodeJudgeApp/Examples/`**: Coleção de exercícios divididos por categorias algorítmicas com código em 4 linguagens (**C, C++, Java e Python**), acompanhados de arquivos `.txt` de entrada (`inputs.txt`) e saída esperada (`outputs.txt`) prontos para uso no runner de testes da extensão.
 - **`CodeJudgeExtension/`**: Extensão para o VS Code desenvolvida em TypeScript. Fornece interface Webview lateral, identificação automática de linguagens a partir do arquivo aberto no editor, sincronização dinâmica com o backend (`/languages`), validação automatizada de casos de teste (`inputs.txt` e `outputs.txt`), visualizador de relatórios em Markdown e exportação de relatórios técnicos em PDF.
-- **`CodeJudgeWebSystem/`**: Microserviço de autenticação e sessão de usuários (porta **5000**).
-- **`CodeJudgeWebClient/`**: Interface web estática alternativa.
+- **`CodeJudgeWeb/`**: Aplicação Web unificada desenvolvida em **React 18**, **TypeScript**, **Bootstrap 5** e servidor **Express/Node.js** (porta **5000**). Unifica a autenticação institucional via **Moodle IFFar / IFF**, bancada de execução/compilação de código com sincronização de linguagens (`/languages`), runner de testes com suporte a `inputs.txt` e `outputs.txt`, feedback conceitual com IA, catálogo de 20 templates de prompts com busca/filtros, tela de perfil do aluno e exportação de relatórios em PDF.
+
 
 ---
 
@@ -228,6 +228,24 @@ npm run compile
 1. Abra a pasta `CodeJudgeExtension` no VS Code.
 2. Pressione **F5** para iniciar uma nova janela no modo **Extension Development Host**.
 3. Abra qualquer arquivo de código ou exemplo da pasta `Examples/` e utilize a barra lateral do **CodeJudge**.
+
+### 3. Inicializando a Aplicação Web (CodeJudgeWeb)
+
+```bash
+cd CodeJudge/CodeJudgeWeb
+
+# Instalar dependências
+npm install
+
+# Modo de desenvolvimento (Express + Vite HMR na porta 5000)
+npm run dev
+
+# Ou compilar e iniciar em produção
+npm run build
+npm start
+```
+Acesse no navegador: `http://localhost:5000`.
+Faça login com suas credenciais do Moodle (CPF e senha institucional) para utilizar o juiz online, consultar o catálogo de prompts e visualizar o perfil acadêmico.
 
 ---
 
