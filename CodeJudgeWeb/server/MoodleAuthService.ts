@@ -175,6 +175,7 @@ export class MoodleAuthService {
     return {
       name,
       email,
+      username: fallbackUsername,
       campus: details['campus'] || details['instituicao'] || 'Instituto Federal Fluminense (IFF)',
       city: details['cidade_municipio'] || details['cidade'] || '',
       country: details['pais'] || 'Brasil',

@@ -1,6 +1,7 @@
 export interface UserProfile {
   name: string;
   email: string;
+  username?: string;
   city: string;
   country: string;
   campus: string;

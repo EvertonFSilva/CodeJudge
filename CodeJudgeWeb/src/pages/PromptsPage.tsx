@@ -11,7 +11,7 @@ export const PromptsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activePrompt, setActivePrompt] = useState<PromptDocument | null>(null);
-  const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [copiedPromptKey, setCopiedPromptKey] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -50,10 +50,10 @@ export const PromptsPage: React.FC = () => {
     });
   }, [prompts, selectedCategory, searchQuery]);
 
-  const handleCopy = (content: string) => {
+  const handleCopy = (key: string, content: string) => {
     navigator.clipboard.writeText(content);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    setCopiedPromptKey(key);
+    setTimeout(() => setCopiedPromptKey(null), 2000);
   };
 
   return (
@@ -98,7 +98,7 @@ export const PromptsPage: React.FC = () => {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="dark-card mb-4 p-3">
+      <div className="dark-card dropdown-host-card mb-4 p-3">
         <div className="row g-3 align-items-center">
           <div className="col-md-7">
             <div className="custom-search-wrapper">
@@ -189,20 +189,23 @@ export const PromptsPage: React.FC = () => {
                 >
                   <button
                     type="button"
-                    className="btn btn-report-action py-1 px-3"
+                    className="btn btn-action-upload py-1 px-3 d-flex align-items-center gap-1.5"
                     onClick={() => setActivePrompt(prompt)}
                   >
-                    <i className="bi bi-eye me-1"></i>
+                    <i className="bi bi-eye"></i>
                     <span>Visualizar</span>
                   </button>
 
                   <button
                     type="button"
-                    className="btn btn-report-action py-1 px-2.5"
-                    onClick={() => handleCopy(prompt.content)}
+                    className={`btn py-1 px-2.5 d-flex align-items-center gap-1 ${
+                      copiedPromptKey === prompt.key ? "btn-action-copy copied" : "btn-action-copy"
+                    }`}
+                    onClick={() => handleCopy(prompt.key, prompt.content)}
                     title="Copiar template"
                   >
-                    <i className="bi bi-clipboard"></i>
+                    <i className={`bi ${copiedPromptKey === prompt.key ? "bi-check-lg" : "bi-clipboard"}`}></i>
+                    {copiedPromptKey === prompt.key && <span className="small">Copiado!</span>}
                   </button>
                 </div>
               </div>
@@ -252,11 +255,13 @@ export const PromptsPage: React.FC = () => {
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <span className="text-secondary small fw-semibold">Conteúdo da Instrução:</span>
                     <button
-                      className="btn btn-sm btn-report-action py-1"
-                      onClick={() => handleCopy(activePrompt.content)}
+                      className={`btn btn-sm py-1 px-3 d-flex align-items-center gap-1.5 ${
+                        copiedPromptKey === activePrompt.key ? "btn-action-copy copied" : "btn-action-copy"
+                      }`}
+                      onClick={() => handleCopy(activePrompt.key, activePrompt.content)}
                     >
-                      <i className={`bi ${copySuccess ? "bi-check-lg text-success" : "bi-clipboard"} me-1`}></i>
-                      <span>{copySuccess ? "Copiado!" : "Copiar"}</span>
+                      <i className={`bi ${copiedPromptKey === activePrompt.key ? "bi-check-lg" : "bi-clipboard"}`}></i>
+                      <span>{copiedPromptKey === activePrompt.key ? "Copiado!" : "Copiar"}</span>
                     </button>
                   </div>
                   <MarkdownRenderer content={activePrompt.content} />

@@ -2,10 +2,10 @@ import { LanguageItem } from "../types/codejudge";
 
 export class LanguageDetectionService {
   private static defaultLanguages: LanguageItem[] = [
-    { key: "c", name: "C", sourceExtension: ".c", targetExtension: ".exe", needsCompilation: true },
-    { key: "cpp", name: "C++", sourceExtension: ".cpp", targetExtension: ".exe", needsCompilation: true },
     { key: "java", name: "Java", sourceExtension: ".java", targetExtension: ".class", needsCompilation: true },
-    { key: "python", name: "Python", sourceExtension: ".py", targetExtension: ".py", needsCompilation: false }
+    { key: "python", name: "Python", sourceExtension: ".py", targetExtension: ".py", needsCompilation: false },
+    { key: "c", name: "C", sourceExtension: ".c", targetExtension: ".exe", needsCompilation: true },
+    { key: "cpp", name: "C++", sourceExtension: ".cpp", targetExtension: ".exe", needsCompilation: true }
   ];
 
   static detectFromFileName(fileName: string, availableLanguages: LanguageItem[] = []): LanguageItem | null {
@@ -35,7 +35,7 @@ export class LanguageDetectionService {
     const trimmed = code.trim();
 
     if (!trimmed) {
-      return languages.find((l) => l.key === "c") || languages[0];
+      return languages.find((l) => l.key === "java") || languages[0];
     }
 
     // Java check

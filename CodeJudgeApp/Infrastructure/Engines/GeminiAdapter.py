@@ -1,18 +1,19 @@
+import os
 from typing import Optional, Dict, Any
 from Domain.Contracts.IAiEngine import IAiEngine
 from Infrastructure.Logging.Logger import Logger
 
 class GeminiAdapter(IAiEngine):
     def __init__(self, args: Dict[str, Any]):
-        self.apiKey = args.get("apiKey", "")
-        self.model = args.get("model", "")
+        self.apiKey = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or args.get("apiKey", "")
+        self.model = os.environ.get("GEMINI_MODEL") or args.get("model", "")
         self.logger = Logger.get()
         self.client = None
         self.setupClient()
 
     def setupClient(self):
         if not self.apiKey:
-            self.logger.warning("GeminiAdapter: API key not provided in configuration.")
+            self.logger.warning("GeminiAdapter: API key not provided in configuration or environment variables.")
             return
         if not self.model:
             self.logger.warning("GeminiAdapter: Model name not provided in configuration.")
@@ -28,7 +29,7 @@ class GeminiAdapter(IAiEngine):
         if not self.client:
             self.setupClient()
             if not self.client:
-                return "Gemini AI engine unavailable. Check apiKey and model in Configuration.json."
+                return "Gemini AI indisponível: Chave de API não informada. Configure 'apiKey' em Configuration.json ou defina a variável de ambiente GEMINI_API_KEY."
 
         try:
             self.logger.debug(f"Dispatching prompt to Gemini ({self.model}), size: {len(prompt)} characters.")
@@ -41,7 +42,10 @@ class GeminiAdapter(IAiEngine):
             return text
         except Exception as error:
             self.logger.error("Exception during Gemini API request", error)
-            return f"AI Engine (Gemini) error: {str(error)}"
+            errorStr = str(error)
+            if "API_KEY_INVALID" in errorStr or "API key not valid" in errorStr or "400" in errorStr:
+                return "AI Engine (Gemini): Chave de API inválida ou revogada. Por favor, forneça uma chave de API válida no arquivo Configuration.json ou na variável de ambiente GEMINI_API_KEY."
+            return f"AI Engine (Gemini) error: {errorStr}"
 
     def isAvailable(self) -> bool:
         return bool(self.client and self.apiKey and self.model)

@@ -82,6 +82,19 @@ class ConfigurableCompiler(ICompiler):
                 workspaceDirectory=workspace.path
             )
 
+        except FileNotFoundError as error:
+            durationMs = round((time.time() - startTime) * 1000, 2)
+            cmdName = command[0] if command else self.language.compilerCommand
+            errMsg = f"Compilador '{cmdName}' não foi encontrado no sistema (PATH). Verifique se o compilador para {self.language.name} está instalado no seu ambiente."
+            self.logger.error(f"Compiler executable '{cmdName}' not found for '{self.language.name}': {str(error)}")
+            return CompilationReport(
+                success=False,
+                message=errMsg,
+                binaryPath=None,
+                logs=f"[WinError 2 / FileNotFoundError] O executável '{cmdName}' não está instalado ou não está no PATH do sistema.",
+                durationMs=durationMs,
+                workspaceDirectory=workspace.path
+            )
         except Exception as error:
             durationMs = round((time.time() - startTime) * 1000, 2)
             self.logger.error(f"Internal compiler failure for '{self.language.name}': {str(error)}", error)

@@ -183,6 +183,21 @@ class ConfigurableExecutor(IExecutor):
                     durationMs=durationMs
                 )
 
+        except FileNotFoundError as error:
+            durationMs = round((time.time() - startTime) * 1000, 2)
+            cmdName = command[0] if command else self.language.executorCommand
+            errMsg = f"Executável '{cmdName}' não foi encontrado no sistema (PATH). Verifique se o ambiente de execução para {self.language.name} está instalado."
+            self.logger.error(f"Executor command '{cmdName}' not found for '{self.language.name}': {str(error)}")
+            return ExecutionReport(
+                success=False,
+                message=errMsg,
+                inputs=[],
+                outputs=[f"[WinError 2 / FileNotFoundError] O executável '{cmdName}' não está instalado ou não está no PATH do sistema."],
+                rate=None,
+                details={"error": "FileNotFoundError", "executable": cmdName},
+                rawOutput=errMsg,
+                durationMs=durationMs
+            )
         except Exception as error:
             durationMs = round((time.time() - startTime) * 1000, 2)
             self.logger.error(f"Execution process failure for '{self.language.name}': {str(error)}", error)

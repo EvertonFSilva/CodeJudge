@@ -84,9 +84,9 @@ const MODE_OPTIONS: DropdownOption[] = [
 
 export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [availableLanguages, setAvailableLanguages] = useState<LanguageItem[]>([]);
-  const [activeFileName, setActiveFileName] = useState<string>("main.c");
+  const [activeFileName, setActiveFileName] = useState<string>("Main.java");
   const [code, setCode] = useState<string>(
-    '#include <stdio.h>\n\nint main() {\n    printf("Olá, CodeJudge!\\n");\n    return 0;\n}\n'
+    'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Olá, CodeJudge!");\n    }\n}\n'
   );
   const [statement, setStatement] = useState<string>("");
   const [isStatementOpen, setIsStatementOpen] = useState<boolean>(false);
@@ -95,10 +95,10 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
   // Detected language (automatically determined, never forced upon the user)
   const [detectedLang, setDetectedLang] = useState<LanguageItem>({
-    key: "c",
-    name: "C",
-    sourceExtension: ".c",
-    targetExtension: ".exe",
+    key: "java",
+    name: "Java",
+    sourceExtension: ".java",
+    targetExtension: ".class",
     needsCompilation: true
   });
 
@@ -149,8 +149,9 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     setCode(newCode);
     const detected = LanguageDetectionService.detectFromCode(newCode, availableLanguages);
     setDetectedLang(detected);
-    if (!activeFileName || activeFileName.startsWith("editor.") || activeFileName.startsWith("main.")) {
-      setActiveFileName(`main${detected.sourceExtension}`);
+    if (!activeFileName || activeFileName.startsWith("editor.") || activeFileName.toLowerCase().startsWith("main.")) {
+      const baseName = detected.key === "java" ? "Main" : "main";
+      setActiveFileName(`${baseName}${detected.sourceExtension}`);
     }
   };
 
@@ -374,6 +375,40 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
   const hasAnyResult = Boolean(compilationResult || executionResult || analysisResult || optimizationResult);
 
+  const getModeActionName = (selectedMode: OperationMode): string => {
+    switch (selectedMode) {
+      case "full":
+        return "Processar Código (Executar Tudo)";
+      case "compile":
+        return "Compilar";
+      case "execute":
+        return "Executar";
+      case "analyze":
+        return "Análise do código";
+      case "optimize":
+        return "Otimização";
+      default:
+        return "Processar Código";
+    }
+  };
+
+  const getModeInstruction = (selectedMode: OperationMode): string => {
+    switch (selectedMode) {
+      case "full":
+        return "para iniciar as etapas de compilação, execução e diagnósticos.";
+      case "compile":
+        return "para verificar a sintaxe e gerar os binários.";
+      case "execute":
+        return "para rodar o binário e validar os casos de teste.";
+      case "analyze":
+        return "para iniciar a avaliação qualitativa do código com IA.";
+      case "optimize":
+        return "para receber recomendações de desempenho e complexidade.";
+      default:
+        return "para iniciar o processamento.";
+    }
+  };
+
   return (
     <div className="container-fluid px-3 px-md-4 py-4 fade-in">
       {/* Top Bar with Title */}
@@ -430,7 +465,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           </div>
 
           {/* Operation Mode Selector */}
-          <div className="dark-card mb-4">
+          <div className="dark-card dropdown-host-card mb-4">
             <div className="dark-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: "420px" }}>
                 <span className="fw-semibold text-light small flex-shrink-0">Modo de Operação:</span>
@@ -454,7 +489,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 />
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1.5"
+                  className="btn-action-upload"
                   onClick={() => fileInputRef.current?.click()}
                   title="Carregar arquivo de código"
                 >
@@ -464,21 +499,22 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1.5"
+                  className={`btn-action-copy ${copiedCode ? "copied" : ""}`}
                   onClick={copyCodeToClipboard}
                   title="Copiar código"
                 >
-                  <i className={`bi ${copiedCode ? "bi-check-lg text-success" : "bi-clipboard"}`}></i>
+                  <i className={`bi ${copiedCode ? "bi-check-lg" : "bi-clipboard"}`}></i>
                   <span>{copiedCode ? "Copiado!" : "Copiar"}</span>
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-report-action btn-sm py-1 d-flex align-items-center gap-1"
+                  className="btn-action-delete"
                   onClick={() => handleCodeChange("")}
                   title="Limpar código"
                 >
                   <i className="bi bi-trash"></i>
+                  <span>Limpar</span>
                 </button>
               </div>
             </div>
@@ -551,17 +587,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
-                    <span>
-                      {mode === "full"
-                        ? "Processar Código (Executar Tudo)"
-                        : mode === "compile"
-                        ? "Compilar"
-                        : mode === "execute"
-                        ? "Executar"
-                        : mode === "analyze"
-                        ? "Análise do código"
-                        : "Otimização"}
-                    </span>
+                    <span>{getModeActionName(mode)}</span>
                   </>
                 )}
               </button>
@@ -987,9 +1013,9 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
               </div>
-              <h6 className="fw-bold text-white">Nenhum Processamento Realizado</h6>
+              <h6 className="fw-bold text-white mb-1">Nenhum Processamento Realizado</h6>
               <p className="text-secondary small mb-0">
-                Clique no botão <strong>Processar Código (Executar Tudo)</strong> para iniciar as etapas.
+                Clique no botão <strong className="text-white">{getModeActionName(mode)}</strong> {getModeInstruction(mode)}
               </p>
             </div>
           )}
