@@ -66,7 +66,7 @@
         },
         "codejudge.requestTimeoutSeconds": {
           "type": "number",
-          "default": 45,
+          "default": 300,
           "description": "Tempo limite em segundos para requisições com IA ou compilação."
         }
       }

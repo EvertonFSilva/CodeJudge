@@ -21,7 +21,7 @@ export class ConfigLoader {
       baseConfig = {
         api: {
           baseUrl: 'http://localhost:8000',
-          timeoutSeconds: 45
+          timeoutSeconds: 300
         }
       };
     }

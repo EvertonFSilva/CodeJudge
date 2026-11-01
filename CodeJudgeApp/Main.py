@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 import uvicorn
+from uvicorn.config import LOGGING_CONFIG
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,10 +46,16 @@ class UvicornAccessFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return False
 
+LOGGING_CONFIG["loggers"]["uvicorn"]["level"] = "WARNING"
+LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"] = "WARNING"
+LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"] = "WARNING"
+LOGGING_CONFIG["loggers"]["uvicorn.access"]["handlers"] = []
+
 logging.getLogger("uvicorn.access").addFilter(UvicornAccessFilter())
 logging.getLogger("uvicorn.access").disabled = True
 logging.getLogger("uvicorn.access").propagate = False
 logging.getLogger("uvicorn").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,6 +63,7 @@ async def lifespan(app: FastAPI):
     logging.getLogger("uvicorn.access").disabled = True
     logging.getLogger("uvicorn.access").propagate = False
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
     yield
 
 def createApp() -> FastAPI:
@@ -167,4 +175,4 @@ def createApp() -> FastAPI:
 app = createApp()
 
 if __name__ == "__main__":
-    uvicorn.run("Main:app", host="0.0.0.0", port=8000, reload=True, access_log=False)
+    uvicorn.run("Main:app", host="0.0.0.0", port=8000, reload=True, access_log=False, log_level="warning", log_config=LOGGING_CONFIG)
