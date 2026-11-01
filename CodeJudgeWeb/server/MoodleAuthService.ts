@@ -67,7 +67,7 @@ export class MoodleAuthService {
       });
 
       const redirectLocation = postResponse.headers.get('location') || '';
-      if (redirectLocation.includes('/login/') || redirectLocation.includes('loginredirect')) {
+      if (redirectLocation.includes('loginredirect=1')) {
         return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
       }
 
@@ -75,14 +75,12 @@ export class MoodleAuthService {
         ? postResponse.headers.getSetCookie()
         : [postResponse.headers.get('set-cookie') || ''];
       
-      if (postCookies.length > 0 && postCookies[0]) {
-        cookieHeader = this.extractCookieString(postCookies);
-      }
-
-      const postHtml = await postResponse.text();
-      if (postHtml.includes('loginerrormessage')) {
+      const hasAuthCookie = postCookies.some(c => c && c.includes('MoodleSession='));
+      if (!hasAuthCookie) {
         return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
       }
+
+      cookieHeader = this.extractCookieString(postCookies);
 
       const profileResponse = await fetch(this.profileUrl, {
         method: 'GET',
@@ -94,11 +92,8 @@ export class MoodleAuthService {
         redirect: 'manual'
       });
 
-      if (profileResponse.status === 302 || profileResponse.status === 303) {
-        const profLoc = profileResponse.headers.get('location') || '';
-        if (profLoc.includes('/login/')) {
-          return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
-        }
+      if (profileResponse.status !== 200) {
+        return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
       }
 
       const profileHtml = await profileResponse.text();

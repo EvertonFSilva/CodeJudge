@@ -22,7 +22,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : "U";
 
   return (
-    <div className="container py-4">
+    <div className="container py-4 fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary-subtle pb-3">
         <div>
           <h4 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">

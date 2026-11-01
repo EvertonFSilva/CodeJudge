@@ -114,7 +114,7 @@ export class PdfExportService {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42);
-      doc.text("1. Etapa de Compilação", margin, y);
+      doc.text("1. Compilação", margin, y);
       y += 5;
 
       doc.setFont("helvetica", "normal");
@@ -149,7 +149,7 @@ export class PdfExportService {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42);
-      doc.text("2. Etapa de Execução e Testes", margin, y);
+      doc.text("2. Execução", margin, y);
       y += 5;
 
       const rate = payload.execution.rate !== undefined && payload.execution.rate !== null
@@ -202,7 +202,7 @@ export class PdfExportService {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42);
-      doc.text("3. Diagnóstico e Boas Práticas de Código (IA)", margin, y);
+      doc.text("3. Análise do código", margin, y);
       y += 5;
 
       doc.setFont("helvetica", "normal");
@@ -223,7 +223,7 @@ export class PdfExportService {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42);
-      doc.text("4. Análise de Complexidade Assintótica e Otimizações (IA)", margin, y);
+      doc.text("4. Otimização", margin, y);
       y += 5;
 
       doc.setFont("helvetica", "normal");

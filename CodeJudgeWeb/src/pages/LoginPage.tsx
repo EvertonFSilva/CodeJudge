@@ -10,13 +10,14 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setErrorMessage("Por favor, preencha o CPF e a senha.");
+      setErrorMessage("Por favor, preencha o CPF e a senha institucional.");
       return;
     }
 
@@ -35,59 +36,59 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div
-      className="min-vh-100 d-flex flex-column justify-content-center align-items-center py-5 px-3"
-      style={{ backgroundColor: "var(--bg-main)" }}
-    >
-      <div className="dark-card shadow-lg p-4 p-md-5" style={{ maxWidth: "440px", width: "100%", borderColor: "var(--border-color)" }}>
+    <div className="login-page-wrapper">
+      <div className="login-card-container fade-in">
+        {/* Brand Header */}
         <div className="text-center mb-4">
-          <div className="d-flex justify-content-center mb-3">
-            <CodeJudgeLogo size={42} />
+          <div className="login-logo-glow mb-3">
+            <CodeJudgeLogo size={52} />
           </div>
-          <h3 className="fw-bold text-white mb-1">CodeJudge</h3>
-          <p className="text-secondary small mb-0">
+          <h2 className="login-title mb-1">CodeJudge</h2>
+          <p className="login-subtitle">
             Ambiente Integrado de Avaliação e Aprendizado com IA
           </p>
         </div>
 
-        <div
-          className="p-3 mb-4 rounded d-flex align-items-center gap-2 small"
-          style={{
-            backgroundColor: "var(--green-subtle)",
-            border: "1px solid var(--green-border)",
-            color: "#e2e8f0"
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" className="flex-shrink-0">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        {/* Institutional Notice */}
+        <div className="institutional-notice mb-4">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" className="flex-shrink-0">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
-          <div>
-            Autenticação integrada via <strong>Moodle IFF</strong>. Utilize seu CPF e senha institucional.
+          <div className="notice-text">
+            Autenticação institucional com <strong>Moodle IFF</strong>. Acesse utilizando seu CPF e senha institucional.
           </div>
         </div>
 
+        {/* Error Alert */}
         {errorMessage && (
-          <div className="alert alert-danger py-2 px-3 small d-flex align-items-center gap-2 mb-4" role="alert">
-            <i className="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0"></i>
+          <div className="error-alert-box mb-4" role="alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" className="flex-shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
             <div>{errorMessage}</div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-secondary" htmlFor="username">
-              CPF / Matrícula (Moodle IFF)
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="form-field-group mb-3">
+            <label className="field-label" htmlFor="username">
+              CPF / Matrícula
             </label>
-            <div className="input-group">
-              <span className="input-group-text dark-input text-secondary border-end-0">
-                <i className="bi bi-person"></i>
+            <div className="input-wrapper">
+              <span className="input-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
               </span>
               <input
                 type="text"
                 id="username"
-                className="form-control dark-input border-start-0"
-                placeholder="Seu CPF (apenas números)"
+                className="custom-form-input"
+                placeholder="Digite seu CPF (apenas números)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
@@ -97,49 +98,79 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="form-label small fw-semibold text-secondary" htmlFor="password">
+          <div className="form-field-group mb-4">
+            <label className="field-label" htmlFor="password">
               Senha Institucional
             </label>
-            <div className="input-group">
-              <span className="input-group-text dark-input text-secondary border-end-0">
-                <i className="bi bi-key"></i>
+            <div className="input-wrapper">
+              <span className="input-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
               </span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
-                className="form-control dark-input border-start-0"
-                placeholder="Sua senha do Moodle IFF"
+                className="custom-form-input"
+                placeholder="Digite sua senha do Moodle"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
                 autoComplete="current-password"
                 required
               />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? "Ocultar senha" : "Exibir senha"}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
-            className="main-execute-btn w-100 py-2 fw-semibold d-flex justify-content-center align-items-center gap-2"
+            className="login-submit-btn w-100"
             disabled={isLoading}
           >
             {isLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span>Validando credenciais no Moodle IFF...</span>
-              </>
+              <span className="d-flex align-items-center justify-content-center gap-2">
+                <span className="spinner-border spinner-border-sm" role="status"></span>
+                <span>Conectando ao Moodle IFF...</span>
+              </span>
             ) : (
-              <>
-                <i className="bi bi-box-arrow-in-right"></i>
+              <span className="d-flex align-items-center justify-content-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
                 <span>Entrar no CodeJudge</span>
-              </>
+              </span>
             )}
           </button>
         </form>
 
-        <div className="text-center mt-4 pt-3 border-top border-secondary-subtle text-secondary small">
-          Desenvolvido por <strong className="text-light">Everton</strong> &bull; IFF
+        {/* Footer info - clean without any white border */}
+        <div className="login-card-footer mt-4">
+          <span>Desenvolvido por </span>
+          <strong className="author-highlight">Everton</strong>
+          <span className="separator">&bull;</span>
+          <span className="institution-tag">IFF</span>
         </div>
       </div>
     </div>

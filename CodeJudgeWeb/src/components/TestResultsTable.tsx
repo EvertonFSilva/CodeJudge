@@ -55,7 +55,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
       <div className="table-responsive">
         <table className="table table-dark table-hover align-middle mb-0" style={{ backgroundColor: "transparent" }}>
           <thead>
-            <tr style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}>
+            <tr style={{ borderColor: "var(--border-color)" }}>
               <th style={{ width: "70px" }} className="text-center text-secondary small">#</th>
               <th className="text-secondary small">Entrada (stdin)</th>
               <th className="text-secondary small">Saída Esperada</th>
@@ -65,12 +65,12 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
           </thead>
           <tbody>
             {outcomes.map((outcome, idx) => (
-              <tr key={idx} style={{ borderColor: "rgba(255, 255, 255, 0.05)" }}>
+              <tr key={idx} style={{ borderColor: "var(--border-subtle)" }}>
                 <td className="text-center fw-semibold text-secondary">{idx + 1}</td>
                 <td>
                   <pre
                     className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "rgba(0,0,0,0.3)", maxHeight: "70px", overflowY: "auto" }}
+                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
                     {outcome.input || <span className="text-secondary fst-italic">(vazia)</span>}
                   </pre>
@@ -78,7 +78,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
                 <td>
                   <pre
                     className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "rgba(0,0,0,0.3)", maxHeight: "70px", overflowY: "auto" }}
+                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
                     {outcome.expected || <span className="text-secondary fst-italic">(vazia)</span>}
                   </pre>
@@ -86,7 +86,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({
                 <td>
                   <pre
                     className="mb-0 p-2 rounded text-light small font-monospace"
-                    style={{ backgroundColor: "rgba(0,0,0,0.3)", maxHeight: "70px", overflowY: "auto" }}
+                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)", maxHeight: "70px", overflowY: "auto" }}
                   >
                     {outcome.actual || <span className="text-secondary fst-italic">(vazia)</span>}
                   </pre>

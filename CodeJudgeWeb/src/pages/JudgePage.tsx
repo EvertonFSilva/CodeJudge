@@ -25,7 +25,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [availableLanguages, setAvailableLanguages] = useState<LanguageItem[]>([]);
   const [activeFileName, setActiveFileName] = useState<string>("main.c");
   const [code, setCode] = useState<string>(
-    '#include <stdio.h>\n\nint main() {\n    int a, b;\n    if (scanf("%d %d", &a, &b) == 2) {\n        printf("%d\\n", a + b);\n    }\n    return 0;\n}\n'
+    '#include <stdio.h>\n\nint main() {\n    printf("Olá, CodeJudge!\\n");\n    return 0;\n}\n'
   );
   const [statement, setStatement] = useState<string>("");
   const [mode, setMode] = useState<OperationMode>("full");
@@ -39,13 +39,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     needsCompilation: true
   });
 
-  // Test cases & file inputs
-  const [inputsFileText, setInputsFileText] = useState<string>("10 20\n-5 15");
-  const [outputsFileText, setOutputsFileText] = useState<string>("30\n10");
-  const [inputsFileName, setInputsFileName] = useState<string>("inputs.txt");
-  const [outputsFileName, setOutputsFileName] = useState<string>("outputs.txt");
-  const [hasInputFile, setHasInputFile] = useState<boolean>(true);
-  const [hasOutputFile, setHasOutputFile] = useState<boolean>(true);
+  // Optional Test cases accordion and files (initially empty and optional like the extension)
+  const [isTestsOpen, setIsTestsOpen] = useState<boolean>(false);
+  const [inputsFileText, setInputsFileText] = useState<string>("");
+  const [outputsFileText, setOutputsFileText] = useState<string>("");
+  const [inputsFileName, setInputsFileName] = useState<string | null>(null);
+  const [outputsFileName, setOutputsFileName] = useState<string | null>(null);
   const [showInputPreview, setShowInputPreview] = useState<boolean>(false);
   const [showOutputPreview, setShowOutputPreview] = useState<boolean>(false);
 
@@ -55,7 +54,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [stepAnalyzeStatus, setStepAnalyzeStatus] = useState<StepStatus>("pending");
   const [stepOptimizeStatus, setStepOptimizeStatus] = useState<StepStatus>("pending");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [processGlobalStatus, setProcessGlobalStatus] = useState<string>("Aguardando execução...");
+  const [processGlobalStatus, setProcessGlobalStatus] = useState<string>("Aguardando...");
 
   // Results
   const [compilationResult, setCompilationResult] = useState<CompilationResult | null>(null);
@@ -77,7 +76,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         const auto = LanguageDetectionService.detectFromCode(code, langs);
         setDetectedLang(auto);
       } catch {
-        // Fallback languages are already available in LanguageDetectionService
+        // Fallback default languages available
       }
     };
     fetchLanguages();
@@ -119,7 +118,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setInputsFileName(file.name);
-    setHasInputFile(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       setInputsFileText((event.target?.result as string) || "");
@@ -132,7 +130,6 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setOutputsFileName(file.name);
-    setHasOutputFile(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       setOutputsFileText((event.target?.result as string) || "");
@@ -141,8 +138,20 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     e.target.value = "";
   };
 
+  const clearInputsFile = () => {
+    setInputsFileName(null);
+    setInputsFileText("");
+    setShowInputPreview(false);
+  };
+
+  const clearOutputsFile = () => {
+    setOutputsFileName(null);
+    setOutputsFileText("");
+    setShowOutputPreview(false);
+  };
+
   const parseTestCases = (): TestCase[] => {
-    if (!hasInputFile && !hasOutputFile) return [];
+    if (!inputsFileText.trim() && !outputsFileText.trim()) return [];
 
     const inSeparator = inputsFileText.includes("---") ? "---" : "\n";
     const outSeparator = outputsFileText.includes("---") ? "---" : "\n";
@@ -180,16 +189,16 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
     setStepExecuteStatus("pending");
     setStepAnalyzeStatus("pending");
     setStepOptimizeStatus("pending");
-    setProcessGlobalStatus("Iniciando processamento...");
+    setProcessGlobalStatus("Iniciando...");
 
     try {
       const tests = parseTestCases();
 
-      // 1. COMPILATION STAGE
+      // 1. COMPILAÇÃO
       if (mode === "full" || mode === "compile") {
         if (detectedLang.needsCompilation) {
           setStepCompileStatus("running");
-          setProcessGlobalStatus("Compilando código-fonte...");
+          setProcessGlobalStatus("Compilação em andamento...");
           const compRes = await CodeJudgeService.compile(detectedLang.key, code, statement);
           setCompilationResult(compRes);
 
@@ -205,28 +214,28 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         }
       }
 
-      // 2. EXECUTION STAGE
+      // 2. EXECUÇÃO
       if (mode === "full" || mode === "execute") {
         setStepExecuteStatus("running");
-        setProcessGlobalStatus("Executando casos de teste em sandbox...");
+        setProcessGlobalStatus("Execução em andamento...");
         const execRes = await CodeJudgeService.execute(detectedLang.key, code, statement, tests);
         setExecutionResult(execRes);
         setStepExecuteStatus(execRes.success ? "success" : "failed");
       }
 
-      // 3. AI ANALYSIS STAGE
+      // 3. ANÁLISE DO CÓDIGO
       if (mode === "full" || mode === "analyze") {
         setStepAnalyzeStatus("running");
-        setProcessGlobalStatus("Consultando IA para análise de boas práticas...");
+        setProcessGlobalStatus("Análise do código em andamento...");
         const anaRes = await CodeJudgeService.analyze(detectedLang.key, code, statement);
         setAnalysisResult(anaRes);
         setStepAnalyzeStatus(anaRes.success ? "success" : "failed");
       }
 
-      // 4. AI OPTIMIZATION STAGE
+      // 4. OTIMIZAÇÃO
       if (mode === "full" || mode === "optimize") {
         setStepOptimizeStatus("running");
-        setProcessGlobalStatus("Consultando IA para análise de complexidade assintótica...");
+        setProcessGlobalStatus("Otimização em andamento...");
         const optRes = await CodeJudgeService.optimize(detectedLang.key, code, statement);
         setOptimizationResult(optRes);
         setStepOptimizeStatus(optRes.success ? "success" : "failed");
@@ -277,15 +286,18 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
 
     if (executionResult) {
       md += `## 2. Execução\n`;
-      md += `Taxa de Acerto: **${executionResult.rate ?? "N/A"}%**\n\n`;
+      md += `Taxa de Acerto: **${executionResult.rate !== null && executionResult.rate !== undefined ? `${executionResult.rate}%` : "Executado"}**\n`;
+      if (executionResult.rawOutput) {
+        md += `\`\`\`text\n${executionResult.rawOutput}\n\`\`\`\n\n`;
+      }
     }
 
     if (analysisResult?.feedback) {
-      md += `## 3. Diagnóstico e Boas Práticas (IA)\n\n${analysisResult.feedback}\n\n`;
+      md += `## 3. Análise do código\n\n${analysisResult.feedback}\n\n`;
     }
 
     if (optimizationResult?.recommendations) {
-      md += `## 4. Otimização Assintótica (IA)\n\n${optimizationResult.recommendations}\n\n`;
+      md += `## 4. Otimização\n\n${optimizationResult.recommendations}\n\n`;
     }
 
     return md;
@@ -294,7 +306,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const hasAnyResult = Boolean(compilationResult || executionResult || analysisResult || optimizationResult);
 
   return (
-    <div className="container-fluid px-3 px-md-4 py-4">
+    <div className="container-fluid px-3 px-md-4 py-4 fade-in">
       {/* Top Bar with Title and Prominent PDF Export Button */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom border-secondary-subtle pb-3">
         <div>
@@ -302,10 +314,10 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
-            Bancada de Processamento e Avaliação
+            Bancada de Processamento
           </h4>
           <p className="text-secondary small mb-0">
-            Compilação, execução em sandbox com gabaritos e diagnósticos formativos com Inteligência Artificial.
+            Compilação, execução, análise do código e otimização automatizada com IA.
           </p>
         </div>
 
@@ -329,7 +341,15 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
       </div>
 
       {errorMessage && (
-        <div className="alert alert-danger py-2 px-3 small d-flex align-items-center gap-2 mb-4" role="alert">
+        <div
+          className="p-3 rounded small d-flex align-items-center gap-2 mb-4"
+          style={{
+            backgroundColor: "rgba(239, 68, 68, 0.12)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
+            color: "#fca5a5"
+          }}
+          role="alert"
+        >
           <i className="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0"></i>
           <div>{errorMessage}</div>
         </div>
@@ -370,8 +390,8 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <option value="full">Processamento Completo (Recomendado)</option>
                   <option value="compile">Apenas Compilar</option>
                   <option value="execute">Apenas Executar</option>
-                  <option value="analyze">Apenas Analisar Código</option>
-                  <option value="optimize">Apenas Otimizar Código</option>
+                  <option value="analyze">Apenas Análise do código</option>
+                  <option value="optimize">Apenas Otimização</option>
                 </select>
               </div>
 
@@ -405,12 +425,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
 
             {/* Problem Statement (Optional) */}
-            <div className="p-3 border-bottom border-secondary-subtle" style={{ backgroundColor: "rgba(0,0,0,0.2)" }}>
+            <div className="p-3 border-bottom border-secondary-subtle" style={{ backgroundColor: "var(--bg-input)" }}>
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <label className="form-label small fw-semibold text-secondary mb-0">
                   Enunciado da Questão
                 </label>
-                <span className="badge bg-secondary-subtle text-secondary small">Opcional</span>
+                <span className="text-muted small">Opcional</span>
               </div>
               <textarea
                 className="form-control dark-textarea small"
@@ -427,7 +447,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               <textarea
                 className="code-editor-area"
                 rows={15}
-                placeholder="// Digite ou cole seu código-fonte aqui... A linguagem será identificada automaticamente!"
+                placeholder="// Digite ou cole seu código-fonte aqui... A linguagem é identificada automaticamente!"
                 value={code}
                 onChange={(e) => handleCodeChange(e.target.value)}
                 disabled={isProcessing}
@@ -461,12 +481,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                       {mode === "full"
                         ? "Processar Código (Executar Tudo)"
                         : mode === "compile"
-                        ? "Compilar Código"
+                        ? "Compilar"
                         : mode === "execute"
-                        ? "Executar Casos de Teste"
+                        ? "Executar"
                         : mode === "analyze"
-                        ? "Analisar Código (IA)"
-                        : "Otimizar Código (IA)"}
+                        ? "Análise do código"
+                        : "Otimização"}
                     </span>
                   </>
                 )}
@@ -474,98 +494,161 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Test cases panel (inputs.txt and outputs.txt) */}
+          {/* Optional Test Cases Accordion (inputs.txt and outputs.txt) */}
           {(mode === "full" || mode === "execute") && (
-            <div className="dark-card mb-4">
-              <div className="dark-card-header d-flex justify-content-between align-items-center">
+            <div className="optional-accordion">
+              <button
+                type="button"
+                className="accordion-header-btn"
+                onClick={() => setIsTestsOpen(!isTestsOpen)}
+              >
                 <div className="d-flex align-items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                   </svg>
-                  <span className="fw-semibold text-light small">Arquivos de Teste (inputs.txt e outputs.txt)</span>
+                  <span>Entradas e Saídas</span>
+                  <span className="text-secondary small fw-normal">(Opcional)</span>
                 </div>
-                <span className="badge bg-secondary-subtle text-secondary small">Opcional</span>
-              </div>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={`chevron-icon ${isTestsOpen ? "open" : ""}`}
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
 
-              <div className="dark-card-body">
-                <div className="row g-3">
-                  {/* Inputs */}
-                  <div className="col-md-6">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span className="small text-secondary fw-semibold">Entradas ({inputsFileName}):</span>
-                      <div className="d-flex gap-2">
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm p-0 text-decoration-none text-success"
-                          onClick={() => setShowInputPreview(!showInputPreview)}
-                        >
-                          {showInputPreview ? "Ocultar" : "Ver conteúdo"}
-                        </button>
-                        <input
-                          type="file"
-                          ref={inputFileRef}
-                          className="d-none"
-                          onChange={handleInputsUpload}
-                          accept=".txt"
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm p-0 text-decoration-none text-light"
+              {isTestsOpen && (
+                <div className="p-3 border-top border-secondary-subtle">
+                  <div className="optional-note">
+                    Os arquivos são opcionais. Forneça arquivos <code>.txt</code> se desejar simular entradas de terminal e comparar com o gabarito.
+                  </div>
+
+                  <div className="row g-3">
+                    {/* Inputs */}
+                    <div className="col-md-6">
+                      <div className="mb-2">
+                        <span className="small text-secondary fw-semibold">Arquivo de Entrada (.txt)</span>
+                      </div>
+
+                      {inputsFileName ? (
+                        <div className="file-badge-chip">
+                          <span className="text-white font-monospace small">{inputsFileName}</span>
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-link btn-sm p-0 text-success text-decoration-none"
+                              onClick={() => setShowInputPreview(!showInputPreview)}
+                            >
+                              {showInputPreview ? "Ocultar" : "Ver conteúdo"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-link btn-sm p-0 text-danger text-decoration-none"
+                              onClick={clearInputsFile}
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="dropzone-box"
                           onClick={() => inputFileRef.current?.click()}
                         >
-                          Carregar .txt
-                        </button>
-                      </div>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-1 d-block mx-auto">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <span>Selecionar ou soltar arquivo de entrada</span>
+                        </div>
+                      )}
+
+                      <input
+                        type="file"
+                        ref={inputFileRef}
+                        className="d-none"
+                        onChange={handleInputsUpload}
+                        accept=".txt"
+                      />
+
+                      {showInputPreview && (
+                        <textarea
+                          className="form-control dark-textarea font-monospace small mt-2"
+                          rows={4}
+                          value={inputsFileText}
+                          onChange={(e) => setInputsFileText(e.target.value)}
+                          placeholder="Entradas do programa (stdin)"
+                        ></textarea>
+                      )}
                     </div>
 
-                    <textarea
-                      className="form-control dark-textarea font-monospace small"
-                      rows={showInputPreview ? 5 : 2}
-                      value={inputsFileText}
-                      onChange={(e) => setInputsFileText(e.target.value)}
-                      placeholder="Entradas do programa (stdin)"
-                    ></textarea>
-                  </div>
+                    {/* Outputs */}
+                    <div className="col-md-6">
+                      <div className="mb-2">
+                        <span className="small text-secondary fw-semibold">Gabarito de Saída (.txt)</span>
+                      </div>
 
-                  {/* Outputs */}
-                  <div className="col-md-6">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span className="small text-secondary fw-semibold">Gabarito ({outputsFileName}):</span>
-                      <div className="d-flex gap-2">
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm p-0 text-decoration-none text-success"
-                          onClick={() => setShowOutputPreview(!showOutputPreview)}
-                        >
-                          {showOutputPreview ? "Ocultar" : "Ver conteúdo"}
-                        </button>
-                        <input
-                          type="file"
-                          ref={outputFileRef}
-                          className="d-none"
-                          onChange={handleOutputsUpload}
-                          accept=".txt"
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm p-0 text-decoration-none text-light"
+                      {outputsFileName ? (
+                        <div className="file-badge-chip">
+                          <span className="text-white font-monospace small">{outputsFileName}</span>
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-link btn-sm p-0 text-success text-decoration-none"
+                              onClick={() => setShowOutputPreview(!showOutputPreview)}
+                            >
+                              {showOutputPreview ? "Ocultar" : "Ver conteúdo"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-link btn-sm p-0 text-danger text-decoration-none"
+                              onClick={clearOutputsFile}
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="dropzone-box"
                           onClick={() => outputFileRef.current?.click()}
                         >
-                          Carregar .txt
-                        </button>
-                      </div>
-                    </div>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-1 d-block mx-auto">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <span>Selecionar ou soltar gabarito esperado</span>
+                        </div>
+                      )}
 
-                    <textarea
-                      className="form-control dark-textarea font-monospace small"
-                      rows={showOutputPreview ? 5 : 2}
-                      value={outputsFileText}
-                      onChange={(e) => setOutputsFileText(e.target.value)}
-                      placeholder="Saídas esperadas (stdout)"
-                    ></textarea>
+                      <input
+                        type="file"
+                        ref={outputFileRef}
+                        className="d-none"
+                        onChange={handleOutputsUpload}
+                        accept=".txt"
+                      />
+
+                      {showOutputPreview && (
+                        <textarea
+                          className="form-control dark-textarea font-monospace small mt-2"
+                          rows={4}
+                          value={outputsFileText}
+                          onChange={(e) => setOutputsFileText(e.target.value)}
+                          placeholder="Saídas esperadas (stdout)"
+                        ></textarea>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -576,7 +659,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           <div className="stepper-card">
             <div className="stepper-header">
               <span>Progresso das Etapas</span>
-              <span className="text-secondary font-monospace">{processGlobalStatus}</span>
+              <span className="text-secondary font-monospace small">{processGlobalStatus}</span>
             </div>
 
             <div className="stepper-list">
@@ -604,7 +687,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                   </svg>
-                  2. Execução de Testes
+                  2. Execução
                 </span>
                 <span className={`step-status-tag ${stepExecuteStatus}`}>
                   {stepExecuteStatus === "pending"
@@ -623,7 +706,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
-                  3. Análise de Código (IA)
+                  3. Análise do código
                 </span>
                 <span className={`step-status-tag ${stepAnalyzeStatus}`}>
                   {stepAnalyzeStatus === "pending"
@@ -641,7 +724,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                   </svg>
-                  4. Otimização Assintótica (IA)
+                  4. Otimização
                 </span>
                 <span className={`step-status-tag ${stepOptimizeStatus}`}>
                   {stepOptimizeStatus === "pending"
@@ -663,7 +746,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 <div>
                   <div className="fw-bold text-white fs-6">Processamento Concluído</div>
                   <div className="text-secondary small">
-                    O relatório técnico está pronto. Escolha como deseja visualizá-lo:
+                    O relatório foi gerado. Escolha como deseja visualizá-lo:
                   </div>
                 </div>
               </div>
@@ -691,7 +774,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
-                  <span>Gerar Relatório (.pdf)</span>
+                  <span>Visualizar (.pdf)</span>
                 </button>
               </div>
             </div>
@@ -716,13 +799,13 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Compilation Logs Card */}
+          {/* 1. Compilação Result */}
           {compilationResult && (
             <div className="dark-card mt-4 mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
-                <span className="fw-bold text-light small">1. Logs de Compilação</span>
+                <span className="fw-bold text-light small">1. Compilação</span>
                 <span className={`badge ${compilationResult.success ? "bg-success" : "bg-danger"}`}>
-                  {compilationResult.success ? "Compilado com Sucesso" : "Erro Sintático"}
+                  {compilationResult.success ? "Sucesso" : "Erro Sintático"}
                 </span>
               </div>
               <div className="dark-card-body">
@@ -730,7 +813,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 {compilationResult.logs && (
                   <pre
                     className="p-3 rounded text-danger-emphasis font-monospace small mb-0"
-                    style={{ backgroundColor: "rgba(0,0,0,0.4)", maxHeight: "200px", overflowY: "auto" }}
+                    style={{ backgroundColor: "var(--bg-input)", maxHeight: "200px", overflowY: "auto" }}
                   >
                     {compilationResult.logs}
                   </pre>
@@ -739,18 +822,43 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Test Execution Outcomes */}
+          {/* 2. Execução Result */}
           {executionResult && (
             <div className="mt-4">
-              <TestResultsTable
-                outcomes={executionResult.outputs || []}
-                rate={executionResult.rate}
-                durationMs={executionResult.durationMs}
-              />
+              {executionResult.outputs && executionResult.outputs.length > 0 ? (
+                <TestResultsTable
+                  outcomes={executionResult.outputs}
+                  rate={executionResult.rate}
+                  durationMs={executionResult.durationMs}
+                />
+              ) : (
+                <div className="dark-card mb-4">
+                  <div className="dark-card-header d-flex justify-content-between align-items-center">
+                    <span className="fw-bold text-light small">2. Execução</span>
+                    <span className={`badge ${executionResult.success ? "bg-success" : "bg-danger"}`}>
+                      {executionResult.success ? "Sucesso" : "Falha"}
+                    </span>
+                  </div>
+                  <div className="dark-card-body">
+                    <p className="mb-2 text-light small">{executionResult.message}</p>
+                    {executionResult.rawOutput && (
+                      <div>
+                        <span className="text-secondary small d-block mb-1">Saída do Processo:</span>
+                        <pre
+                          className="p-3 rounded text-light font-monospace small mb-0"
+                          style={{ backgroundColor: "var(--bg-input)", maxHeight: "200px", overflowY: "auto" }}
+                        >
+                          {executionResult.rawOutput}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* AI Quality Feedback */}
+          {/* 3. Análise do código Result */}
           {analysisResult && (
             <div className="dark-card mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -759,7 +867,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
-                  <span className="fw-bold text-light small">3. Diagnóstico e Boas Práticas (IA)</span>
+                  <span className="fw-bold text-light small">3. Análise do código</span>
                 </div>
                 {analysisResult.durationMs !== undefined && analysisResult.durationMs !== null && (
                   <span className="badge bg-secondary-subtle text-secondary small">
@@ -768,12 +876,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                 )}
               </div>
               <div className="dark-card-body">
-                <MarkdownRenderer content={analysisResult.feedback || "Sem feedback disponível."} />
+                <MarkdownRenderer content={analysisResult.feedback || "Sem análise disponível."} />
               </div>
             </div>
           )}
 
-          {/* AI Optimization Feedback */}
+          {/* 4. Otimização Result */}
           {optimizationResult && (
             <div className="dark-card mb-4">
               <div className="dark-card-header d-flex justify-content-between align-items-center">
@@ -781,7 +889,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                   </svg>
-                  <span className="fw-bold text-light small">4. Otimização Assintótica (IA)</span>
+                  <span className="fw-bold text-light small">4. Otimização</span>
                 </div>
                 {optimizationResult.durationMs !== undefined && optimizationResult.durationMs !== null && (
                   <span className="badge bg-secondary-subtle text-secondary small">
@@ -791,7 +899,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               </div>
               <div className="dark-card-body">
                 <MarkdownRenderer
-                  content={optimizationResult.recommendations || "Sem recomendações disponíveis."}
+                  content={optimizationResult.recommendations || "Sem recomendações de otimização disponíveis."}
                 />
               </div>
             </div>
@@ -807,7 +915,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
               </div>
               <h6 className="fw-bold text-white">Nenhum Processamento Realizado</h6>
               <p className="text-secondary small mb-0">
-                Clique no botão <strong>Processar Código (Executar Tudo)</strong> para compilar, executar contra os gabaritos e receber o parecer da IA.
+                Clique no botão <strong>Processar Código (Executar Tudo)</strong> para iniciar as etapas.
               </p>
             </div>
           )}

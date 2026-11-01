@@ -56,7 +56,7 @@ export const PromptsPage: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid px-3 px-md-4 py-4">
+    <div className="container-fluid px-3 px-md-4 py-4 fade-in">
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom border-secondary-subtle pb-3">
         <div>
           <h4 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">
