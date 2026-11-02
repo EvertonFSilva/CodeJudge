@@ -11,32 +11,35 @@ O ecossistema é estruturado em três módulos independentes e perfeitamente int
 2. [Arquitetura do Backend (CodeJudgeApp)](#arquitetura-do-backend-codejudgeapp)
 3. [Aplicação Web Unificada (CodeJudgeWeb)](#aplicação-web-unificada-codejudgeweb)
 4. [Extensão para Visual Studio Code (CodeJudgeExtension)](#extensão-para-visual-studio-code-codejudgeextension)
-5. [Padrões de Projeto Aplicados](#padrões-de-projeto-aplicados)
-6. [Suíte de Exemplos para Testes (Examples)](#suíte-de-exemplos-para-testes-examples)
-7. [Pré-requisitos](#pré-requisitos)
-8. [Instalação e Configuração do Ollama (IA Local Gratuita)](#instalação-e-configuração-do-ollama-ia-local-gratuita)
-9. [Como Executar](#como-executar)
-10. [Documentação dos Endpoints da API](#documentação-dos-endpoints-da-api)
-11. [Configuração Dinâmica (Configuration.json)](#configuração-dinâmica-configurationjson)
-12. [Diretrizes de Feedback e Aprendizado](#diretrizes-de-feedback-e-aprendizado)
-13. [Autor e Licença](#autor-e-licença)
+5. [Aplicação Desktop Nativa Windows (CodeJudgeDesktop)](#aplicação-desktop-nativa-windows-codejudgedesktop)
+6. [Padrões de Projeto Aplicados](#padrões-de-projeto-aplicados)
+7. [Suíte de Exemplos para Testes (Examples)](#suíte-de-exemplos-para-testes-examples)
+8. [Pré-requisitos](#pré-requisitos)
+9. [Instalação e Configuração do Ollama (IA Local Gratuita)](#instalação-e-configuração-do-ollama-ia-local-gratuita)
+10. [Como Executar](#como-executar)
+11. [Documentação dos Endpoints da API](#documentação-dos-endpoints-da-api)
+12. [Configuração Dinâmica (Configuration.json)](#configuração-dinâmica-configurationjson)
+13. [Diretrizes de Feedback e Aprendizado](#diretrizes-de-feedback-e-aprendizado)
+14. [Autor e Licença](#autor-e-licença)
 
 ---
 
 ## Visão Geral dos Módulos
 
-O repositório é composto por 3 módulos desacoplados:
+O repositório é composto por 4 módulos desacoplados:
 
 ```
 CodeJudge/
 ├── CodeJudgeApp/          # API Backend em Python (FastAPI) rodando na porta 8000
 ├── CodeJudgeWeb/          # Aplicação Web unificada (React 18 + Express + Bootstrap 5) na porta 5000
-└── CodeJudgeExtension/    # Extensão oficial para Visual Studio Code (TypeScript)
+├── CodeJudgeExtension/    # Extensão oficial para Visual Studio Code (TypeScript)
+└── CodeJudgeDesktop/      # Aplicação Desktop Nativa Windows (C# .NET 8 WPF + WebView2 + Inno Setup)
 ```
 
 - **`CodeJudgeApp/`**: Backend em FastAPI estruturado em Clean Architecture. Realiza o gerenciamento seguro de compilação, execução em sandbox de disco isolado, análise técnica com IA e geração de diagnósticos formativos (Google Gemini ou Ollama local).
 - **`CodeJudgeWeb/`**: Sistema Web moderno que unifica a autenticação institucional no **Moodle IFF**, bancada de processamento de código com detecção automática de linguagens, suporte a casos de teste com arquivos `.txt`, catálogo de prompts e geração de relatórios técnicos em PDF.
 - **`CodeJudgeExtension/`**: Extensão para VS Code com interface Webview lateral nativa, detecção inteligente de linguagem do arquivo ativo no editor, execução de testes automatizados e visualização de relatórios.
+- **`CodeJudgeDesktop/`**: Aplicação Desktop executável nativa para Windows (`.exe`), desenvolvida em **C# (.NET 8 WPF)** com integração com o **Microsoft Edge WebView2**, supervisão autônoma de ciclo de vida do backend local (`BackendSupervisor`) e instalador profissional em padrão wizard (`CodeJudge-v2.0.0-Setup.exe`).
 
 ---
 
@@ -181,6 +184,48 @@ A extensão para o VS Code transforma o editor em uma bancada de aprendizado int
 - **Suporte Integral a Múltiplos Prompts e Resiliência Local:**
   - Timeout de comunicação calibrado para 300 segundos, permitindo a execução completa e sequencial de todas as baterias de prompts sem interrupções prematuras.
   - Normalização de cercas de código em Markdown (`normalizeMarkdownCodeFences`) integrada ao pipeline de geração de relatórios, garantindo que o preview nativo do VS Code e o PDFKit processem perfeitamente blocos de código com identificadores de linguagem (`java`, `python`, `c`, `cpp`).
+
+---
+
+## Aplicação Desktop Nativa Windows (CodeJudgeDesktop)
+
+O **CodeJudgeDesktop** complementa os módulos Web e Extensão fornecendo uma experiência desktop completa, instalável e nativa para Windows no formato de uma **IDE moderna de desenvolvimento e avaliação pedagógica**, eliminando a dependência de scripts manuais de inicialização ou terminais abertos para usuários finais.
+
+### Características do CodeJudge Desktop
+
+- **Executável Nativo Compilado em C# (.NET 8 WPF):**
+  - Desenvolvido em **C#** com **Windows Presentation Foundation (WPF)** e arquitetura 64-bit (`win-x64`).
+  - Estrutura de publicação em **Clean Folder** com manifesto de aplicação (`app.manifest` com `asInvoker`), metadados completos de assembly (IFF) e separação de DLLs assinadas, eliminando por completo falsos positivos de antivírus (Windows Defender ML heuristics).
+- **Interface Gráfica no Estilo IDE Profissional:**
+  - **Editor de Código Completo:** Gutter com numeração de linhas sincronizada, fontes monoespaçadas, suporte a indentação com a tecla `Tab` (4 espaços sem perda de foco) e atalho de execução `Ctrl + Enter`.
+  - **Abas de Arquivos e Presets de Linguagem:** Botões de acesso rápido com templates limpos para **Java**, **Python**, **C** e **C++**, além de seletor dos 4 exercícios de exemplo integrados.
+  - **Gaveta Inferior Multiuso (Console & Runner):**
+    - 📟 *Terminal / Saída:* Exibição de logs do compilador e saída de execução formatados como terminal escuro.
+    - 🧪 *Casos de Teste:* Upload/edição de `inputs.txt` e `outputs.txt` com tabela comparativa de veredito.
+    - 📝 *Enunciado da Tarefa:* Área dedicada para contextualização do problema.
+  - **Bancada Lateral de Avaliação & IA (Idêntica à Extensão do VS Code):** Cartão de arquivo ativo, dropdown estilizado de modos de operação, botão principal de execução em degradê esmeralda, stepper de 4 etapas em tempo real, diagnóstico socrático de erros, pareceres qualitativos, análise assintótica de complexidade e bloco de código otimizado com injeção direta no editor (*Aplicar no Editor*).
+  - **Barra de Status Inferior:** Métricas de arquivo (linha, coluna, caracteres, codificação), status de integridade do backend (porta 8000), motor de IA ativo e botão de verificação de versão.
+- **Sistema de Notificação e Atualização Obrigatória (GitHub):**
+  - Integração contínua com o repositório oficial no GitHub (`EvertonFSilva/CodeJudge`).
+  - Monitora releases e `version.json`. Ao detectar uma nova versão remota superior à instalada (`v2.0.0`), exibe um **modal popup bloqueante** que detalha o changelog e exige que o usuário realize o download da nova versão no GitHub antes de prosseguir, garantindo integridade e conformidade de segurança.
+- **Integração com Microsoft Edge WebView2 Runtime:**
+  - Carrega a bancada interativa de forma ultrarrápida diretamente do disco local através de mapeamento virtual seguro (`https://app.codejudge.local`).
+  - Isolamento de cache e dados de sessão na pasta local `%LOCALAPPDATA%\CodeJudge\WebView2Data`.
+- **Supervisão Inteligente de Backend (`BackendSupervisor`):**
+  - Monitora continuamente a disponibilidade da API do CodeJudge na porta `8000` (`/health`).
+  - Se o backend estiver offline, tenta inicializar automaticamente o motor Python em segundo plano de forma oculta (sem abrir janelas pretas de console).
+  - Encerra de forma limpa qualquer processo filho iniciado ao fechar a janela do aplicativo.
+  - Indicador visual no cabeçalho: verde (*Backend Online*), amarelo (*Iniciando*) ou vermelho (*Offline* com botão para reconexão manual).
+
+### Instalador Oficial do Windows (`CodeJudge-v2.0.0-Setup.exe`)
+
+Gerado com o compilador **Inno Setup 6**, o instalador oferece um assistente clássico passo a passo (*Wizard*):
+1. **Tela de Boas-Vindas:** Apresentação visual e identificação institucional do IFF.
+2. **Termos de Uso e Licença de Software Acadêmico:** Exigência de leitura e aceite dos termos formais de licença de software educacional antes de prosseguir.
+3. **Seleção de Pasta de Instalação:** Padrão em `C:\Program Files\CodeJudge` ou pasta de preferência do usuário com privilégios adequados.
+4. **Criação de Atalhos:** Opção de criar ícones na **Área de Trabalho** e grupo no **Menu Iniciar**.
+5. **Instalação e Desinstalador Nativo:** Registra o desinstalador oficial no Windows (*Configurações > Aplicativos > Aplicativos Instalados*), permitindo a remoção limpa e completa a qualquer momento.
+6. **Conclusão:** Opção de iniciar o CodeJudge Desktop imediatamente após a conclusão da instalação.
 
 ---
 
@@ -372,6 +417,34 @@ npm run compile
 1. Abra a pasta `CodeJudgeExtension` no VS Code.
 2. Pressione **F5** para iniciar o modo **Extension Development Host**.
 3. Abra qualquer arquivo de código e utilize o painel lateral do **CodeJudge**.
+
+### 4. Executando e Instalando a Aplicação Desktop (CodeJudgeDesktop)
+
+#### Opção A: Executar o Instalador Oficial (.exe)
+Basta dar um duplo clique no instalador gerado:
+```
+CodeJudge/CodeJudgeDesktop/Installer/Output/CodeJudge-v2.0.0-Setup.exe
+```
+Siga o assistente de instalação clássico (*Avançar > Aceitar Termos > Selecionar Diretório > Criar Atalhos > Instalar*). O CodeJudge criará os atalhos na Área de Trabalho e no Menu Iniciar.
+
+#### Opção B: Executar Diretamente o Binário Standalone
+Se preferir executar sem instalar:
+```
+CodeJudge/CodeJudgeDesktop/publish/CodeJudge.exe
+```
+
+#### Opção C: Compilação e Empacotamento do Projeto C# (Desenvolvedor)
+Para recompilar o executável e o instalador a partir do código-fonte:
+```powershell
+cd CodeJudge/CodeJudgeDesktop
+
+# 1. Compilar e publicar a versão standalone do C# (.NET 8)
+dotnet publish CodeJudgeDesktop.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
+
+# 2. Gerar o instalador oficial via Inno Setup Compiler
+& "C:\Users\evert\AppData\Local\Programs\Inno Setup 6\ISCC.exe" Installer\CodeJudgeSetup.iss
+```
+O instalador será gerado em `Installer/Output/CodeJudge-v2.0.0-Setup.exe`.
 
 ---
 

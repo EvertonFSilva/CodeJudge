@@ -28,6 +28,14 @@ node_modules/
 .vscode-test/
 *.vsix
 
+# .NET / C#
+bin/
+obj/
+publish/
+*.user
+*.suo
+CodeJudgeDesktop/Installer/Output/
+
 # OS / Editor
 .DS_Store
 Thumbs.db

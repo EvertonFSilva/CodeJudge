@@ -1,0 +1,42 @@
+================================================================================
+TERMOS DE USO E LICENÇA DE SOFTWARE ACADÊMICO
+CODEJUDGE - PLATAFORMA DE AVALIAÇÃO DE CÓDIGO & ASSISTÊNCIA COM IA
+Instituto Federal Fluminense (IFF)
+================================================================================
+
+1. TERMOS DE LICENÇA E CONCESSÃO DE USO
+O software CodeJudge é disponibilizado para fins acadêmicos, pedagógicos e de
+pesquisa aplicada pelo Instituto Federal Fluminense (IFF).
+
+Ao instalar, copiar ou utilizar este software, você concorda em cumprir integralmente
+os termos e condições deste termo de licença.
+
+2. FINALIDADE ACADÊMICA E PEDAGÓGICA
+O CodeJudge foi desenvolvido para avaliação automatizada de códigos-fonte,
+execução de baterias de testes com entrada/saída padronizadas e diagnóstico
+educacional assistido por Inteligência Artificial (Ollama / IA Generativa).
+
+3. REQUISITOS DO SISTEMA
+- Sistema Operacional: Microsoft Windows 10 (versão 1809 ou superior) ou Windows 11 (64-bit).
+- Microsoft Edge WebView2 Runtime (geralmente pré-instalado no Windows 10/11).
+- Python 3.10 ou superior (para execução do motor backend CodeJudgeApp e testes locais).
+- Compiladores das linguagens desejadas (GCC/G++ para C/C++, JDK para Java, Python 3).
+- (Opcional) Ollama instalado localmente com modelos como llama3:latest ou deepseek-coder
+  para geração de análises inteligentes e tutoria automatizada de código.
+
+4. POLÍTICA DE PRIVACIDADE E DADOS LOCAIS
+O CodeJudge preza pela privacidade acadêmica e segurança dos estudantes. A execução
+de código e a análise por meio de modelos locais (Ollama) ocorrem integralmente no
+ambiente local do usuário, sem transmissão não autorizada de dados para servidores
+externos de terceiros.
+
+5. ISENÇÃO DE RESPONSABILIDADE (DISCLAIMER)
+ESTE SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRA" ("AS IS"), SEM GARANTIAS DE
+QUALQUER TIPO, EXPRESSAS OU IMPLÍCITAS. EM NENHUMA HIPÓTESE OS AUTORES OU O INSTITUTO
+FEDERAL FLUMINENSE SERÃO RESPONSÁVEIS POR QUAISQUER DANOS INDIRETOS, INCIDENTAIS OU
+CONSEQUENCIAIS DECORRENTES DO USO OU DA IMPOSSIBILIDADE DE USO DESTE SOFTWARE.
+
+6. CONTATO E SUPORTE
+Desenvolvido por Everton (IFF). Projeto particular de TCC do IFF.
+Repositório: https://github.com/EvertonFSilva/CodeJudge
+================================================================================

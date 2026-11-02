@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "name": "CodeJudge IDE & Avaliação",
+  "minRequiredVersion": "2.0.0",
+  "releaseDate": "2026-11-02",
+  "downloadUrl": "https://github.com/EvertonFSilva/CodeJudge/releases/latest",
+  "mandatory": true,
+  "changelog": [
+    "Nova interface de IDE completa com editor de código, gutter com numeração de linhas e console integrado.",
+    "Bancada lateral de avaliação pedagógica e diagnósticos com IA no mesmo padrão da extensão do VS Code.",
+    "Sistema inteligente de verificação de versões via GitHub com notificação de atualização obrigatória.",
+    "Compilação nativa em C# .NET 8 WPF ajustada contra falsos positivos de antivírus.",
+    "Suporte a execução com casos de teste (inputs.txt e outputs.txt) e exportação em PDF institucional (IFF)."
+  ]
+}
