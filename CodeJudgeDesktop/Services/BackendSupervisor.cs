@@ -13,6 +13,10 @@ namespace CodeJudgeDesktop.Services
         private Process? _backendProcess;
         private CancellationTokenSource? _monitorCts;
         private bool _isDisposed;
+        private bool _isStarting;
+        private DateTime _lastStartAttempt = DateTime.MinValue;
+        private static string? _cachedPythonExe;
+        private static string? _cachedMainPyPath;
 
         public event Action<bool, string>? StatusChanged;
 
@@ -30,11 +34,16 @@ namespace CodeJudgeDesktop.Services
                 while (!token.IsCancellationRequested && !_isDisposed)
                 {
                     bool ok = await CheckHealthAsync();
-                    if (!ok)
+                    if (!ok && !_isStarting)
                     {
-                        await TryStartBackendAsync();
+                        var timeSinceLast = DateTime.UtcNow - _lastStartAttempt;
+                        if (timeSinceLast.TotalSeconds >= 15)
+                        {
+                            _lastStartAttempt = DateTime.UtcNow;
+                            await TryStartBackendAsync();
+                        }
                     }
-                    await Task.Delay(2000, token).ContinueWith(_ => { });
+                    await Task.Delay(4000, token).ContinueWith(_ => { });
                 }
             }, token);
         }
@@ -76,20 +85,21 @@ namespace CodeJudgeDesktop.Services
                 return true;
             }
 
-            string? mainPyPath = LocateMainPy();
-            if (string.IsNullOrEmpty(mainPyPath) || !File.Exists(mainPyPath))
-            {
-                return false;
-            }
-
-            string? pythonExe = LocatePythonExe();
-            if (string.IsNullOrEmpty(pythonExe))
-            {
-                return false;
-            }
-
+            _isStarting = true;
             try
             {
+                string? mainPyPath = LocateMainPy();
+                if (string.IsNullOrEmpty(mainPyPath) || !File.Exists(mainPyPath))
+                {
+                    return false;
+                }
+
+                string? pythonExe = LocatePythonExe();
+                if (string.IsNullOrEmpty(pythonExe))
+                {
+                    return false;
+                }
+
                 string backendDir = Path.GetDirectoryName(mainPyPath)!;
                 var psi = new ProcessStartInfo
                 {
@@ -103,17 +113,26 @@ namespace CodeJudgeDesktop.Services
                 };
 
                 _backendProcess = Process.Start(psi);
-                await Task.Delay(1500);
+                await Task.Delay(2000);
                 return await CheckHealthAsync();
             }
             catch
             {
                 return false;
             }
+            finally
+            {
+                _isStarting = false;
+            }
         }
 
         private static string? LocateMainPy()
         {
+            if (_cachedMainPyPath != null && File.Exists(_cachedMainPyPath))
+            {
+                return _cachedMainPyPath;
+            }
+
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             string[] candidates = new[]
             {
@@ -127,6 +146,7 @@ namespace CodeJudgeDesktop.Services
             {
                 if (File.Exists(path))
                 {
+                    _cachedMainPyPath = path;
                     return path;
                 }
             }
@@ -135,6 +155,11 @@ namespace CodeJudgeDesktop.Services
 
         private static string? LocatePythonExe()
         {
+            if (_cachedPythonExe != null)
+            {
+                return _cachedPythonExe;
+            }
+
             string[] candidates = new[] { "python", "python3", "py" };
             foreach (var cmd in candidates)
             {
@@ -153,7 +178,11 @@ namespace CodeJudgeDesktop.Services
                     if (p != null)
                     {
                         p.WaitForExit(1500);
-                        if (p.ExitCode == 0) return cmd;
+                        if (p.ExitCode == 0)
+                        {
+                            _cachedPythonExe = cmd;
+                            return cmd;
+                        }
                     }
                 }
                 catch
