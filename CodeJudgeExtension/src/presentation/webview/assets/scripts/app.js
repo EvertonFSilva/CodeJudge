@@ -42,6 +42,9 @@
     aiModelTriggerBtn: document.getElementById('aiModelTriggerBtn'),
     aiModelCurrentLabel: document.getElementById('aiModelCurrentLabel'),
     aiModelPopover: document.getElementById('aiModelPopover'),
+    aiModelSearchBox: document.getElementById('aiModelSearchBox'),
+    aiModelSearchInput: document.getElementById('aiModelSearchInput'),
+    aiModelOptionsList: document.getElementById('aiModelOptionsList'),
     aiKeyInput: document.getElementById('aiKeyInput'),
     aiKeyVisBtn: document.getElementById('aiKeyVisBtn'),
     aiEyeIcon: document.getElementById('aiEyeIcon'),
@@ -171,11 +174,13 @@
     return svg;
   }
 
-  function createModelOptionElement(value, label, description, isSelected) {
+  function createModelOptionElement(value, label, description, isSelected, sectionKey) {
     const opt = document.createElement('div');
     opt.className = 'dropdown-option' + (isSelected ? ' selected' : '');
     opt.setAttribute('data-value', value);
     opt.setAttribute('data-label', label);
+    opt.setAttribute('data-section', sectionKey || '');
+    opt.setAttribute('data-search', `${label} ${description} ${value}`.toLowerCase());
 
     const header = document.createElement('div');
     header.className = 'dropdown-option-header';
@@ -200,6 +205,45 @@
     return opt;
   }
 
+  function filterAiModelOptions(rawQuery) {
+    if (!elements.aiModelOptionsList) return;
+    const query = (rawQuery || '').trim().toLowerCase();
+    const listContainer = elements.aiModelOptionsList;
+    const options = listContainer.querySelectorAll('.dropdown-option');
+    const sections = listContainer.querySelectorAll('.dropdown-section-title');
+    const visibleBySection = {};
+    let totalVisible = 0;
+
+    options.forEach(opt => {
+      const searchText = opt.getAttribute('data-search') || '';
+      const matches = !query || searchText.includes(query);
+      opt.style.display = matches ? 'flex' : 'none';
+      if (matches) {
+        totalVisible++;
+        const sec = opt.getAttribute('data-section') || '';
+        visibleBySection[sec] = (visibleBySection[sec] || 0) + 1;
+      }
+    });
+
+    sections.forEach(secEl => {
+      const secKey = secEl.getAttribute('data-section') || '';
+      secEl.style.display = visibleBySection[secKey] ? 'block' : 'none';
+    });
+
+    let emptyEl = listContainer.querySelector('.ai-model-empty-search');
+    if (totalVisible === 0) {
+      if (!emptyEl) {
+        emptyEl = document.createElement('div');
+        emptyEl.className = 'ai-model-empty-search';
+        emptyEl.textContent = 'Nenhum modelo encontrado.';
+        listContainer.appendChild(emptyEl);
+      }
+      emptyEl.style.display = 'block';
+    } else if (emptyEl) {
+      emptyEl.style.display = 'none';
+    }
+  }
+
   function selectAiModelOption(value, label) {
     if (!value) {
       aiPreferences.engine = '';
@@ -214,8 +258,8 @@
       elements.aiModelCurrentLabel.textContent = label || 'Padrão do Servidor';
     }
 
-    if (elements.aiModelPopover) {
-      const allOpts = elements.aiModelPopover.querySelectorAll('.dropdown-option');
+    if (elements.aiModelOptionsList) {
+      const allOpts = elements.aiModelOptionsList.querySelectorAll('.dropdown-option');
       allOpts.forEach(node => {
         node.classList.toggle('selected', node.getAttribute('data-value') === value);
       });
@@ -225,9 +269,9 @@
   }
 
   function populateAiModelSelect(aiModels) {
-    if (!elements.aiModelPopover || !elements.aiModelCurrentLabel) return;
-    const popover = elements.aiModelPopover;
-    popover.innerHTML = '';
+    if (!elements.aiModelOptionsList || !elements.aiModelCurrentLabel) return;
+    const listContainer = elements.aiModelOptionsList;
+    listContainer.innerHTML = '';
 
     let currentValue =
       aiPreferences.engine && aiPreferences.model
@@ -251,26 +295,45 @@
       }
       const section = document.createElement('div');
       section.className = 'dropdown-section-title';
+      section.setAttribute('data-section', 'server');
       section.textContent = 'Servidor';
-      popover.appendChild(section);
+      listContainer.appendChild(section);
 
       const defaultLabel = aiPreferences.model || 'Padrão do Servidor';
-      popover.appendChild(
+      listContainer.appendChild(
         createModelOptionElement(
           currentValue,
           defaultLabel,
           'Conecte ao servidor para carregar a lista de modelos',
-          true
+          true,
+          'server'
         )
       );
       elements.aiModelCurrentLabel.textContent = defaultLabel;
       return;
     }
 
+    const validValues = new Set(['']);
     let totalModelsCount = 0;
     rawEngines.forEach(eng => {
-      totalModelsCount += Array.isArray(eng.supportedModels) ? eng.supportedModels.length : 0;
+      const list = Array.isArray(eng.supportedModels) ? eng.supportedModels : [];
+      totalModelsCount += list.length;
+      list.forEach(mdl => validValues.add(`${eng.key}::${mdl}`));
     });
+
+    if (currentValue && !validValues.has(currentValue)) {
+      const matchingEng = rawEngines.find(e => e.key === aiPreferences.engine);
+      if (matchingEng && matchingEng.defaultModel && validValues.has(`${matchingEng.key}::${matchingEng.defaultModel}`)) {
+        aiPreferences.model = matchingEng.defaultModel;
+        currentValue = `${matchingEng.key}::${matchingEng.defaultModel}`;
+      } else {
+        aiPreferences.engine = '';
+        aiPreferences.model = '';
+        currentValue = '';
+      }
+      persistAiPreferences();
+    }
+
     if (elements.aiModelSyncHint) {
       elements.aiModelSyncHint.textContent = `${totalModelsCount} modelos disponíveis`;
     }
@@ -286,8 +349,9 @@
     if (!aiModels.isUserKeyRequired) {
       const recSection = document.createElement('div');
       recSection.className = 'dropdown-section-title';
+      recSection.setAttribute('data-section', 'server');
       recSection.textContent = 'Servidor';
-      popover.appendChild(recSection);
+      listContainer.appendChild(recSection);
 
       const defTitle = aiModels.defaultModel
         ? `Padrão do Servidor (${aiModels.defaultModel})`
@@ -299,17 +363,19 @@
       if (isDefSelected) {
         selectedLabel = defTitle;
       }
-      popover.appendChild(createModelOptionElement('', defTitle, defDesc, isDefSelected));
+      listContainer.appendChild(createModelOptionElement('', defTitle, defDesc, isDefSelected, 'server'));
     }
 
     rawEngines.forEach(eng => {
       const modelsList = Array.isArray(eng.supportedModels) ? eng.supportedModels : [];
       if (modelsList.length === 0) return;
 
+      const secKey = `eng_${eng.key}`;
       const secTitle = document.createElement('div');
       secTitle.className = 'dropdown-section-title';
+      secTitle.setAttribute('data-section', secKey);
       secTitle.textContent = eng.name || eng.key;
-      popover.appendChild(secTitle);
+      listContainer.appendChild(secTitle);
 
       const descText = eng.requiresApiKey
         ? `${eng.name || eng.key} • Requer API Key`
@@ -321,7 +387,7 @@
         if (isSel) {
           selectedLabel = mdl;
         }
-        popover.appendChild(createModelOptionElement(val, mdl, descText, isSel));
+        listContainer.appendChild(createModelOptionElement(val, mdl, descText, isSel, secKey));
       });
     });
 
@@ -329,6 +395,10 @@
       selectedLabel = aiPreferences.model || (aiModels.defaultModel ? `Padrão do Servidor (${aiModels.defaultModel})` : 'Padrão do Servidor');
     }
     elements.aiModelCurrentLabel.textContent = selectedLabel;
+
+    if (elements.aiModelSearchInput && elements.aiModelSearchInput.value) {
+      filterAiModelOptions(elements.aiModelSearchInput.value);
+    }
   }
 
   function setupDiscreetAiConfig() {
@@ -353,9 +423,28 @@
         e.stopPropagation();
         elements.dropdownContainer?.classList.remove('open');
         const isOpen = elements.aiModelDropdownContainer.classList.toggle('open');
-        if (isOpen && !serverAiConfig) {
-          vscode.postMessage({ type: 'request-health' });
+        if (isOpen) {
+          if (elements.aiModelSearchInput) {
+            elements.aiModelSearchInput.value = '';
+            filterAiModelOptions('');
+            setTimeout(() => elements.aiModelSearchInput.focus(), 20);
+          }
+          if (!serverAiConfig) {
+            vscode.postMessage({ type: 'request-health' });
+          }
         }
+      });
+    }
+
+    if (elements.aiModelSearchBox) {
+      elements.aiModelSearchBox.addEventListener('click', e => {
+        e.stopPropagation();
+      });
+    }
+
+    if (elements.aiModelSearchInput) {
+      elements.aiModelSearchInput.addEventListener('input', () => {
+        filterAiModelOptions(elements.aiModelSearchInput.value);
       });
     }
 

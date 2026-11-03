@@ -185,7 +185,7 @@ def createApp() -> FastAPI:
     logger.info("Application routes registered successfully.")
     return app
 
-app = createApp()
+app = createApp() if __name__ != "__main__" else None
 
 if __name__ == "__main__":
     uvicorn.run("Main:app", host="0.0.0.0", port=8000, reload=True, access_log=False, log_level="warning", log_config=LOGGING_CONFIG)

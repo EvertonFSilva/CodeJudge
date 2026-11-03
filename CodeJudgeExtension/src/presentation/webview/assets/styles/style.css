@@ -225,17 +225,67 @@ body {
 }
 
 .ai-model-popover {
-  max-height: 230px;
+  padding: 6px;
+}
+
+.ai-model-search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.ai-model-search-box:focus-within {
+  border-color: var(--green-accent);
+}
+
+.ai-model-search-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ai-model-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  padding: 1px 0;
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+}
+
+.ai-model-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ai-model-options-list {
+  max-height: 205px;
   overflow-y: auto;
 }
 
-.ai-model-popover::-webkit-scrollbar {
+.ai-model-options-list::-webkit-scrollbar {
   width: 5px;
 }
 
-.ai-model-popover::-webkit-scrollbar-thumb {
+.ai-model-options-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.16);
   border-radius: 4px;
+}
+
+.ai-model-empty-search {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--text-muted);
 }
 
 .ai-key-input-wrap {

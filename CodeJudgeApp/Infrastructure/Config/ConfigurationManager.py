@@ -19,6 +19,7 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         self.baseDirectory = Path(__file__).resolve().parent.parent.parent
         self.configPath = configPath or str(self.baseDirectory / "Configuration.json")
         self.settings: Dict[str, Any] = {}
+        self._lastMtime: float = 0.0
         self._languagesCache: Optional[Dict[str, Language]] = None
         self._providersCache: Optional[Dict[str, AiModelProvider]] = None
         self.loadConfiguration()
@@ -29,17 +30,28 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
             cls._instance = ConfigurationManager()
         return cls._instance
 
+    def _ensureFreshConfiguration(self):
+        try:
+            if os.path.isfile(self.configPath):
+                currentMtime = os.path.getmtime(self.configPath)
+                if currentMtime != self._lastMtime:
+                    self.loadConfiguration()
+        except Exception:
+            pass
+
     def loadConfiguration(self):
         self._languagesCache = None
         self._providersCache = None
         if os.path.isfile(self.configPath):
             try:
+                self._lastMtime = os.path.getmtime(self.configPath)
                 with open(self.configPath, "r", encoding="utf-8") as file:
                     self.settings = json.load(file)
             except Exception:
                 self.settings = {}
 
     def getSetting(self, keyPath: str, default: Any = None) -> Any:
+        self._ensureFreshConfiguration()
         keys = keyPath.split(".")
         current = self.settings
         for key in keys:
@@ -125,6 +137,7 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         return self.getAllAiProviders().get(key)
 
     def getAllAiProviders(self) -> Dict[str, AiModelProvider]:
+        self._ensureFreshConfiguration()
         if self._providersCache is not None:
             return self._providersCache
         rawEngines = self.getAiEnginesRaw()
@@ -170,6 +183,8 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
                 raise UnsupportedAiEngineException(cleanEngine, supportedKeys)
             if cleanModel:
                 if cleanModel not in provider.supportedModels:
+                    if cleanEngine == "gemini" and cleanModel.startswith("gemini-"):
+                        return (cleanEngine, provider.defaultModel)
                     raise UnsupportedAiModelException(cleanModel, cleanEngine, provider.supportedModels)
                 return (cleanEngine, cleanModel)
             return (cleanEngine, provider.defaultModel)
