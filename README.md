@@ -3,9 +3,9 @@
 Plataforma educacional e profissional modular para **compilação, execução, diagnóstico formativo de erros, análise técnica de código e otimização de desempenho** em tempo real. Desenvolvido por **Everton** para o **Instituto Federal Fluminense (IFF)**.
 
 O ecossistema é estruturado em quatro módulos independentes e integrados sob os princípios da **Clean Architecture**:
-1. **`CodeJudgeApp`**: Servidor backend em **Python (FastAPI)** com execução em sandbox isolado, suporte multi-motor de IA (**Google Gemini** e **Ollama Local**) e política flexível de chave de API (`isUserKeyRequired`).
-2. **`CodeJudgeWeb`**: Aplicação Web em **React 18 + TypeScript + Bootstrap 5** com autenticação institucional integrada ao **Moodle IFF** e modal Web de configuração de IA e API Key.
-3. **`CodeJudgeExtension`**: Extensão oficial para **Visual Studio Code (TypeScript)** com sincronização automática de linguagens/modelos e gaveta discreta para configuração de API Key.
+1. **`CodeJudgeApp`**: Servidor backend em **Python (FastAPI)** com execução em sandbox isolado, suporte multi-motor de IA (**Google Gemini** e **Ollama Local**), templates objetivos de avaliação universitária (notas de 0 a 10 com explicações diretas e sem sermões conversacionais) e política flexível de chave de API (`isUserKeyRequired`).
+2. **`CodeJudgeWeb`**: Aplicação Web em **React 18 + TypeScript + Bootstrap 5** com autenticação institucional integrada ao **Moodle IFF**, seletor de modelos com barra de pesquisa e modal Web de configuração de IA e API Key.
+3. **`CodeJudgeExtension`**: Extensão oficial para **Visual Studio Code (TypeScript)** com login via Moodle IFF, sincronização automática de modelos do servidor com busca integrada, gaveta discreta para API Key e geração de relatórios em PDF/Markdown com cabeçalho institucional e tipografia refinada.
 4. **`CodeJudgeDesktop`**: Ambiente Desktop nativo para Windows (**C# .NET 8 WPF + WebView2**) no estilo **IDE**, com suporte a múltiplos arquivos em abas, compilação nativa ReadyToRun + proteção de payload AES-256 e seletor de modelo/chave na barra de status da IDE.
 
 ---
@@ -77,7 +77,7 @@ CodeJudgeApp/
 │   ├── Logging/                       # Logger estruturado thread-safe
 │   ├── Registries/                    # CompilerRegistry e ExecutorRegistry
 │   ├── Repositories/                  # FilePromptRepository
-│   └── Templates/                     # 20 templates em Markdown (Analysis, Compilation, Error, Execution, Optimization)
+│   └── Templates/                     # 21 templates em Markdown objetivos com formato universitário (Analysis, Compilation, Error, Execution, Optimization)
 │
 ├── Presentation/                      # Camada HTTP / FastAPI
 │   ├── Controllers/                   # AiController, AnalysisController, CompilationController, DiagnosticController, etc.
@@ -104,7 +104,10 @@ Construída com **React 18**, **TypeScript**, **Bootstrap 5** e **Express**:
 ## Extensão para Visual Studio Code (CodeJudgeExtension)
 
 Estruturada em **Clean Architecture** (`core/`, `features/`, `infrastructure/`, `presentation/`):
-- **Design Discreto de Configuração de IA:** Ícone compacto de chave no topo da barra lateral ao lado do status `Online`, abrindo uma gaveta retrátil enxuta (`#aiConfigDrawer`) com seletor de modelos sincronizado com `/ai/models` e campo de `API Key` opcional/obrigatório sem poluir a interface do editor.
+- **Autenticação Institucional Moodle IFF Integrada:** Login direto pelo painel lateral com extração automática do perfil acadêmico do estudante (Nome, Curso/Disciplina, Campus e E-mail institucional), injetados de forma limpa como cabeçalho em relatórios `.md` e `.pdf`.
+- **Seletor de Modelos com Barra de Pesquisa:** Dropdown com campo de busca interativo e digitação em tempo real para filtrar instantaneamente modelos de IA disponíveis no servidor.
+- **Gaveta Retrátil Discreta de Configuração de IA:** Acesso por ícone compacto de engrenagem/chave no topo da barra lateral para definição de chave de API (`apiKey`) e modelo personalizado sem poluir a área de trabalho.
+- **Gerador de Relatórios em PDF de Alta Precisão (PDFKit):** Tipografia aprimorada com espaçamento entrelinhas real 1.5, quebra segura de blocos de código sem sobreposição de cabeçalhos e eliminação definitiva de páginas em branco desnecessárias.
 - **Arquitetura Otimizada e Sem Redundâncias:**
   - `BaseHttpGateway`: Centraliza chamadas HTTP, controle de timeout via `AbortController`, cabeçalho `X-Api-Key` e normalização de codificação UTF-8 (`fixEncoding`).
   - `BaseStageUseCase` & `StageContract`: Padronizam telemetria de tempo, logs estruturados e repasse de parâmetros de IA (`apiKey`, `engine`, `model`) entre `CompileUseCase`, `AnalyzeUseCase` e `OptimizeUseCase`.
@@ -137,10 +140,10 @@ O servidor permite dois modos de operação controlados pela flag `"isUserKeyReq
 
 ### Modelos Suportados no Servidor (`/ai/models`)
 - **Google Gemini (`gemini`):**
-  - Série 4 & 3.x: `gemini-4-argon`, `gemini-3.8-pro`, `gemini-3.8-flash`, `gemini-3.8-flash-lite`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-pro`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-3.0-pro`, `gemini-3.0-flash`, `gemini-3-pro-preview`, `gemini-3-flash-preview`.
-  - Série 2.5, 2.0 & 1.5: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-1.5-flash-8b`.
+  - Modelos recomendados e ativos: `gemini-3.5-flash-lite`, `gemini-3.8-flash`, `gemini-4-argon`.
+  - Fallback automático e tolerância a descontinuações integrado no `GeminiAdapter`.
 - **Ollama Local (`ollama`):**
-  - `llama3:latest`, `llama3.1:latest`, `llama3.2:latest`, `llama3.3:latest`, `qwen2.5-coder:latest`, `qwen2.5-coder:1.5b`, `qwen2.5-coder:7b`, `qwen2.5-coder:14b`, `qwen2.5-coder:32b`, `qwen3:latest`, `deepseek-coder:latest`, `deepseek-coder:6.7b`, `deepseek-coder-v2:latest`, `deepseek-r1:latest`, `codellama:latest`, `starcoder2:latest`, `mistral:latest`, `phi3:latest`, `phi4:latest`, `gemma2:latest`, `gemma3:latest`.
+  - `llama3:latest`, `llama3.1:latest`, `llama3.2:latest`, `llama3.3:latest`, `qwen2.5-coder:latest`, `qwen3-coder:latest`, `deepseek-coder:latest`, `deepseek-r1:latest`, `codellama:latest`, `gemma3:latest`, `mistral:latest`, `phi4:latest`.
 
 ---
 
@@ -253,24 +256,35 @@ Execute o instalador oficial em `CodeJudgeDesktop/Installer/Output/CodeJudge-v2.
       "gemini": {
         "name": "Google Gemini",
         "adapter": "GeminiAdapter",
+        "requiresApiKey": true,
+        "supportedModels": [
+          "gemini-3.5-flash-lite",
+          "gemini-3.8-flash",
+          "gemini-4-argon"
+        ],
         "args": {
           "apiKey": "SUA_CHAVE_GEMINI_AQUI",
-          "model": "gemini-2.5-flash"
-        },
-        "supportedModels": [
-          "gemini-4-argon",
-          "gemini-3.8-pro",
-          "gemini-3.8-flash",
-          "gemini-3.8-flash-lite",
-          "gemini-3.5-pro",
-          "gemini-3.5-flash",
-          "gemini-2.5-pro",
-          "gemini-2.5-flash"
-        ]
+          "model": "gemini-3.5-flash-lite"
+        }
       },
       "ollama": {
         "name": "Ollama (Local)",
         "adapter": "OllamaAdapter",
+        "requiresApiKey": false,
+        "supportedModels": [
+          "llama3:latest",
+          "llama3.1:latest",
+          "llama3.2:latest",
+          "llama3.3:latest",
+          "qwen2.5-coder:latest",
+          "qwen3-coder:latest",
+          "deepseek-coder:latest",
+          "deepseek-r1:latest",
+          "codellama:latest",
+          "gemma3:latest",
+          "mistral:latest",
+          "phi4:latest"
+        ],
         "args": {
           "endpoint": "http://localhost:11434/v1",
           "model": "llama3:latest",
@@ -287,8 +301,9 @@ Execute o instalador oficial em `CodeJudgeDesktop/Installer/Output/CodeJudge-v2.
 
 ## Diretrizes de Feedback e Aprendizado
 
-- **Diagnóstico Formativo Socrático:** Em falhas de compilação ou execução, o módulo de erro é acionado automaticamente com os templates pedagógicos para orientar a autodepuração do estudante sem entregar o código pronto.
-- **Avaliação Qualitativa e Assintótica:** Nas etapas de Análise e Otimização, o sistema atribui notas de 0 a 10 fundamentadas em boas práticas de engenharia de software e complexidade Big-O.
+- **Formato Objetivo do Avaliador Universitário:** Nas etapas de Análise e Otimização, todos os prompts seguem a estrutura pré-definida de avaliação (`## Título`, `**Código**:`, `**Nota**: [0 a 10]`, `**Explicação**: [justificativa técnica concisa]`).
+- **Comunicação Direta sem Prolixidade:** Os retornos da IA são rigorosamente filtrados pela `DIRETRIZ DE OBJETIVIDADE` no `PromptBuilder`, impedindo saudações ("Olá estudante"), introduções conversacionais ou palestras teóricas prolixas sobre sistemas operacionais.
+- **Diagnóstico Formativo Socrático:** Em falhas de compilação ou execução, o módulo de diagnóstico orienta a investigação do estudante de forma clara e educativa, sem entregar o código pronto.
 
 ---
 

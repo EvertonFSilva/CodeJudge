@@ -44,7 +44,7 @@ class PromptBuilder:
             parts.append(self.guideline)
         parts.extend(self.sections)
         parts.append(
-            "DIRETRIZ DE OBJETIVIDADE: Seja estritamente direto, técnico e conciso. Não inclua saudações (como 'Olá estudante', 'Como seu professor...'), sermões, introduções conversacionais ou palestras teóricas genéricas sobre sistemas operacionais e computadores. Responda exclusivamente no formato e estrutura pré-definida de saída esperada."
+            "DIRETRIZ DE OBJETIVIDADE: Seja estritamente direto, técnico e conciso. Não inclua saudações, apresentações, sermões, introduções conversacionais ou divagações teóricas. Responda exclusivamente no formato e estrutura pré-definida de saída esperada."
         )
         parts.append(
             "DIRETRIZ DE FORMATAÇÃO: Sempre formate qualquer bloco de código com a cerca tripla (```) iniciando em uma nova linha isolada."
