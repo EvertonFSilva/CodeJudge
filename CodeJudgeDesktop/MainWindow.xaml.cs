@@ -1,9 +1,11 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
 using Microsoft.Web.WebView2.Core;
 using CodeJudgeDesktop.Services;
 
@@ -11,6 +13,9 @@ namespace CodeJudgeDesktop
 {
     public partial class MainWindow : Window
     {
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
         private readonly BackendSupervisor _supervisor = new BackendSupervisor();
         private bool _isInitialized;
         private bool _hasLoadedOnce;
@@ -18,8 +23,26 @@ namespace CodeJudgeDesktop
         public MainWindow()
         {
             InitializeComponent();
+            SourceInitialized += MainWindow_SourceInitialized;
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_SourceInitialized(object? sender, EventArgs e)
+        {
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd != IntPtr.Zero)
+                {
+                    int useDarkMode = 1;
+                    DwmSetWindowAttribute(hwnd, 20, ref useDarkMode, sizeof(int));
+                    DwmSetWindowAttribute(hwnd, 19, ref useDarkMode, sizeof(int));
+                }
+            }
+            catch
+            {
+            }
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -40,7 +63,7 @@ namespace CodeJudgeDesktop
             {
                 MessageBox.Show(
                     $"Erro ao inicializar o ambiente desktop:\n\n{ex.Message}",
-                    "CodeJudge - Erro",
+                    "CodeJudge IDE - Erro",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error
                 );
@@ -67,9 +90,50 @@ namespace CodeJudgeDesktop
             settings.AreBrowserAcceleratorKeysEnabled = false;
 
             MainWebView.CoreWebView2.AddHostObjectToScript("moodleAuth", new MoodleAuthBridge());
+            MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-            string fetchInterceptorScript = @"
+            string bridgeScript = @"
             (function() {
+                const pendingMap = new Map();
+
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.addEventListener('message', function(event) {
+                        try {
+                            const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                            if (data && data.requestId && pendingMap.has(data.requestId)) {
+                                const entry = pendingMap.get(data.requestId);
+                                clearTimeout(entry.timer);
+                                pendingMap.delete(data.requestId);
+                                entry.resolve(data.payload);
+                            }
+                        } catch (e) {}
+                    });
+                }
+
+                window.__cjNativeCall = function(action, payloadObj) {
+                    return new Promise(function(resolve) {
+                        if (!window.chrome || !window.chrome.webview) {
+                            resolve(JSON.stringify({ success: false, message: 'Bridge nativo indisponível.' }));
+                            return;
+                        }
+                        const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+                        const timer = setTimeout(function() {
+                            if (pendingMap.has(requestId)) {
+                                pendingMap.delete(requestId);
+                                resolve(JSON.stringify({ success: false, message: 'Tempo limite esgotado na operação.' }));
+                            }
+                        }, 22000);
+
+                        pendingMap.set(requestId, { resolve: resolve, timer: timer });
+                        const rawPayload = typeof payloadObj === 'string' ? payloadObj : JSON.stringify(payloadObj || {});
+                        window.chrome.webview.postMessage(JSON.stringify({
+                            requestId: requestId,
+                            action: action,
+                            payload: rawPayload
+                        }));
+                    });
+                };
+
                 const origFetch = window.fetch;
                 window.fetch = async function(resource, init) {
                     let urlStr = '';
@@ -82,15 +146,14 @@ namespace CodeJudgeDesktop
                     if (urlStr.includes('/auth/login')) {
                         try {
                             let bodyStr = (init && init.body) ? (typeof init.body === 'string' ? init.body : JSON.stringify(init.body)) : '{}';
-                            const bridge = window.chrome.webview.hostObjects.moodleAuth;
-                            const result = await bridge.Login(bodyStr);
+                            const result = await window.__cjNativeCall('auth-login', bodyStr);
                             return new Response(result, {
                                 status: 200,
                                 statusText: 'OK',
                                 headers: { 'Content-Type': 'application/json' }
                             });
                         } catch (err) {
-                            return new Response(JSON.stringify({ success: false, message: 'Falha no login desktop: ' + err }), {
+                            return new Response(JSON.stringify({ success: false, message: 'Falha ao autenticar: ' + err }), {
                                 status: 200,
                                 statusText: 'OK',
                                 headers: { 'Content-Type': 'application/json' }
@@ -100,8 +163,7 @@ namespace CodeJudgeDesktop
 
                     if (urlStr.includes('/auth/profile')) {
                         try {
-                            const bridge = window.chrome.webview.hostObjects.moodleAuth;
-                            const result = await bridge.GetProfile();
+                            const result = await window.__cjNativeCall('auth-profile', '{}');
                             return new Response(result, {
                                 status: 200,
                                 statusText: 'OK',
@@ -118,9 +180,8 @@ namespace CodeJudgeDesktop
 
                     if (urlStr.includes('/auth/logout')) {
                         try {
-                            const bridge = window.chrome.webview.hostObjects.moodleAuth;
-                            await bridge.Logout();
-                            return new Response(JSON.stringify({ success: true }), {
+                            const result = await window.__cjNativeCall('auth-logout', '{}');
+                            return new Response(result, {
                                 status: 200,
                                 statusText: 'OK',
                                 headers: { 'Content-Type': 'application/json' }
@@ -139,7 +200,7 @@ namespace CodeJudgeDesktop
             })();
             ";
 
-            await MainWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(fetchInterceptorScript);
+            await MainWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(bridgeScript);
 
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(
                 "https://app.codejudge.local/auth/*",
@@ -171,6 +232,112 @@ namespace CodeJudgeDesktop
             }
         }
 
+        private async void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            string requestId = "";
+            string action = "";
+            string payload = "";
+
+            try
+            {
+                string rawMsg = e.TryGetWebMessageAsString();
+                using var doc = JsonDocument.Parse(rawMsg);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("requestId", out var rId)) requestId = rId.GetString() ?? "";
+                if (root.TryGetProperty("action", out var act)) action = act.GetString() ?? "";
+                if (root.TryGetProperty("payload", out var pld)) payload = pld.GetString() ?? "";
+            }
+            catch
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(requestId)) return;
+
+            string responsePayload = "{}";
+
+            try
+            {
+                switch (action)
+                {
+                    case "auth-login":
+                        responsePayload = await Task.Run(() => MoodleAuthService.HandleLoginAsync(payload));
+                        break;
+
+                    case "auth-profile":
+                        responsePayload = MoodleAuthService.HandleProfileAsync();
+                        break;
+
+                    case "auth-logout":
+                        responsePayload = MoodleAuthService.HandleLogout();
+                        break;
+
+                    case "examples-list":
+                        responsePayload = await Task.Run(() => WorkspaceService.GetExamplesCatalogJson());
+                        break;
+
+                    case "example-load":
+                        {
+                            string folder = "";
+                            string fileName = "Main.java";
+                            using var pDoc = JsonDocument.Parse(payload);
+                            if (pDoc.RootElement.TryGetProperty("folder", out var fProp)) folder = fProp.GetString() ?? "";
+                            if (pDoc.RootElement.TryGetProperty("fileName", out var fnProp)) fileName = fnProp.GetString() ?? "Main.java";
+                            responsePayload = await Task.Run(() => WorkspaceService.LoadExampleJson(folder, fileName));
+                        }
+                        break;
+
+                    case "file-open":
+                        {
+                            string filterType = "code";
+                            try
+                            {
+                                using var pDoc = JsonDocument.Parse(payload);
+                                if (pDoc.RootElement.TryGetProperty("filterType", out var ft)) filterType = ft.GetString() ?? "code";
+                            }
+                            catch { }
+                            responsePayload = WorkspaceService.OpenFileFromDisk(this, filterType);
+                        }
+                        break;
+
+                    case "file-save":
+                        {
+                            string fileName = "Main.java";
+                            string content = "";
+                            using var pDoc = JsonDocument.Parse(payload);
+                            if (pDoc.RootElement.TryGetProperty("fileName", out var fn)) fileName = fn.GetString() ?? "Main.java";
+                            if (pDoc.RootElement.TryGetProperty("content", out var ct)) content = ct.GetString() ?? "";
+                            responsePayload = WorkspaceService.SaveFileToDisk(this, fileName, content);
+                        }
+                        break;
+
+                    default:
+                        responsePayload = JsonSerializer.Serialize(new { success = false, message = "Ação desconhecida." });
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                responsePayload = JsonSerializer.Serialize(new { success = false, message = ex.Message });
+            }
+
+            try
+            {
+                if (MainWebView.CoreWebView2 != null)
+                {
+                    string reply = JsonSerializer.Serialize(new
+                    {
+                        requestId,
+                        payload = responsePayload
+                    });
+                    MainWebView.CoreWebView2.PostWebMessageAsString(reply);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private async void CoreWebView2_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
         {
             var uri = e.Request.Uri;
@@ -187,7 +354,7 @@ namespace CodeJudgeDesktop
                         body = await reader.ReadToEndAsync();
                     }
 
-                    string jsonResult = await MoodleAuthService.HandleLoginAsync(body);
+                    string jsonResult = await Task.Run(() => MoodleAuthService.HandleLoginAsync(body));
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonResult));
 
                     e.Response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(
@@ -215,7 +382,7 @@ namespace CodeJudgeDesktop
 
                 if (uri.Contains("/auth/logout"))
                 {
-                    string jsonResult = JsonSerializer.Serialize(new { success = true });
+                    string jsonResult = MoodleAuthService.HandleLogout();
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonResult));
 
                     e.Response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(
@@ -253,12 +420,6 @@ namespace CodeJudgeDesktop
                 return localWww;
             }
 
-            string devDist = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "CodeJudgeWeb", "dist"));
-            if (Directory.Exists(devDist) && File.Exists(Path.Combine(devDist, "index.html")))
-            {
-                return devDist;
-            }
-
             return localWww;
         }
 
@@ -266,10 +427,11 @@ namespace CodeJudgeDesktop
         {
             Dispatcher.Invoke(() =>
             {
-                if (isOnline && _hasLoadedOnce && MainWebView.CoreWebView2 != null)
+                if (_hasLoadedOnce && MainWebView.CoreWebView2 != null)
                 {
+                    string flag = isOnline ? "true" : "false";
                     MainWebView.CoreWebView2.ExecuteScriptAsync(
-                        "window.dispatchEvent(new CustomEvent('backend-status-change', { detail: { online: true } }));"
+                        $"window.dispatchEvent(new CustomEvent('backend-status-change', {{ detail: {{ online: {flag} }} }}));"
                     );
                 }
             });

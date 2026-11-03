@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CodeJudgeDesktop.Services
@@ -10,7 +9,7 @@ namespace CodeJudgeDesktop.Services
     {
         public string Login(string json)
         {
-            return MoodleAuthService.HandleLoginAsync(json).GetAwaiter().GetResult();
+            return Task.Run(() => MoodleAuthService.HandleLoginAsync(json)).GetAwaiter().GetResult();
         }
 
         public string GetProfile()
@@ -20,7 +19,7 @@ namespace CodeJudgeDesktop.Services
 
         public string Logout()
         {
-            return JsonSerializer.Serialize(new { success = true });
+            return MoodleAuthService.HandleLogout();
         }
     }
 }
