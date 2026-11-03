@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Query
 from Presentation.Schemas.Responses.AiModelsResponse import AiModelsResponse
 from Presentation.Controllers.AiController import AiController
 
@@ -9,7 +10,11 @@ def createAiRouter(controller: AiController) -> APIRouter:
     @router.get("/all", response_model=AiModelsResponse)
     @router.get("/models", response_model=AiModelsResponse)
     @router.get("/supported", response_model=AiModelsResponse)
-    def getSupportedAiModels() -> AiModelsResponse:
-        return controller.getSupportedModels()
+    def getSupportedAiModels(engine: Optional[str] = Query(default=None)) -> AiModelsResponse:
+        return controller.getSupportedModels(engineKey=engine)
+
+    @router.get("/models/{engineKey}", response_model=AiModelsResponse)
+    def getEngineSupportedModels(engineKey: str) -> AiModelsResponse:
+        return controller.getSupportedModels(engineKey=engineKey)
 
     return router

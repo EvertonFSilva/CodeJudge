@@ -9,3 +9,4 @@ class CompilationReport:
     logs: str = ""
     durationMs: float = 0.0
     workspaceDirectory: Optional[str] = None
+    feedback: Optional[str] = None

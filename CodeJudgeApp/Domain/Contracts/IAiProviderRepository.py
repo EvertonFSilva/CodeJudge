@@ -27,6 +27,7 @@ class IAiProviderRepository(ABC):
     def resolveEngineAndModel(
         self,
         requestedEngine: Optional[str] = None,
-        requestedModel: Optional[str] = None
+        requestedModel: Optional[str] = None,
+        hasUserApiKey: bool = False
     ) -> Tuple[str, str]:
         pass

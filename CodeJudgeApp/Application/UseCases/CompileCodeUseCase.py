@@ -76,6 +76,7 @@ class CompileCodeUseCase:
                     model=model
                 )
                 if feedback:
+                    report.feedback = feedback
                     report.message = f"{report.message}\n\nFeedback:\n{feedback}"
             return report
         finally:

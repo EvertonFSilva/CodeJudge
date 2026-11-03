@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import Dict, List
 
 class AiEngineItem(BaseModel):
     key: str
@@ -13,6 +13,9 @@ class AiEngineItem(BaseModel):
 class AiModelsResponse(BaseModel):
     success: bool
     isUserKeyRequired: bool
+    allowUserKeyOverride: bool = True
     defaultEngine: str
     defaultModel: str
+    models: List[str]
+    providers: Dict[str, List[str]]
     engines: List[AiEngineItem]

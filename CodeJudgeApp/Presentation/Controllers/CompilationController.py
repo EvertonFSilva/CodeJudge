@@ -21,5 +21,6 @@ class CompilationController:
             message=report.message,
             sourcePath=report.binaryPath,
             logs=report.logs,
+            feedback=report.feedback,
             durationMs=report.durationMs
         )

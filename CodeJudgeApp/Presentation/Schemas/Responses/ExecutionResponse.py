@@ -9,4 +9,5 @@ class ExecutionResponse(BaseModel):
     rate: Optional[int] = None
     details: Optional[Dict[str, Any]] = {}
     rawOutput: Optional[str] = ""
+    feedback: Optional[str] = None
     durationMs: Optional[float] = None

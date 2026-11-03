@@ -39,5 +39,6 @@ class ExecutionController:
             rate=report.rate,
             details=report.details,
             rawOutput=report.rawOutput,
+            feedback=report.feedback,
             durationMs=report.durationMs
         )

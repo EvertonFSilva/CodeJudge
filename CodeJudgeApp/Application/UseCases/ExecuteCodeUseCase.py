@@ -70,7 +70,14 @@ class ExecuteCodeUseCase:
                 inputs=[],
                 outputs=[],
                 rate=None,
-                details={"error": "CompilationFailed", "logs": buildReport.logs}
+                details={
+                    "error": "CompilationFailed",
+                    "logs": buildReport.logs,
+                    "feedback": buildReport.feedback
+                },
+                rawOutput=buildReport.logs,
+                feedback=buildReport.feedback,
+                durationMs=buildReport.durationMs
             )
 
         executor = self.executorRegistry.getExecutor(language)
@@ -90,35 +97,59 @@ class ExecuteCodeUseCase:
 
             if not executionReport.success:
                 if not scenarios or len(scenarios) == 0:
+                    errorPayload = executionReport.rawOutput or executionReport.message
                     feedback = self.diagnoseErrorUseCase.diagnoseExecutionError(
                         statement=statement,
                         language=language,
                         code=code,
-                        errorMessage=executionReport.message,
+                        errorMessage=errorPayload,
                         apiKey=apiKey,
                         engine=engine,
                         model=model
                     )
                     if feedback:
+                        executionReport.feedback = feedback
                         executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
                 else:
                     mismatches = []
+                    runtimeErrors = []
                     for idx, res in enumerate(executionReport.outputs or []):
                         if isinstance(res, dict) and not res.get("passed", False):
-                            mismatches.append(
-                                f"Caso #{idx + 1}: Entrada='{res.get('input', '')}' | Esperado='{res.get('expected', '')}' | Obtido='{res.get('actual', '')}'"
+                            actualText = str(res.get("actual", ""))
+                            entryLine = (
+                                f"Caso #{idx + 1}: Entrada='{res.get('input', '')}' | Esperado='{res.get('expected', '')}' | Obtido='{actualText}'"
                             )
-                    details = "\n".join(mismatches) if mismatches else executionReport.message
-                    feedback = self.diagnoseErrorUseCase.diagnoseLogicMismatch(
-                        statement=statement,
-                        language=language,
-                        code=code,
-                        mismatchDetails=details,
-                        apiKey=apiKey,
-                        engine=engine,
-                        model=model
-                    )
+                            if actualText.startswith("Execution error (exit code") or actualText.startswith("Execution timed out"):
+                                runtimeErrors.append(entryLine)
+                            else:
+                                mismatches.append(entryLine)
+
+                    if runtimeErrors and not mismatches:
+                        details = "\n".join(runtimeErrors)
+                        feedback = self.diagnoseErrorUseCase.diagnoseExecutionError(
+                            statement=statement,
+                            language=language,
+                            code=code,
+                            errorMessage=details,
+                            apiKey=apiKey,
+                            engine=engine,
+                            model=model
+                        )
+                    else:
+                        combined = mismatches + runtimeErrors
+                        details = "\n".join(combined) if combined else executionReport.message
+                        feedback = self.diagnoseErrorUseCase.diagnoseLogicMismatch(
+                            statement=statement,
+                            language=language,
+                            code=code,
+                            mismatchDetails=details,
+                            apiKey=apiKey,
+                            engine=engine,
+                            model=model
+                        )
+
                     if feedback:
+                        executionReport.feedback = feedback
                         executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
 
             return executionReport

@@ -78,7 +78,11 @@ class EngineFactory:
         if not userKeyRequired and not cleanKey and not cleanEngine and not cleanModel:
             return fallbackEngine
 
-        resolvedEngineKey, resolvedModel = config.resolveEngineAndModel(cleanEngine, cleanModel)
+        resolvedEngineKey, resolvedModel = config.resolveEngineAndModel(
+            requestedEngine=cleanEngine,
+            requestedModel=cleanModel,
+            hasUserApiKey=bool(cleanKey)
+        )
         ignoreServerKey = bool(userKeyRequired or cleanKey)
         cacheKey = (resolvedEngineKey, resolvedModel, cleanKey, ignoreServerKey)
 

@@ -6,4 +6,5 @@ class CompilationResponse(BaseModel):
     message: str
     sourcePath: Optional[str] = None
     logs: Optional[str] = ""
+    feedback: Optional[str] = None
     durationMs: Optional[float] = None

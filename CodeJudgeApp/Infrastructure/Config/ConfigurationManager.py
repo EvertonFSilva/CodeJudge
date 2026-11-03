@@ -152,7 +152,8 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
     def resolveEngineAndModel(
         self,
         requestedEngine: Optional[str] = None,
-        requestedModel: Optional[str] = None
+        requestedModel: Optional[str] = None,
+        hasUserApiKey: bool = False
     ) -> Tuple[str, str]:
         providers = self.getAllAiProviders()
         supportedKeys = list(providers.keys())
@@ -186,6 +187,12 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         defaultProvider = providers.get(defaultKey)
         if not defaultProvider:
             raise UnsupportedAiEngineException(defaultKey, supportedKeys)
+
+        if (hasUserApiKey or self.isUserKeyRequired()) and not defaultProvider.requiresApiKey:
+            for key, provider in providers.items():
+                if provider.requiresApiKey:
+                    return (key, provider.defaultModel)
+
         return (defaultKey, defaultProvider.defaultModel)
 
     def getLanguagesRaw(self) -> Dict[str, Any]:
