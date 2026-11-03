@@ -20,9 +20,10 @@
       <span class="brand-title">CodeJudge</span>
     </div>
     <div class="header-right-actions">
-      <button type="button" class="ai-discreet-btn" id="aiConfigToggleBtn" title="Configurar API Key e Modelo de IA (Opcional)">
+      <button type="button" class="ai-discreet-btn" id="aiConfigToggleBtn" title="Configurar Modelo de IA e API Key">
         <svg class="ai-key-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+          <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path>
+          <circle cx="16.5" cy="7.5" r="1" fill="currentColor"></circle>
         </svg>
         <span class="ai-key-dot" id="aiKeyDot"></span>
       </button>
@@ -35,15 +36,58 @@
 
   <div class="ai-discreet-drawer" id="aiConfigDrawer">
     <div class="ai-drawer-top">
-      <span class="ai-drawer-title" id="aiPolicyLabel">IA &amp; API Key (Opcional)</span>
-      <button type="button" class="ai-drawer-reset" id="aiKeyResetBtn" title="Restaurar padrão do servidor">Padrão</button>
+      <div class="ai-drawer-heading">
+        <svg class="ai-drawer-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+          <rect x="9" y="9" width="6" height="6"></rect>
+          <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path>
+        </svg>
+        <span class="ai-drawer-title">Configuração de IA</span>
+      </div>
+      <button type="button" class="ai-drawer-reset" id="aiKeyResetBtn" title="Restaurar padrão do servidor">Restaurar padrão</button>
     </div>
-    <select class="ai-compact-select" id="aiModelSelect">
-      <option value="">Padrão do Servidor</option>
-    </select>
-    <div class="ai-key-input-wrap">
-      <input type="password" class="ai-compact-input" id="aiKeyInput" placeholder="Cole sua API Key (opcional)..." autocomplete="off" spellcheck="false" />
-      <button type="button" class="ai-eye-btn" id="aiKeyVisBtn" title="Mostrar ou ocultar chave">Ver</button>
+
+    <div class="ai-drawer-section">
+      <div class="form-label">
+        <span>Modelo de IA</span>
+        <span class="form-hint" id="aiModelSyncHint">Sincronizando...</span>
+      </div>
+
+      <div class="custom-dropdown-container ai-model-dropdown" id="aiModelDropdownContainer">
+        <button type="button" class="dropdown-trigger-btn" id="aiModelTriggerBtn">
+          <div class="dropdown-trigger-left">
+            <svg class="dropdown-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            </svg>
+            <span id="aiModelCurrentLabel">Padrão do Servidor</span>
+          </div>
+          <svg class="dropdown-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="dropdown-popover ai-model-popover" id="aiModelPopover"></div>
+      </div>
+    </div>
+
+    <div class="ai-drawer-section">
+      <div class="form-label">
+        <span>API Key</span>
+        <span class="form-hint" id="aiPolicyLabel">Opcional</span>
+      </div>
+      <div class="ai-key-input-wrap">
+        <svg class="ai-input-leading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <input type="password" class="ai-compact-input" id="aiKeyInput" placeholder="Cole sua API Key (opcional)..." autocomplete="off" spellcheck="false" />
+        <button type="button" class="ai-eye-btn" id="aiKeyVisBtn" title="Mostrar ou ocultar chave">
+          <svg class="ai-eye-icon" id="aiEyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 

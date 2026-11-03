@@ -75,7 +75,14 @@ class CodeJudgeSidebarProvider {
                 payload: state
             });
         });
-        this.syncLanguagesUseCase.execute().finally(() => {
+        Promise.all([
+            this.healthController.check(),
+            this.syncLanguagesUseCase.execute()
+        ]).then(([health]) => {
+            this.postMessage({
+                type: 'health-status',
+                payload: health
+            });
             this.updateActiveEditorState();
         });
         setTimeout(() => {

@@ -87,12 +87,11 @@ class OllamaAdapter(IAiEngine):
             return False
         testUrl = f"{self.endpoint}/models"
         try:
-            response = self._httpClient.get(testUrl, timeout=2.0)
-            return response.status_code == 200
+            response = self._httpClient.get(testUrl, timeout=httpx.Timeout(0.4, connect=0.25))
+            if response.status_code == 200:
+                return True
+            baseHost = self.endpoint.replace("/v1", "")
+            response = self._httpClient.get(baseHost, timeout=httpx.Timeout(0.4, connect=0.25))
+            return response.status_code in (200, 404)
         except Exception:
-            try:
-                baseHost = self.endpoint.replace("/v1", "")
-                response = self._httpClient.get(baseHost, timeout=2.0)
-                return response.status_code in (200, 404)
-            except Exception:
-                return False
+            return False

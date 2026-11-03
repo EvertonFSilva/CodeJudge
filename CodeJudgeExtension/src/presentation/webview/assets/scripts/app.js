@@ -36,10 +36,15 @@
     aiKeyDot: document.getElementById('aiKeyDot'),
     aiConfigDrawer: document.getElementById('aiConfigDrawer'),
     aiPolicyLabel: document.getElementById('aiPolicyLabel'),
+    aiModelSyncHint: document.getElementById('aiModelSyncHint'),
     aiKeyResetBtn: document.getElementById('aiKeyResetBtn'),
-    aiModelSelect: document.getElementById('aiModelSelect'),
+    aiModelDropdownContainer: document.getElementById('aiModelDropdownContainer'),
+    aiModelTriggerBtn: document.getElementById('aiModelTriggerBtn'),
+    aiModelCurrentLabel: document.getElementById('aiModelCurrentLabel'),
+    aiModelPopover: document.getElementById('aiModelPopover'),
     aiKeyInput: document.getElementById('aiKeyInput'),
     aiKeyVisBtn: document.getElementById('aiKeyVisBtn'),
+    aiEyeIcon: document.getElementById('aiEyeIcon'),
 
     tabProcessBtn: document.getElementById('tabProcessBtn'),
     tabPromptsBtn: document.getElementById('tabPromptsBtn'),
@@ -54,7 +59,7 @@
     dropdownTriggerBtn: document.getElementById('dropdownTriggerBtn'),
     dropdownCurrentLabel: document.getElementById('dropdownCurrentLabel'),
     dropdownPopover: document.getElementById('dropdownPopover'),
-    dropdownOptions: document.querySelectorAll('.dropdown-option'),
+    dropdownOptions: document.querySelectorAll('#dropdownPopover .dropdown-option'),
 
     statementInput: document.getElementById('statementInput'),
 
@@ -153,60 +158,177 @@
     }
   }
 
+  function createCheckIconSvg() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'option-check-svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2.5');
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', '20 6 9 17 4 12');
+    svg.appendChild(poly);
+    return svg;
+  }
+
+  function createModelOptionElement(value, label, description, isSelected) {
+    const opt = document.createElement('div');
+    opt.className = 'dropdown-option' + (isSelected ? ' selected' : '');
+    opt.setAttribute('data-value', value);
+    opt.setAttribute('data-label', label);
+
+    const header = document.createElement('div');
+    header.className = 'dropdown-option-header';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = label;
+    header.appendChild(titleSpan);
+    header.appendChild(createCheckIconSvg());
+
+    const desc = document.createElement('div');
+    desc.className = 'dropdown-option-desc';
+    desc.textContent = description;
+
+    opt.appendChild(header);
+    opt.appendChild(desc);
+
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      selectAiModelOption(value, label);
+      elements.aiModelDropdownContainer?.classList.remove('open');
+    });
+
+    return opt;
+  }
+
+  function selectAiModelOption(value, label) {
+    if (!value) {
+      aiPreferences.engine = '';
+      aiPreferences.model = '';
+    } else {
+      const [eng, mdl] = value.split('::');
+      aiPreferences.engine = eng || '';
+      aiPreferences.model = mdl || '';
+    }
+
+    if (elements.aiModelCurrentLabel) {
+      elements.aiModelCurrentLabel.textContent = label || 'Padrão do Servidor';
+    }
+
+    if (elements.aiModelPopover) {
+      const allOpts = elements.aiModelPopover.querySelectorAll('.dropdown-option');
+      allOpts.forEach(node => {
+        node.classList.toggle('selected', node.getAttribute('data-value') === value);
+      });
+    }
+
+    persistAiPreferences();
+  }
+
   function populateAiModelSelect(aiModels) {
-    if (!elements.aiModelSelect) return;
-    const select = elements.aiModelSelect;
-    const currentValue =
+    if (!elements.aiModelPopover || !elements.aiModelCurrentLabel) return;
+    const popover = elements.aiModelPopover;
+    popover.innerHTML = '';
+
+    let currentValue =
       aiPreferences.engine && aiPreferences.model
         ? `${aiPreferences.engine}::${aiPreferences.model}`
         : '';
 
-    select.innerHTML = '';
+    const rawEngines = Array.isArray(aiModels?.engines) && aiModels.engines.length > 0
+      ? aiModels.engines
+      : aiModels?.providers && typeof aiModels.providers === 'object'
+        ? Object.entries(aiModels.providers).map(([key, list]) => ({
+            key,
+            name: key.toUpperCase(),
+            supportedModels: Array.isArray(list) ? list : [],
+            requiresApiKey: key !== 'ollama'
+          }))
+        : [];
 
-    if (!aiModels || !aiModels.isUserKeyRequired) {
-      const defOpt = document.createElement('option');
-      defOpt.value = '';
-      defOpt.textContent = aiModels?.defaultModel
+    if (!aiModels || rawEngines.length === 0) {
+      if (elements.aiModelSyncHint) {
+        elements.aiModelSyncHint.textContent = 'Aguardando servidor...';
+      }
+      const section = document.createElement('div');
+      section.className = 'dropdown-section-title';
+      section.textContent = 'Servidor';
+      popover.appendChild(section);
+
+      const defaultLabel = aiPreferences.model || 'Padrão do Servidor';
+      popover.appendChild(
+        createModelOptionElement(
+          currentValue,
+          defaultLabel,
+          'Conecte ao servidor para carregar a lista de modelos',
+          true
+        )
+      );
+      elements.aiModelCurrentLabel.textContent = defaultLabel;
+      return;
+    }
+
+    let totalModelsCount = 0;
+    rawEngines.forEach(eng => {
+      totalModelsCount += Array.isArray(eng.supportedModels) ? eng.supportedModels.length : 0;
+    });
+    if (elements.aiModelSyncHint) {
+      elements.aiModelSyncHint.textContent = `${totalModelsCount} modelos disponíveis`;
+    }
+
+    if (aiModels.isUserKeyRequired && !currentValue && rawEngines[0]?.supportedModels?.[0]) {
+      aiPreferences.engine = rawEngines[0].key;
+      aiPreferences.model = rawEngines[0].supportedModels[0];
+      currentValue = `${aiPreferences.engine}::${aiPreferences.model}`;
+    }
+
+    let selectedLabel = '';
+
+    if (!aiModels.isUserKeyRequired) {
+      const recSection = document.createElement('div');
+      recSection.className = 'dropdown-section-title';
+      recSection.textContent = 'Servidor';
+      popover.appendChild(recSection);
+
+      const defTitle = aiModels.defaultModel
         ? `Padrão do Servidor (${aiModels.defaultModel})`
         : 'Padrão do Servidor';
-      select.appendChild(defOpt);
+      const defDesc = aiModels.defaultEngine
+        ? `Motor padrão do servidor (${aiModels.defaultEngine})`
+        : 'Usar modelo configurado no servidor';
+      const isDefSelected = currentValue === '';
+      if (isDefSelected) {
+        selectedLabel = defTitle;
+      }
+      popover.appendChild(createModelOptionElement('', defTitle, defDesc, isDefSelected));
     }
 
-    const engines = Array.isArray(aiModels?.engines) && aiModels.engines.length > 0
-      ? aiModels.engines
-      : [
-          {
-            key: 'gemini',
-            name: 'Google Gemini',
-            supportedModels: ['gemini-3.8-flash', 'gemini-3.8-pro', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-pro']
-          },
-          {
-            key: 'ollama',
-            name: 'Ollama (Local)',
-            supportedModels: ['llama3:latest', 'qwen2.5-coder:latest', 'deepseek-coder:latest']
-          }
-        ];
+    rawEngines.forEach(eng => {
+      const modelsList = Array.isArray(eng.supportedModels) ? eng.supportedModels : [];
+      if (modelsList.length === 0) return;
 
-    engines.forEach(eng => {
-      const group = document.createElement('optgroup');
-      group.label = eng.name || eng.key;
-      (eng.supportedModels || []).forEach(mdl => {
-        const opt = document.createElement('option');
-        opt.value = `${eng.key}::${mdl}`;
-        opt.textContent = mdl;
-        group.appendChild(opt);
+      const secTitle = document.createElement('div');
+      secTitle.className = 'dropdown-section-title';
+      secTitle.textContent = eng.name || eng.key;
+      popover.appendChild(secTitle);
+
+      const descText = eng.requiresApiKey
+        ? `${eng.name || eng.key} • Requer API Key`
+        : `${eng.name || eng.key} • Execução no Servidor`;
+
+      modelsList.forEach(mdl => {
+        const val = `${eng.key}::${mdl}`;
+        const isSel = currentValue === val;
+        if (isSel) {
+          selectedLabel = mdl;
+        }
+        popover.appendChild(createModelOptionElement(val, mdl, descText, isSel));
       });
-      select.appendChild(group);
     });
 
-    if (currentValue) {
-      select.value = currentValue;
-    } else if (aiModels?.isUserKeyRequired && select.options.length > 0) {
-      select.selectedIndex = 0;
-      const parts = (select.value || '').split('::');
-      aiPreferences.engine = parts[0] || '';
-      aiPreferences.model = parts[1] || '';
+    if (!selectedLabel) {
+      selectedLabel = aiPreferences.model || (aiModels.defaultModel ? `Padrão do Servidor (${aiModels.defaultModel})` : 'Padrão do Servidor');
     }
+    elements.aiModelCurrentLabel.textContent = selectedLabel;
   }
 
   function setupDiscreetAiConfig() {
@@ -219,20 +341,23 @@
     elements.aiConfigToggleBtn.addEventListener('click', () => {
       const isOpen = elements.aiConfigDrawer.classList.toggle('open');
       elements.aiConfigToggleBtn.classList.toggle('open', isOpen);
+      if (!isOpen) {
+        elements.aiModelDropdownContainer?.classList.remove('open');
+      } else if (!serverAiConfig) {
+        vscode.postMessage({ type: 'request-health' });
+      }
     });
 
-    elements.aiModelSelect.addEventListener('change', () => {
-      const val = elements.aiModelSelect.value;
-      if (!val) {
-        aiPreferences.engine = '';
-        aiPreferences.model = '';
-      } else {
-        const [eng, mdl] = val.split('::');
-        aiPreferences.engine = eng || '';
-        aiPreferences.model = mdl || '';
-      }
-      persistAiPreferences();
-    });
+    if (elements.aiModelTriggerBtn && elements.aiModelDropdownContainer) {
+      elements.aiModelTriggerBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        elements.dropdownContainer?.classList.remove('open');
+        const isOpen = elements.aiModelDropdownContainer.classList.toggle('open');
+        if (isOpen && !serverAiConfig) {
+          vscode.postMessage({ type: 'request-health' });
+        }
+      });
+    }
 
     elements.aiKeyInput.addEventListener('input', () => {
       aiPreferences.apiKey = elements.aiKeyInput.value.trim();
@@ -245,7 +370,11 @@
     elements.aiKeyVisBtn.addEventListener('click', () => {
       const isPwd = elements.aiKeyInput.type === 'password';
       elements.aiKeyInput.type = isPwd ? 'text' : 'password';
-      elements.aiKeyVisBtn.textContent = isPwd ? 'Ocultar' : 'Ver';
+      if (elements.aiEyeIcon) {
+        elements.aiEyeIcon.innerHTML = isPwd
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+      }
     });
 
     elements.aiKeyResetBtn.addEventListener('click', () => {
@@ -253,7 +382,7 @@
       aiPreferences.engine = '';
       aiPreferences.model = '';
       elements.aiKeyInput.value = '';
-      elements.aiModelSelect.value = '';
+      populateAiModelSelect(serverAiConfig);
       persistAiPreferences();
     });
   }
@@ -298,12 +427,16 @@
   function setupCustomDropdown() {
     elements.dropdownTriggerBtn.addEventListener('click', e => {
       e.stopPropagation();
+      elements.aiModelDropdownContainer?.classList.remove('open');
       elements.dropdownContainer.classList.toggle('open');
     });
 
     document.addEventListener('click', e => {
-      if (!elements.dropdownContainer.contains(e.target)) {
+      if (elements.dropdownContainer && !elements.dropdownContainer.contains(e.target)) {
         elements.dropdownContainer.classList.remove('open');
+      }
+      if (elements.aiModelDropdownContainer && !elements.aiModelDropdownContainer.contains(e.target)) {
+        elements.aiModelDropdownContainer.classList.remove('open');
       }
     });
 
@@ -651,8 +784,8 @@
       serverAiConfig = aiModels;
       if (elements.aiPolicyLabel) {
         elements.aiPolicyLabel.textContent = aiModels.isUserKeyRequired
-          ? 'IA & API Key (Obrigatória)'
-          : 'IA & API Key (Opcional)';
+          ? 'Obrigatória pelo servidor'
+          : 'Opcional';
       }
       if (elements.aiKeyInput) {
         elements.aiKeyInput.placeholder = aiModels.isUserKeyRequired
@@ -665,6 +798,8 @@
         elements.aiConfigDrawer?.classList.add('open');
         elements.aiConfigToggleBtn?.classList.add('open');
       }
+    } else if (!online && elements.aiModelSyncHint) {
+      elements.aiModelSyncHint.textContent = 'Servidor offline';
     }
   }
 

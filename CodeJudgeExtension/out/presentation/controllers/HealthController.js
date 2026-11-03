@@ -14,7 +14,7 @@ class HealthController {
             this.healthUseCase.fetchAiModels()
         ]);
         return {
-            online,
+            online: online || Boolean(aiModels),
             apiUrl: this.getApiUrl(),
             aiModels
         };

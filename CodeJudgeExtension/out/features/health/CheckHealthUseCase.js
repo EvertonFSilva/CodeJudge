@@ -9,13 +9,16 @@ class CheckHealthUseCase {
         this.logger = logger;
     }
     async execute() {
-        const url = `${this.getApiUrl()}/health`;
+        const baseUrl = this.getApiUrl();
+        const url = `${baseUrl}/health`;
         this.logger.debug(`Verificando conectividade do servidor em ${url}`);
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3500);
+            const timer = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(url, { method: 'GET', signal: controller.signal }).catch(async () => {
-                return await fetch(`${this.getApiUrl()}/`, { method: 'GET', signal: controller.signal });
+                return await fetch(`${baseUrl}/ai/models`, { method: 'GET', signal: controller.signal }).catch(async () => {
+                    return await fetch(`${baseUrl}/`, { method: 'GET', signal: controller.signal });
+                });
             });
             clearTimeout(timer);
             const isOnline = res.status < 500;
@@ -31,7 +34,7 @@ class CheckHealthUseCase {
         const url = `${this.getApiUrl()}/ai/models`;
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3500);
+            const timer = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(url, { method: 'GET', signal: controller.signal });
             clearTimeout(timer);
             if (!res.ok)

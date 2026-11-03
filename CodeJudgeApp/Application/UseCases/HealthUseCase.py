@@ -83,7 +83,7 @@ class HealthUseCase:
         if shutil.which(executable):
             return True
         try:
-            result = subprocess.run([executable, "--version"], capture_output=True, timeout=2)
+            result = subprocess.run([executable, "--version"], capture_output=True, timeout=0.5)
             return result.returncode == 0
         except Exception:
             return False
