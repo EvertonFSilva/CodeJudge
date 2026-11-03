@@ -651,7 +651,7 @@
           chip.type = 'button';
           chip.className = 'moodle-course-chip' + (moodleProfile.course === courseTitle ? ' active' : '');
           chip.textContent = courseTitle;
-          chip.title = 'Usar como Curso / Disciplina no cabeçalho';
+          chip.title = 'Selecionar curso / disciplina';
           chip.addEventListener('click', () => {
             if (elements.moodleCourseInput) {
               elements.moodleCourseInput.value = courseTitle;

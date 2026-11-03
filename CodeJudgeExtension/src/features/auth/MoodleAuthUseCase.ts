@@ -206,12 +206,21 @@ export class MoodleAuthUseCase {
       return null;
     }
 
-    let email = '';
-    const mailMatch = html.match(/<a[^>]+href=["']mailto:([^"'>\s?]+)["'][^>]*>([\s\S]*?)<\/a>/i);
-    if (mailMatch) {
-      email = this.stripHtml(mailMatch[2]) || mailMatch[1].trim();
-    }
+    const isSystemEmail = (candidate: string): boolean => {
+      const lower = (candidate || '').toLowerCase().trim();
+      return (
+        lower.includes('suporte') ||
+        lower.includes('atendimento') ||
+        lower.includes('contato') ||
+        lower.includes('noreply') ||
+        lower.includes('ouvidoria') ||
+        lower.includes('reitoria') ||
+        lower.includes('ead@') ||
+        lower.includes('admin')
+      );
+    };
 
+    let email = '';
     const details: Record<string, string> = {};
     const dlRegex = /<dl[^>]*>([\s\S]*?)<\/dl>/gi;
     let dlMatch: RegExpExecArray | null;
@@ -229,7 +238,46 @@ export class MoodleAuthUseCase {
         if (dt && dd) {
           details[dt] = dd;
         }
+
+        if (!email && (dt.includes('email') || dt.includes('e-mail') || dt.includes('correio'))) {
+          const mailto = ddMatch[1].match(/href=["']mailto:([^"'>\s?]+)["']/i);
+          if (mailto && mailto[1] && !isSystemEmail(mailto[1])) {
+            email = decodeURIComponent(mailto[1].trim());
+          } else {
+            const textMail = dd.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (textMail && !isSystemEmail(textMail[0])) {
+              email = textMail[0];
+            }
+          }
+        }
       }
+    }
+
+    if (!email && cardIdx !== -1) {
+      const cardSlice = html.substring(cardIdx, cardIdx + 4000);
+      const cardMailto = cardSlice.match(/href=["']mailto:([^"'>\s?]+)["']/i);
+      if (cardMailto && cardMailto[1] && !isSystemEmail(cardMailto[1])) {
+        email = decodeURIComponent(cardMailto[1].trim());
+      } else {
+        const cardMail = this.stripHtml(cardSlice).match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (cardMail && !isSystemEmail(cardMail[0])) {
+          email = cardMail[0];
+        }
+      }
+    }
+
+    if (!email) {
+      const allEmails = [...html.matchAll(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g)].map(m => m[0]);
+      const candidate = allEmails.find(e => !isSystemEmail(e));
+      if (candidate) {
+        email = candidate;
+      }
+    }
+
+    if (!email) {
+      email = /^\d+$/.test(fallbackUsername)
+        ? `${fallbackUsername}@aluno.iff.edu.br`
+        : `${fallbackUsername}@iff.edu.br`;
     }
 
     const courses: string[] = [];
@@ -281,7 +329,7 @@ export class MoodleAuthUseCase {
     return {
       username: fallbackUsername,
       name,
-      email: email || `${fallbackUsername}@iff.edu.br`,
+      email,
       campus,
       city,
       course: primaryCourse,
