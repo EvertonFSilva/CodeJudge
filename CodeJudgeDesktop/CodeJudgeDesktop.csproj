@@ -18,6 +18,10 @@
     <Copyright>Everton (IFF)</Copyright>
     <Description>CodeJudge - Plataforma de Avaliação de Código</Description>
     <NeutralLanguage>pt-BR</NeutralLanguage>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,8 +7,11 @@
         mc:Ignorable="d"
         Title="CodeJudge"
         Icon="Assets/icon.ico"
-        Height="880" Width="1420"
-        MinHeight="660" MinWidth="1020"
+        Height="700" Width="1180"
+        MinHeight="500" MinWidth="820"
+        WindowState="Maximized"
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"
         WindowStartupLocation="CenterScreen"
         Background="#0d1117">
 

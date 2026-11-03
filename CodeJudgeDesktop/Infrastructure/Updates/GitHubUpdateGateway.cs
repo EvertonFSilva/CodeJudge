@@ -4,40 +4,35 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using CodeJudgeDesktop.Domain.Interfaces;
+using CodeJudgeDesktop.Infrastructure.Security;
 
-namespace CodeJudgeDesktop.Services
+namespace CodeJudgeDesktop.Infrastructure.Updates
 {
-    public class VersionInfo
-    {
-        public string Version { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string MinRequiredVersion { get; set; } = "";
-        public string DownloadUrl { get; set; } = "https://github.com/EvertonFSilva/CodeJudge/releases/latest";
-        public bool Mandatory { get; set; } = true;
-    }
-
-    public static class UpdateChecker
+    public sealed class GitHubUpdateGateway : IUpdateGateway
     {
         public const string CurrentVersion = "2.0.0";
-        private const string VersionUrl = "https://raw.githubusercontent.com/EvertonFSilva/CodeJudge/main/version.json";
-        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        private static readonly HttpClient HttpInstance = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
 
-        public static async Task CheckForMandatoryUpdatesAsync(Window parentWindow)
+        public async Task VerifyMandatoryUpdatesAsync(Window parentWindow)
         {
             try
             {
-                var response = await _http.GetStringAsync(VersionUrl);
+                string versionUrl = CryptoVault.GetVersionEndpoint();
+                string fallbackReleases = CryptoVault.GetReleasesUrl();
+
+                var response = await HttpInstance.GetStringAsync(versionUrl).ConfigureAwait(false);
                 using var doc = JsonDocument.Parse(response);
                 var root = doc.RootElement;
 
                 string remoteVersion = root.GetProperty("version").GetString() ?? "";
                 string downloadUrl = root.TryGetProperty("downloadUrl", out var dl)
-                    ? dl.GetString() ?? "https://github.com/EvertonFSilva/CodeJudge/releases/latest"
-                    : "https://github.com/EvertonFSilva/CodeJudge/releases/latest";
+                    ? dl.GetString() ?? fallbackReleases
+                    : fallbackReleases;
 
                 bool mandatory = root.TryGetProperty("mandatory", out var m) && m.GetBoolean();
 
-                if (IsNewer(remoteVersion, CurrentVersion))
+                if (IsNewerVersion(remoteVersion, CurrentVersion))
                 {
                     parentWindow.Dispatcher.Invoke(() =>
                     {
@@ -61,7 +56,7 @@ namespace CodeJudgeDesktop.Services
                                 });
                             }
                             catch { }
-                            Application.Current.Shutdown();
+                            System.Windows.Application.Current.Shutdown();
                         }
                         else if (mandatory)
                         {
@@ -71,7 +66,7 @@ namespace CodeJudgeDesktop.Services
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Error
                             );
-                            Application.Current.Shutdown();
+                            System.Windows.Application.Current.Shutdown();
                         }
                     });
                 }
@@ -81,7 +76,7 @@ namespace CodeJudgeDesktop.Services
             }
         }
 
-        private static bool IsNewer(string vRemote, string vCurrent)
+        private static bool IsNewerVersion(string vRemote, string vCurrent)
         {
             if (string.IsNullOrWhiteSpace(vRemote)) return false;
 

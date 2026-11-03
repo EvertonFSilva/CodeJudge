@@ -4,12 +4,14 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using CodeJudgeDesktop.Domain.Interfaces;
+using CodeJudgeDesktop.Infrastructure.Security;
 
-namespace CodeJudgeDesktop.Services
+namespace CodeJudgeDesktop.Infrastructure.Runtime
 {
-    public class BackendSupervisor : IDisposable
+    public sealed class PythonBackendRuntime : IBackendRuntime
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+        private static readonly HttpClient HttpClientInstance = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
         private Process? _backendProcess;
         private CancellationTokenSource? _monitorCts;
         private bool _isDisposed;
@@ -33,17 +35,17 @@ namespace CodeJudgeDesktop.Services
             {
                 while (!token.IsCancellationRequested && !_isDisposed)
                 {
-                    bool ok = await CheckHealthAsync();
+                    bool ok = await CheckHealthAsync().ConfigureAwait(false);
                     if (!ok && !_isStarting)
                     {
                         var timeSinceLast = DateTime.UtcNow - _lastStartAttempt;
                         if (timeSinceLast.TotalSeconds >= 15)
                         {
                             _lastStartAttempt = DateTime.UtcNow;
-                            await TryStartBackendAsync();
+                            await TryStartBackendAsync().ConfigureAwait(false);
                         }
                     }
-                    await Task.Delay(4000, token).ContinueWith(_ => { });
+                    await Task.Delay(4000, token).ContinueWith(_ => { }).ConfigureAwait(false);
                 }
             }, token);
         }
@@ -52,7 +54,8 @@ namespace CodeJudgeDesktop.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("http://127.0.0.1:8000/health");
+                string healthUrl = CryptoVault.GetHealthEndpoint();
+                var response = await HttpClientInstance.GetAsync(healthUrl).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     if (!IsOnline)
@@ -113,8 +116,8 @@ namespace CodeJudgeDesktop.Services
                 };
 
                 _backendProcess = Process.Start(psi);
-                await Task.Delay(2000);
-                return await CheckHealthAsync();
+                await Task.Delay(2000).ConfigureAwait(false);
+                return await CheckHealthAsync().ConfigureAwait(false);
             }
             catch
             {
@@ -138,8 +141,7 @@ namespace CodeJudgeDesktop.Services
             {
                 Path.Combine(baseDir, "backend", "Main.py"),
                 Path.GetFullPath(Path.Combine(baseDir, "..", "CodeJudgeApp", "Main.py")),
-                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "CodeJudgeApp", "Main.py")),
-                @"C:\Users\evert\OneDrive\Desktop\CodeJudge\CodeJudgeApp\Main.py"
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "CodeJudgeApp", "Main.py"))
             };
 
             foreach (var path in candidates)

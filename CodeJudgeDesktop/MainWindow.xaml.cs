@@ -7,7 +7,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using Microsoft.Web.WebView2.Core;
-using CodeJudgeDesktop.Services;
+using CodeJudgeDesktop.Application.UseCases;
+using CodeJudgeDesktop.Infrastructure.Auth;
+using CodeJudgeDesktop.Infrastructure.Runtime;
+using CodeJudgeDesktop.Infrastructure.Security;
+using CodeJudgeDesktop.Infrastructure.Storage;
+using CodeJudgeDesktop.Infrastructure.Updates;
+using CodeJudgeDesktop.Presentation.Bridges;
+using CodeJudgeDesktop.Presentation.Controllers;
 
 namespace CodeJudgeDesktop
 {
@@ -16,13 +23,25 @@ namespace CodeJudgeDesktop
         [DllImport("dwmapi.dll", PreserveSig = true)]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
-        private readonly BackendSupervisor _supervisor = new BackendSupervisor();
+        private readonly AuthenticateStudentUseCase _authUseCase;
+        private readonly ManageWorkspaceUseCase _workspaceUseCase;
+        private readonly SuperviseBackendUseCase _backendUseCase;
+        private readonly VerifyReleaseUpdateUseCase _updateUseCase;
+        private readonly DesktopBridgeController _bridgeController;
+
         private bool _isInitialized;
         private bool _hasLoadedOnce;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            _authUseCase = new AuthenticateStudentUseCase(new MoodleIffAuthGateway());
+            _workspaceUseCase = new ManageWorkspaceUseCase(new WindowsFileWorkspaceGateway());
+            _backendUseCase = new SuperviseBackendUseCase(new PythonBackendRuntime());
+            _updateUseCase = new VerifyReleaseUpdateUseCase(new GitHubUpdateGateway());
+            _bridgeController = new DesktopBridgeController(this, _authUseCase, _workspaceUseCase);
+
             SourceInitialized += MainWindow_SourceInitialized;
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
@@ -50,10 +69,16 @@ namespace CodeJudgeDesktop
             if (_isInitialized) return;
             _isInitialized = true;
 
-            _supervisor.StatusChanged += OnBackendStatusChanged;
-            _supervisor.StartMonitoring();
+            if (!RuntimeShield.VerifyRuntimeIntegrity())
+            {
+                Close();
+                return;
+            }
 
-            _ = UpdateChecker.CheckForMandatoryUpdatesAsync(this);
+            _backendUseCase.StatusChanged += OnBackendStatusChanged;
+            _backendUseCase.Start();
+
+            _ = _updateUseCase.ExecuteAsync(this);
 
             try
             {
@@ -109,7 +134,7 @@ namespace CodeJudgeDesktop
             {
             }
 
-            MainWebView.CoreWebView2.AddHostObjectToScript("moodleAuth", new MoodleAuthBridge());
+            MainWebView.CoreWebView2.AddHostObjectToScript("moodleAuth", new MoodleComBridge(_authUseCase));
             MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
             string bridgeScript = @"
@@ -189,7 +214,7 @@ namespace CodeJudgeDesktop
                                 statusText: 'OK',
                                 headers: { 'Content-Type': 'application/json' }
                             });
-                        } catch (err) {
+                        } catch {
                             return new Response(JSON.stringify({ success: false, message: 'Falha ao obter perfil' }), {
                                 status: 200,
                                 statusText: 'OK',
@@ -222,12 +247,14 @@ namespace CodeJudgeDesktop
 
             await MainWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(bridgeScript);
 
+            string virtualHost = CryptoVault.GetVirtualHost();
+
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(
-                "https://app.codejudge.local/auth/*",
+                $"https://{virtualHost}/auth/*",
                 CoreWebView2WebResourceContext.All
             );
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(
-                "https://app.codejudge.local/api/auth/*",
+                $"https://{virtualHost}/api/auth/*",
                 CoreWebView2WebResourceContext.All
             );
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2_WebResourceRequested;
@@ -237,7 +264,7 @@ namespace CodeJudgeDesktop
             if (Directory.Exists(wwwDir) && File.Exists(Path.Combine(wwwDir, "index.html")))
             {
                 MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                    "app.codejudge.local",
+                    virtualHost,
                     wwwDir,
                     CoreWebView2HostResourceAccessKind.Allow
                 );
@@ -248,7 +275,7 @@ namespace CodeJudgeDesktop
                     LoadingOverlay.Visibility = Visibility.Collapsed;
                 };
 
-                MainWebView.CoreWebView2.Navigate("https://app.codejudge.local/index.html");
+                MainWebView.CoreWebView2.Navigate($"https://{virtualHost}/index.html");
             }
         }
 
@@ -274,67 +301,10 @@ namespace CodeJudgeDesktop
 
             if (string.IsNullOrEmpty(requestId)) return;
 
-            string responsePayload = "{}";
-
+            string responsePayload;
             try
             {
-                switch (action)
-                {
-                    case "auth-login":
-                        responsePayload = await Task.Run(() => MoodleAuthService.HandleLoginAsync(payload));
-                        break;
-
-                    case "auth-profile":
-                        responsePayload = MoodleAuthService.HandleProfileAsync();
-                        break;
-
-                    case "auth-logout":
-                        responsePayload = MoodleAuthService.HandleLogout();
-                        break;
-
-                    case "examples-list":
-                        responsePayload = await Task.Run(() => WorkspaceService.GetExamplesCatalogJson());
-                        break;
-
-                    case "example-load":
-                        {
-                            string folder = "";
-                            string fileName = "Main.java";
-                            using var pDoc = JsonDocument.Parse(payload);
-                            if (pDoc.RootElement.TryGetProperty("folder", out var fProp)) folder = fProp.GetString() ?? "";
-                            if (pDoc.RootElement.TryGetProperty("fileName", out var fnProp)) fileName = fnProp.GetString() ?? "Main.java";
-                            responsePayload = await Task.Run(() => WorkspaceService.LoadExampleJson(folder, fileName));
-                        }
-                        break;
-
-                    case "file-open":
-                        {
-                            string filterType = "code";
-                            try
-                            {
-                                using var pDoc = JsonDocument.Parse(payload);
-                                if (pDoc.RootElement.TryGetProperty("filterType", out var ft)) filterType = ft.GetString() ?? "code";
-                            }
-                            catch { }
-                            responsePayload = WorkspaceService.OpenFileFromDisk(this, filterType);
-                        }
-                        break;
-
-                    case "file-save":
-                        {
-                            string fileName = "Main.java";
-                            string content = "";
-                            using var pDoc = JsonDocument.Parse(payload);
-                            if (pDoc.RootElement.TryGetProperty("fileName", out var fn)) fileName = fn.GetString() ?? "Main.java";
-                            if (pDoc.RootElement.TryGetProperty("content", out var ct)) content = ct.GetString() ?? "";
-                            responsePayload = WorkspaceService.SaveFileToDisk(this, fileName, content);
-                        }
-                        break;
-
-                    default:
-                        responsePayload = JsonSerializer.Serialize(new { success = false, message = "Ação desconhecida." });
-                        break;
-                }
+                responsePayload = await _bridgeController.HandleActionAsync(action, payload);
             }
             catch (Exception ex)
             {
@@ -374,7 +344,7 @@ namespace CodeJudgeDesktop
                         body = await reader.ReadToEndAsync();
                     }
 
-                    string jsonResult = await Task.Run(() => MoodleAuthService.HandleLoginAsync(body));
+                    string jsonResult = await Task.Run(() => _authUseCase.LoginAsync(body));
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonResult));
 
                     e.Response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(
@@ -388,7 +358,7 @@ namespace CodeJudgeDesktop
 
                 if (uri.Contains("/auth/profile"))
                 {
-                    string jsonResult = MoodleAuthService.HandleProfileAsync();
+                    string jsonResult = _authUseCase.GetProfile();
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonResult));
 
                     e.Response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(
@@ -402,7 +372,7 @@ namespace CodeJudgeDesktop
 
                 if (uri.Contains("/auth/logout"))
                 {
-                    string jsonResult = MoodleAuthService.HandleLogout();
+                    string jsonResult = _authUseCase.Logout();
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonResult));
 
                     e.Response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(
@@ -434,13 +404,7 @@ namespace CodeJudgeDesktop
         private static string ResolveWebDistDirectory()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string localWww = Path.Combine(baseDir, "www");
-            if (Directory.Exists(localWww) && File.Exists(Path.Combine(localWww, "index.html")))
-            {
-                return localWww;
-            }
-
-            return localWww;
+            return Path.Combine(baseDir, "www");
         }
 
         private void OnBackendStatusChanged(bool isOnline, string message)
@@ -459,7 +423,7 @@ namespace CodeJudgeDesktop
 
         private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            _supervisor.Dispose();
+            _backendUseCase.Dispose();
         }
     }
 }
