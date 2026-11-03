@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
-        Title="CodeJudge IDE"
+        Title="CodeJudge"
         Icon="Assets/icon.ico"
         Height="880" Width="1420"
         MinHeight="660" MinWidth="1020"
@@ -18,8 +18,8 @@
         <Border x:Name="LoadingOverlay" Background="#0d1117" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Visible">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Image Source="Assets/icon.png" Width="64" Height="64" Margin="0,0,0,18" RenderOptions.BitmapScalingMode="HighQuality"/>
-                <TextBlock Text="CodeJudge IDE" Foreground="#ffffff" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                <TextBlock Text="Iniciando bancada desktop..." Foreground="#8b949e" FontSize="12" Margin="0,4,0,16" HorizontalAlignment="Center"/>
+                <TextBlock Text="CodeJudge" Foreground="#ffffff" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <TextBlock Text="Inicializando ambiente..." Foreground="#8b949e" FontSize="12" Margin="0,4,0,16" HorizontalAlignment="Center"/>
                 <ProgressBar IsIndeterminate="True" Width="200" Height="3" Background="#161b22" Foreground="#10b981" BorderThickness="0"/>
             </StackPanel>
         </Border>

@@ -63,7 +63,7 @@ namespace CodeJudgeDesktop
             {
                 MessageBox.Show(
                     $"Erro ao inicializar o ambiente desktop:\n\n{ex.Message}",
-                    "CodeJudge IDE - Erro",
+                    "CodeJudge",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error
                 );
@@ -79,6 +79,17 @@ namespace CodeJudgeDesktop
             );
             Directory.CreateDirectory(userDataDir);
 
+            try
+            {
+                string cacheDir = Path.Combine(userDataDir, "EBWebView", "Default", "Cache");
+                if (Directory.Exists(cacheDir)) Directory.Delete(cacheDir, true);
+                string codeCacheDir = Path.Combine(userDataDir, "EBWebView", "Default", "Code Cache");
+                if (Directory.Exists(codeCacheDir)) Directory.Delete(codeCacheDir, true);
+            }
+            catch
+            {
+            }
+
             var env = await CoreWebView2Environment.CreateAsync(null, userDataDir);
             await MainWebView.EnsureCoreWebView2Async(env);
 
@@ -88,6 +99,15 @@ namespace CodeJudgeDesktop
             settings.AreDevToolsEnabled = false;
             settings.IsZoomControlEnabled = false;
             settings.AreBrowserAcceleratorKeysEnabled = false;
+
+            try
+            {
+                await MainWebView.CoreWebView2.CallDevToolsProtocolMethodAsync("Network.enable", "{}");
+                await MainWebView.CoreWebView2.CallDevToolsProtocolMethodAsync("Network.setCacheDisabled", "{\"cacheDisabled\":true}");
+            }
+            catch
+            {
+            }
 
             MainWebView.CoreWebView2.AddHostObjectToScript("moodleAuth", new MoodleAuthBridge());
             MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
