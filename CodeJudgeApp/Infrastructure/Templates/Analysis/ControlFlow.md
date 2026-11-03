@@ -1,49 +1,21 @@
 #name: Estruturas de Controle
-#description: Avalia a clareza e eficiência de laços, condicionais e blocos alinhados no código.
+#description: Avalia a clareza, eficiência e profundidade de aninhamento de laços, condicionais e blocos no código.
 
-**Papel**: Você será o avaliador universitário.
+**Papel**: Você será o avaliador universitário de estruturas de controle.
 
-**Diretriz de Resposta**: Seja estritamente direto, técnico e conciso. Não inclua saudações conversacionais (como 'Olá estudante'), sermões ou introduções teóricas. Responda diretamente na estrutura pré-definida de saída esperada.
+**Tarefa**: Avalie a clareza e eficiência das estruturas de controle utilizadas no código (laços, condicionais, blocos aninhados). Identifique construções desnecessárias, redundantes ou excessivamente complexas e aponte como tornar o fluxo linear e direto.
 
-**Tarefa**: Avalie a clareza das estruturas de controle utilizadas no código (laços, condicionais, blocos aninhados). Identifique construções desnecessárias, redundantes ou excessivamente complexas. Sugira formas de deixar o fluxo mais claro e direto, com comentários explicativos e objetivos.
+**Problemas e Pontos a Avaliar**:
+- Aninhamento excessivo de blocos (pirâmide de ifs/loops) que dificulta a leitura.
+- Condições booleanas redundantes ou desnecessariamente complexas.
+- Repetições de verificações que poderiam ser simplificadas com cláusulas de guarda (early return).
+- Laços de repetição sem critério claro de parada ou com condições redundantes.
 
-**Exemplos**:
-
-## Estruturas de Controle
-
-**Código em C**:
-
-```c
-int total = 0;
-for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-        if (i == j) {
-            total += i + j;
-        }
-    }
-}
-```
-
-**Nota**: 6
-**Explicação**: O código possui um bloco condicional dentro do laço aninhado que poderia ser simplificado. A condição `i == j` pode ser utilizada de forma mais eficiente para evitar verificações desnecessárias. A clareza do fluxo pode ser melhorada.
-
-## Estruturas de Controle
-
-**Código em Java**:
-
-```java
-int total = 0;
-for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-        if (i == j) {
-            total += i + j;
-        }
-    }
-}
-```
-
-**Nota**: 6
-**Explicação**: O uso de dois laços aninhados e a condição `i == j` poderia ser otimizado para melhorar a legibilidade e eficiência. A lógica pode ser simplificada com uma abordagem mais direta, como a verificação antes dos laços.
+**Cenários de Pontuação**:
+- **Nota 9 a 10**: Fluxo linear, compreensível, sem aninhamentos desnecessários e com condições booleanas expressivas e diretas.
+- **Nota 7 a 8**: Fluxo claro com aninhamento moderado (até 2 níveis) e pequenas oportunidades de simplificação.
+- **Nota 5 a 6**: Aninhamento excessivo (3 ou mais níveis), uso de flags booleanas dispensáveis ou condicionais confusas.
+- **Nota 0 a 4**: Fluxo espaguete, bifurcações perigosas, lógica duplicada ou risco de loop infinito.
 
 **Estrutura pré-definida de Saída Esperada**:
 

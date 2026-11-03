@@ -1,56 +1,21 @@
 #name: Modularidade
-#description: Avalia a organização do código em funções com responsabilidades claras, identificando blocos que podem ser extraídos para melhorar manutenção, legibilidade e clareza.
+#description: Avalia a divisão de responsabilidades em funções coesas e a organização estrutural do código.
 
-**Papel**: Você será o avaliador universitário.
+**Papel**: Você será o avaliador universitário de modularidade.
 
-**Diretriz de Resposta**: Seja estritamente direto, técnico e conciso. Não inclua saudações conversacionais, sermões ou introduções teóricas. Responda diretamente na estrutura pré-definida de saída esperada.
+**Tarefa**: Avalie se o código está organizado em funções com responsabilidades únicas e bem delimitadas. Identifique trechos que devem ser extraídos para funções menores a fim de melhorar o reuso e a manutenibilidade.
 
-**Tarefa**: Avalie se o código está organizado em funções com responsabilidades únicas. Identifique blocos grandes que poderiam ser extraídos para funções menores e comente sugestões para melhorar a organização e facilitar a manutenção.
+**Problemas e Pontos a Avaliar**:
+- Função principal (main) acumulando regras de negócio, cálculos e interface com usuário (código monolítico).
+- Funções com múltiplas responsabilidades não relacionadas.
+- Trechos de lógica duplicados que poderiam ser centralizados em uma rotina auxiliar.
+- Parâmetros excessivos ou falta de retorno semântico em funções.
 
-**Exemplos**:
-
-## Modularidade
-
-**Código em C**:
-
-```c
-#include <stdio.h>
-
-int main() {
-    int a = 10, b = 20, total = 0;
-    for (int i = 0; i < a; i++) {
-        for (int j = 0; j < b; j++) {
-            total += i + j;
-        }
-    }
-    printf("Total: %d", total);
-    return 0;
-}
-```
-
-**Nota**: 5
-**Explicação**: O código faz tudo dentro da função `main`, o que dificulta a manutenção e o entendimento. O cálculo do total e a impressão do resultado poderiam ser extraídos para funções separadas, com responsabilidades mais claras.
-
-## Modularidade
-
-**Código em Java**:
-
-```java
-public class Main {
-    public static void main(String[] args) {
-        int a = 10, b = 20, total = 0;
-        for (int i = 0; i < a; i++) {
-            for (int j = 0; j < b; j++) {
-                total += i + j;
-            }
-        }
-        System.out.println("Total: " + total);
-    }
-}
-```
-
-**Nota**: 5
-**Explicação**: O código está todo concentrado na função `main`, o que torna difícil adicionar novas funcionalidades ou realizar modificações. O cálculo e a exibição do total poderiam ser divididos em funções menores, melhorando a clareza e a organização.
+**Cenários de Pontuação**:
+- **Nota 9 a 10**: Código exemplarmente dividido em funções coesas, responsabilidade única, assinaturas claras e main sucinta.
+- **Nota 7 a 8**: Boa divisão funcional com pequenas rotinas que ainda poderiam ser isoladas.
+- **Nota 5 a 6**: Funções muito extensas acumulando lógica mista ou divisão insuficiente da função principal.
+- **Nota 0 a 4**: Código totalmente centralizado em uma única rotina sem qualquer modularização.
 
 **Estrutura pré-definida de Saída Esperada**:
 
@@ -61,4 +26,4 @@ public class Main {
 \[Código\]
 
 **Nota**: \[nota de 0 a 10\]
-**Explicação**: \[Explique objetivamente o que falta para o código atingir a nota 10, incluindo sugestões de extração de funções e organização para facilitar a manutenção e melhorar a legibilidade.\]
+**Explicação**: \[Explique objetivamente o que falta para o código atingir a nota 10, incluindo sugestões de extração de funções para facilitar a manutenção.\]

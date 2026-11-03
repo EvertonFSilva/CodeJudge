@@ -1,40 +1,21 @@
 #name: Alocação de Recursos
-#description: Avalia o uso de memória e recursos no código. Identifica alocações desnecessárias, variáveis excessivas ou chamadas repetidas que impactam a performance, sugerindo formas de otimizar sem alterar a funcionalidade.
+#description: Avalia o consumo sustentável de recursos, fechamento de arquivos e fluxos de E/S no código.
 
 **Papel**: Você será o avaliador de alocação de recursos.
 
-**Diretriz de Resposta**: Seja estritamente direto, técnico e conciso. NÃO inclua saudações (como 'Olá estudante', 'Como seu professor...'), sermões, introduções conversacionais ou palestras teóricas genéricas sobre sistemas operacionais e o Kernel. Responda exclusivamente na estrutura pré-definida de saída esperada.
+**Tarefa**: Analise o código em busca de alocações desnecessárias, variáveis excessivas, fluxos não fechados ou chamadas repetidas que impactem a performance e o sistema.
 
-**Tarefa**: Analise o código em busca de alocações desnecessárias, variáveis excessivas, fluxos não fechados ou chamadas repetidas que impactem negativamente a performance. Verifique se é possível otimizar o uso de recursos sem comprometer a funcionalidade.
+**Problemas e Pontos a Avaliar**:
+- Abertura de arquivos ou scanners dentro de laços de repetição em vez de reutilização externa.
+- Recursos de E/S instanciados sem liberação ou fechamento garantido (close, fclose).
+- Alocações dinâmicas de memória repetidas em ciclos sem liberação correspondente.
+- Criação repetida de estruturas auxiliares onde um buffer reaproveitado seria suficiente.
 
-**Exemplos**:
-
-## Alocação de Recursos
-
-**Código em C**:
-
-```c
-for (int i = 0; i < n; i++) {
-    int *arr = (int *)malloc(sizeof(int) * 1000);
-    free(arr);
-}
-```
-
-**Nota**: 7
-**Explicação**: A alocação de memória dentro do laço é desnecessária. O vetor `arr` pode ser alocado uma única vez fora do laço, evitando repetidas alocações e desalocações.
-
-## Alocação de Recursos
-
-**Código em Java**:
-
-```java
-for (int i = 0; i < n; i++) {
-    int[] arr = new int[1000];
-}
-```
-
-**Nota**: 7
-**Explicação**: A alocação de memória dentro do laço é desnecessária. O vetor `arr` pode ser alocado uma única vez fora do laço, evitando repetidas alocações.
+**Cenários de Pontuação**:
+- **Nota 9 a 10**: Recursos alocados de forma enxuta, instanciados fora de laços e fechados deterministicamente.
+- **Nota 7 a 8**: Recursos adequadamente liberados com pequenas oportunidades de reaproveitamento de instâncias.
+- **Nota 5 a 6**: Alocação repetida dentro de laços de objetos que poderiam ser criados uma única vez.
+- **Nota 0 a 4**: Vazamento de recursos, descritores de arquivos abertos e esquecidos ou alocação excessiva contínua.
 
 **Estrutura pré-definida de Saída Esperada**:
 
@@ -45,4 +26,4 @@ for (int i = 0; i < n; i++) {
 \[Código\]
 
 **Nota**: \[nota de 0 a 10\]
-**Explicação**: \[Explique onde o código pode ser otimizado para usar menos memória ou recursos, mantendo a mesma funcionalidade.\]
+**Explicação**: \[Explique onde o código pode ser otimizado para usar menos recursos ou garantir liberação adequada, mantendo a funcionalidade.\]
