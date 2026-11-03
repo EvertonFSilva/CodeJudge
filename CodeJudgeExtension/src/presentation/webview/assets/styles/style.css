@@ -31,12 +31,15 @@ body {
   font-size: 12px;
   line-height: 1.5;
   user-select: none;
+  overflow-x: hidden;
 }
 
 .header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-color);
@@ -46,6 +49,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .brand-logo-svg {
@@ -62,6 +66,9 @@ body {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .api-status {
@@ -73,6 +80,7 @@ body {
   cursor: pointer;
   padding: 3px 6px;
   border-radius: 4px;
+  white-space: nowrap;
   transition: all 0.15s;
 }
 
@@ -86,6 +94,7 @@ body {
   height: 7px;
   border-radius: 50%;
   background-color: var(--warning);
+  flex-shrink: 0;
 }
 
 .status-dot.online {
@@ -100,6 +109,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .ai-discreet-btn {
@@ -114,6 +124,7 @@ body {
   background: var(--bg-card);
   color: var(--text-muted);
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -167,21 +178,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   padding-bottom: 8px;
   margin-bottom: 10px;
   border-bottom: 1px solid var(--border-color);
+  min-width: 0;
 }
 
 .ai-drawer-heading {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .ai-drawer-heading-icon {
   width: 13px;
   height: 13px;
   color: var(--green-accent);
+  flex-shrink: 0;
 }
 
 .ai-drawer-title {
@@ -189,6 +205,9 @@ body {
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ai-drawer-reset {
@@ -201,6 +220,7 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .ai-drawer-reset:hover {
@@ -292,6 +312,9 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -312,6 +335,7 @@ body {
 
 .ai-compact-input {
   flex: 1;
+  width: 100%;
   min-width: 0;
   background: transparent;
   color: var(--text-main);
@@ -337,6 +361,7 @@ body {
   border-radius: 4px;
   padding: 3px;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -348,6 +373,19 @@ body {
 .ai-eye-icon {
   width: 13px;
   height: 13px;
+}
+
+#moodleAuthDrawer {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+#moodleLoginFormView,
+#moodleProfileView {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 
 .moodle-text-input {

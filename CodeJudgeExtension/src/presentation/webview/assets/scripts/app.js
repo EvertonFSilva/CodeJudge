@@ -604,10 +604,10 @@
     }
 
     if (elements.moodleLoginFormView) {
-      elements.moodleLoginFormView.style.display = isLogged ? 'none' : 'flex';
+      elements.moodleLoginFormView.style.display = isLogged ? 'none' : 'block';
     }
     if (elements.moodleProfileView) {
-      elements.moodleProfileView.style.display = isLogged ? 'flex' : 'none';
+      elements.moodleProfileView.style.display = isLogged ? 'block' : 'none';
     }
     if (elements.moodleLogoutBtn) {
       elements.moodleLogoutBtn.style.display = isLogged ? 'inline-block' : 'none';
