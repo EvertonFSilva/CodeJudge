@@ -75,22 +75,11 @@ class CodeJudgeSidebarProvider {
                 payload: state
             });
         });
-        this.syncLanguagesUseCase.execute().then(() => {
-            this.postMessage({
-                type: 'active-editor-changed',
-                payload: this.editorAdapter.getState()
-            });
-        }).catch(() => {
-            this.postMessage({
-                type: 'active-editor-changed',
-                payload: this.editorAdapter.getState()
-            });
+        this.syncLanguagesUseCase.execute().finally(() => {
+            this.updateActiveEditorState();
         });
         setTimeout(() => {
-            this.postMessage({
-                type: 'active-editor-changed',
-                payload: this.editorAdapter.getState()
-            });
+            this.updateActiveEditorState();
         }, 100);
     }
     updateActiveEditorState() {
@@ -111,10 +100,7 @@ class CodeJudgeSidebarProvider {
         switch (message.type) {
             case 'request-active-editor': {
                 await this.syncLanguagesUseCase.execute();
-                this.postMessage({
-                    type: 'active-editor-changed',
-                    payload: this.editorAdapter.getState()
-                });
+                this.updateActiveEditorState();
                 break;
             }
             case 'request-health': {
@@ -126,10 +112,7 @@ class CodeJudgeSidebarProvider {
                     type: 'health-status',
                     payload: health
                 });
-                this.postMessage({
-                    type: 'active-editor-changed',
-                    payload: this.editorAdapter.getState()
-                });
+                this.updateActiveEditorState();
                 break;
             }
             case 'start-process': {

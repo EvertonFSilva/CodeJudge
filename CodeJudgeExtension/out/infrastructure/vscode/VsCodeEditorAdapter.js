@@ -43,20 +43,7 @@ class VsCodeEditorAdapter {
         this.languageRegistry = languageRegistry;
     }
     getState() {
-        let editor = vscode.window.activeTextEditor;
-        if (editor && this.isCodeEditor(editor)) {
-            this.lastCodeEditor = editor;
-        }
-        else {
-            const visibleCode = vscode.window.visibleTextEditors.find(e => this.isCodeEditor(e));
-            if (visibleCode) {
-                editor = visibleCode;
-                this.lastCodeEditor = visibleCode;
-            }
-            else if (this.lastCodeEditor && !this.lastCodeEditor.document.isClosed) {
-                editor = this.lastCodeEditor;
-            }
-        }
+        const editor = this.resolveTargetCodeEditor();
         if (!editor) {
             return { hasEditor: false, isSupported: false };
         }
@@ -73,11 +60,7 @@ class VsCodeEditorAdapter {
         };
     }
     getFullCode() {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor || !this.isCodeEditor(editor)) {
-            const visibleCode = vscode.window.visibleTextEditors.find(e => this.isCodeEditor(e));
-            editor = visibleCode || (this.lastCodeEditor && !this.lastCodeEditor.document.isClosed ? this.lastCodeEditor : undefined);
-        }
+        const editor = this.resolveTargetCodeEditor();
         return editor ? editor.document.getText() : null;
     }
     async openMarkdownSidePreview(filePath) {
@@ -137,10 +120,29 @@ class VsCodeEditorAdapter {
             }
         };
     }
+    resolveTargetCodeEditor() {
+        const active = vscode.window.activeTextEditor;
+        if (active && this.isCodeEditor(active)) {
+            this.lastCodeEditor = active;
+            return active;
+        }
+        const visibleCode = vscode.window.visibleTextEditors.find(e => this.isCodeEditor(e));
+        if (visibleCode) {
+            this.lastCodeEditor = visibleCode;
+            return visibleCode;
+        }
+        if (this.lastCodeEditor && !this.lastCodeEditor.document.isClosed) {
+            return this.lastCodeEditor;
+        }
+        return undefined;
+    }
     isCodeEditor(editor) {
         const doc = editor.document;
         const fileName = path.basename(doc.fileName);
-        if (fileName.startsWith('codejudge_relatorio_') || fileName.endsWith('.md') || fileName.endsWith('.pdf')) {
+        if (fileName.startsWith('codejudge_relatorio_') ||
+            fileName.startsWith('codejudge_prompt_') ||
+            fileName.endsWith('.md') ||
+            fileName.endsWith('.pdf')) {
             return false;
         }
         const rawLang = doc.languageId.toLowerCase();

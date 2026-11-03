@@ -9,9 +9,11 @@ import { ILogger } from '../../core/logger/ILogger';
 import {
   RunProcessRequest,
   ProcessResult,
+  ProcessStage,
   StageProgress
 } from './ProcessDTO';
 import { Report, StageExecutionResult } from '../../core/entities/Report';
+import { AiRequestOptions } from '../../core/entities/StageContract';
 import {
   NoActiveEditorError,
   UnsupportedLanguageError,
@@ -58,7 +60,7 @@ export class ProcessUseCase {
     const statement = request.statement?.trim() || '';
     const config = request.config;
     const tests = request.tests || [];
-    const aiOptions = {
+    const aiOptions: AiRequestOptions = {
       apiKey: request.apiKey?.trim() || undefined,
       engine: request.engine?.trim() || undefined,
       model: request.model?.trim() || undefined
@@ -173,59 +175,25 @@ export class ProcessUseCase {
       }
 
       if (config.analyze) {
-        notify({
-          stage: 'analyze',
-          status: 'running',
-          title: 'Analisando codigo...'
-        });
-
-        try {
-          analysisResult = await this.analyzeUseCase.execute(language, code, statement, aiOptions);
-          notify({
-            stage: 'analyze',
-            status: analysisResult.success ? 'success' : 'failed',
-            title: 'Analise finalizada',
-            durationMs: analysisResult.durationMs,
-            message: analysisResult.message
-          });
-        } catch (err: any) {
-          this.logger.error('Erro na analise', err);
-          analysisResult = { success: false, message: err?.message };
-          notify({
-            stage: 'analyze',
-            status: 'failed',
-            title: 'Erro na analise',
-            message: err?.message
-          });
-        }
+        analysisResult = await this.runAiStage(
+          'analyze',
+          'Analisando codigo...',
+          'Analise finalizada',
+          'Erro na analise',
+          () => this.analyzeUseCase.execute(language, code, statement, aiOptions),
+          notify
+        );
       }
 
       if (config.optimize) {
-        notify({
-          stage: 'optimize',
-          status: 'running',
-          title: 'Avaliando otimizacao...'
-        });
-
-        try {
-          optimizationResult = await this.optimizeUseCase.execute(language, code, statement, aiOptions);
-          notify({
-            stage: 'optimize',
-            status: optimizationResult.success ? 'success' : 'failed',
-            title: 'Otimizacao finalizada',
-            durationMs: optimizationResult.durationMs,
-            message: optimizationResult.message
-          });
-        } catch (err: any) {
-          this.logger.error('Erro na otimizacao', err);
-          optimizationResult = { success: false, message: err?.message };
-          notify({
-            stage: 'optimize',
-            status: 'failed',
-            title: 'Erro na otimizacao',
-            message: err?.message
-          });
-        }
+        optimizationResult = await this.runAiStage(
+          'optimize',
+          'Avaliando otimizacao...',
+          'Otimizacao finalizada',
+          'Erro na otimizacao',
+          () => this.optimizeUseCase.execute(language, code, statement, aiOptions),
+          notify
+        );
       }
     }
 
@@ -270,5 +238,42 @@ export class ProcessUseCase {
       successRate: hasTests ? executionResult?.successRate : undefined,
       stagesCompleted
     };
+  }
+
+  private async runAiStage(
+    stage: ProcessStage,
+    runningTitle: string,
+    finishedTitle: string,
+    errorTitle: string,
+    action: () => Promise<StageExecutionResult>,
+    notify: (progress: StageProgress) => void
+  ): Promise<StageExecutionResult> {
+    notify({
+      stage,
+      status: 'running',
+      title: runningTitle
+    });
+
+    try {
+      const result = await action();
+      notify({
+        stage,
+        status: result.success ? 'success' : 'failed',
+        title: finishedTitle,
+        durationMs: result.durationMs,
+        message: result.message
+      });
+      return result;
+    } catch (err: any) {
+      this.logger.error(errorTitle, err);
+      const fallback: StageExecutionResult = { success: false, message: err?.message };
+      notify({
+        stage,
+        status: 'failed',
+        title: errorTitle,
+        message: err?.message
+      });
+      return fallback;
+    }
   }
 }

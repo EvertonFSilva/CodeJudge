@@ -152,58 +152,10 @@ class ProcessUseCase {
                 }
             }
             if (config.analyze) {
-                notify({
-                    stage: 'analyze',
-                    status: 'running',
-                    title: 'Analisando codigo...'
-                });
-                try {
-                    analysisResult = await this.analyzeUseCase.execute(language, code, statement, aiOptions);
-                    notify({
-                        stage: 'analyze',
-                        status: analysisResult.success ? 'success' : 'failed',
-                        title: 'Analise finalizada',
-                        durationMs: analysisResult.durationMs,
-                        message: analysisResult.message
-                    });
-                }
-                catch (err) {
-                    this.logger.error('Erro na analise', err);
-                    analysisResult = { success: false, message: err?.message };
-                    notify({
-                        stage: 'analyze',
-                        status: 'failed',
-                        title: 'Erro na analise',
-                        message: err?.message
-                    });
-                }
+                analysisResult = await this.runAiStage('analyze', 'Analisando codigo...', 'Analise finalizada', 'Erro na analise', () => this.analyzeUseCase.execute(language, code, statement, aiOptions), notify);
             }
             if (config.optimize) {
-                notify({
-                    stage: 'optimize',
-                    status: 'running',
-                    title: 'Avaliando otimizacao...'
-                });
-                try {
-                    optimizationResult = await this.optimizeUseCase.execute(language, code, statement, aiOptions);
-                    notify({
-                        stage: 'optimize',
-                        status: optimizationResult.success ? 'success' : 'failed',
-                        title: 'Otimizacao finalizada',
-                        durationMs: optimizationResult.durationMs,
-                        message: optimizationResult.message
-                    });
-                }
-                catch (err) {
-                    this.logger.error('Erro na otimizacao', err);
-                    optimizationResult = { success: false, message: err?.message };
-                    notify({
-                        stage: 'optimize',
-                        status: 'failed',
-                        title: 'Erro na otimizacao',
-                        message: err?.message
-                    });
-                }
+                optimizationResult = await this.runAiStage('optimize', 'Avaliando otimizacao...', 'Otimizacao finalizada', 'Erro na otimizacao', () => this.optimizeUseCase.execute(language, code, statement, aiOptions), notify);
             }
         }
         const hasTests = tests.length > 0 && tests.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0));
@@ -241,6 +193,35 @@ class ProcessUseCase {
             successRate: hasTests ? executionResult?.successRate : undefined,
             stagesCompleted
         };
+    }
+    async runAiStage(stage, runningTitle, finishedTitle, errorTitle, action, notify) {
+        notify({
+            stage,
+            status: 'running',
+            title: runningTitle
+        });
+        try {
+            const result = await action();
+            notify({
+                stage,
+                status: result.success ? 'success' : 'failed',
+                title: finishedTitle,
+                durationMs: result.durationMs,
+                message: result.message
+            });
+            return result;
+        }
+        catch (err) {
+            this.logger.error(errorTitle, err);
+            const fallback = { success: false, message: err?.message };
+            notify({
+                stage,
+                status: 'failed',
+                title: errorTitle,
+                message: err?.message
+            });
+            return fallback;
+        }
     }
 }
 exports.ProcessUseCase = ProcessUseCase;

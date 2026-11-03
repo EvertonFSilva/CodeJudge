@@ -1,17 +1,7 @@
-export interface CompileRequest {
-  language: string;
-  code: string;
-  statement?: string;
-  apiKey?: string;
-  engine?: string;
-  model?: string;
-}
+import { BaseStageRequest, BaseStageResponse } from '../../core/entities/StageContract';
 
-export interface CompileResponse {
-  success: boolean;
-  message: string;
-  raw?: any;
-}
+export type CompileRequest = BaseStageRequest;
+export type CompileResponse = BaseStageResponse;
 
 export interface ICompileGateway {
   compile(request: CompileRequest): Promise<CompileResponse>;

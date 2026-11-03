@@ -1,17 +1,7 @@
-export interface AnalyzeRequest {
-  language: string;
-  code: string;
-  statement?: string;
-  apiKey?: string;
-  engine?: string;
-  model?: string;
-}
+import { BaseStageRequest, BaseStageResponse } from '../../core/entities/StageContract';
 
-export interface AnalyzeResponse {
-  success: boolean;
-  message: string;
-  raw?: any;
-}
+export type AnalyzeRequest = BaseStageRequest;
+export type AnalyzeResponse = BaseStageResponse;
 
 export interface IAnalyzeGateway {
   analyze(request: AnalyzeRequest): Promise<AnalyzeResponse>;

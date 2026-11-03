@@ -1,29 +1,20 @@
 import { ILanguageGateway, ApiLanguageItem } from './ILanguageGateway';
 import { ILogger } from '../../core/logger/ILogger';
+import { BaseHttpGateway } from '../../infrastructure/http/BaseHttpGateway';
 
-export class HttpLanguageGateway implements ILanguageGateway {
+export class HttpLanguageGateway extends BaseHttpGateway implements ILanguageGateway {
   constructor(
-    private readonly getApiUrl: () => string,
-    private readonly logger: ILogger
-  ) {}
+    getApiUrl: () => string,
+    logger: ILogger
+  ) {
+    super(getApiUrl, logger, () => 8000);
+  }
 
   public async fetchSupportedLanguages(): Promise<ApiLanguageItem[]> {
-    const url = `${this.getApiUrl()}/languages`;
-    this.logger.debug(`Consultando linguagens suportadas em ${url}`);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      }
+    const data = await this.getJson({
+      endpoint: '/languages',
+      errorMessage: 'Falha ao obter linguagens suportadas da API'
     });
-
-    if (!response.ok) {
-      throw new Error(`Falha ao obter linguagens suportadas da API (HTTP ${response.status})`);
-    }
-
-    const data = await response.json() as any;
     return (data?.languages || []) as ApiLanguageItem[];
   }
 }

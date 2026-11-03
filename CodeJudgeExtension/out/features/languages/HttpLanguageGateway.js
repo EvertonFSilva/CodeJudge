@@ -1,27 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HttpLanguageGateway = void 0;
-class HttpLanguageGateway {
-    getApiUrl;
-    logger;
+const BaseHttpGateway_1 = require("../../infrastructure/http/BaseHttpGateway");
+class HttpLanguageGateway extends BaseHttpGateway_1.BaseHttpGateway {
     constructor(getApiUrl, logger) {
-        this.getApiUrl = getApiUrl;
-        this.logger = logger;
+        super(getApiUrl, logger, () => 8000);
     }
     async fetchSupportedLanguages() {
-        const url = `${this.getApiUrl()}/languages`;
-        this.logger.debug(`Consultando linguagens suportadas em ${url}`);
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json'
-            }
+        const data = await this.getJson({
+            endpoint: '/languages',
+            errorMessage: 'Falha ao obter linguagens suportadas da API'
         });
-        if (!response.ok) {
-            throw new Error(`Falha ao obter linguagens suportadas da API (HTTP ${response.status})`);
-        }
-        const data = await response.json();
         return (data?.languages || []);
     }
 }

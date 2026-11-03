@@ -1,17 +1,7 @@
-export interface OptimizeRequest {
-  language: string;
-  code: string;
-  statement?: string;
-  apiKey?: string;
-  engine?: string;
-  model?: string;
-}
+import { BaseStageRequest, BaseStageResponse } from '../../core/entities/StageContract';
 
-export interface OptimizeResponse {
-  success: boolean;
-  message: string;
-  raw?: any;
-}
+export type OptimizeRequest = BaseStageRequest;
+export type OptimizeResponse = BaseStageResponse;
 
 export interface IOptimizeGateway {
   optimize(request: OptimizeRequest): Promise<OptimizeResponse>;

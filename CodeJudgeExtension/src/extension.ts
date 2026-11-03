@@ -111,7 +111,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const refreshCommand = vscode.commands.registerCommand('codejudge.refreshWebview', () => {
     ConfigLoader.reset();
-    syncLanguagesUseCase.execute().then(() => {
+    syncLanguagesUseCase.execute(true).then(() => {
       sidebarProvider.refresh();
       editorAdapter.showInfo('Interface do CodeJudge recarregada e linguagens sincronizadas.');
     });

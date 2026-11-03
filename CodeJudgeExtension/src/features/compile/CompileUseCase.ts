@@ -1,45 +1,16 @@
-import { ICompileGateway } from './ICompileGateway';
+import { ICompileGateway, CompileRequest, CompileResponse } from './ICompileGateway';
 import { ILogger } from '../../core/logger/ILogger';
-import { StageExecutionResult } from '../../core/entities/Report';
+import { BaseStageUseCase } from '../common/BaseStageUseCase';
 
-export class CompileUseCase {
+export class CompileUseCase extends BaseStageUseCase<CompileRequest> {
   constructor(
     private readonly gateway: ICompileGateway,
-    private readonly logger: ILogger
-  ) {}
+    logger: ILogger
+  ) {
+    super('compile', logger);
+  }
 
-  public async execute(
-    language: string,
-    code: string,
-    statement?: string,
-    aiOptions?: { apiKey?: string; engine?: string; model?: string }
-  ): Promise<StageExecutionResult> {
-    const startTime = Date.now();
-    this.logger.stageStart('compile', { language, codeLength: code.length });
-
-    try {
-      const response = await this.gateway.compile({
-        language,
-        code,
-        statement,
-        apiKey: aiOptions?.apiKey,
-        engine: aiOptions?.engine,
-        model: aiOptions?.model
-      });
-      const durationMs = Date.now() - startTime;
-
-      this.logger.stageEnd('compile', durationMs, response.success, response.message);
-
-      return {
-        success: response.success,
-        message: response.message,
-        data: response.raw,
-        durationMs
-      };
-    } catch (err: any) {
-      const durationMs = Date.now() - startTime;
-      this.logger.stageEnd('compile', durationMs, false, err?.message);
-      throw err;
-    }
+  protected invokeGateway(request: CompileRequest): Promise<CompileResponse> {
+    return this.gateway.compile(request);
   }
 }

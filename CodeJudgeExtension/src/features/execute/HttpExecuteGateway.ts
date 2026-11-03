@@ -1,105 +1,69 @@
 import { IExecuteGateway, ExecuteRequest, ExecuteResponse } from './IExecuteGateway';
 import { TestCaseResult } from '../../core/entities/TestCase';
 import { ILogger } from '../../core/logger/ILogger';
-import { fixEncoding } from '../../core/utils/EncodingUtils';
+import { BaseHttpGateway } from '../../infrastructure/http/BaseHttpGateway';
 
-export class HttpExecuteGateway implements IExecuteGateway {
+export class HttpExecuteGateway extends BaseHttpGateway implements IExecuteGateway {
   constructor(
-    private readonly getApiUrl: () => string,
-    private readonly getTimeoutMs: () => number,
-    private readonly logger: ILogger
-  ) {}
+    getApiUrl: () => string,
+    getTimeoutMs: () => number,
+    logger: ILogger
+  ) {
+    super(getApiUrl, logger, getTimeoutMs);
+  }
 
   public async execute(request: ExecuteRequest): Promise<ExecuteResponse> {
-    const url = `${this.getApiUrl()}/execution/run`;
-    const controller = new AbortController();
-    const timeoutMs = this.getTimeoutMs();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    this.logger.debug(`Requisitando execucao em ${url}`);
-
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      };
-      if (request.apiKey) {
-        headers['X-Api-Key'] = request.apiKey;
+    const json = await this.postJson({
+      endpoint: '/execution/run',
+      stageLabel: 'execucao',
+      apiKey: request.apiKey,
+      body: {
+        statement: request.statement || '',
+        language: request.language,
+        code: request.code,
+        tests: request.tests || [],
+        apiKey: request.apiKey || undefined,
+        engine: request.engine || undefined,
+        model: request.model || undefined
       }
+    });
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          statement: request.statement || '',
-          language: request.language,
-          code: request.code,
-          tests: request.tests || [],
-          apiKey: request.apiKey || undefined,
-          engine: request.engine || undefined,
-          model: request.model || undefined
-        }),
-        signal: controller.signal
-      });
+    const rawOutputs = json?.outputs || [];
+    const hasTests = Array.isArray(request.tests) && request.tests.length > 0;
 
-      if (!res.ok) {
-        let errMessage = `HTTP ${res.status}`;
-        try {
-          const json = await res.json();
-          if (json?.message) errMessage += `: ${json.message}`;
-        } catch {}
-        throw new Error(errMessage);
-      }
+    let testResults: TestCaseResult[] = [];
+    let successRate: number | undefined = undefined;
+    let allPassed = true;
 
-      const rawJson = await res.json();
-      const json = fixEncoding(rawJson);
-      const rawOutputs = json?.outputs || [];
+    if (hasTests) {
+      testResults = this.parseOutputs(rawOutputs);
+      const hasExpected = testResults.some(t => t.expected && t.expected.trim() !== '');
 
-      const hasTests = Array.isArray(request.tests) && request.tests.length > 0;
-
-      let testResults: TestCaseResult[] = [];
-      let successRate: number | undefined = undefined;
-      let allPassed = true;
-
-      if (hasTests) {
-        testResults = this.parseOutputs(rawOutputs);
-        const hasExpected = testResults.some(t => t.expected && t.expected.trim() !== '');
-
-        if (hasExpected) {
-          const passedCount = testResults.filter(t => t.passed).length;
-          successRate = Math.round((passedCount / testResults.length) * 100);
-          allPassed = passedCount === testResults.length;
-        } else {
-          allPassed = json?.success !== false;
-        }
+      if (hasExpected) {
+        const passedCount = testResults.filter(t => t.passed).length;
+        successRate = Math.round((passedCount / testResults.length) * 100);
+        allPassed = passedCount === testResults.length;
       } else {
-        testResults = [];
-        successRate = undefined;
         allPassed = json?.success !== false;
       }
-
-      let message = json?.message;
-      if (!message) {
-        message = hasTests
-          ? `Execucao concluida. ${testResults.length} caso(s) de teste processados.`
-          : 'Execucao concluida com sucesso.';
-      }
-
-      return {
-        success: allPassed && json?.success !== false,
-        message,
-        testResults,
-        successRate,
-        raw: json
-      };
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        throw new Error(`Tempo limite de ${timeoutMs / 1000}s esgotado na execucao.`);
-      }
-      throw err;
-    } finally {
-      clearTimeout(timer);
+    } else {
+      allPassed = json?.success !== false;
     }
+
+    let message = json?.message;
+    if (!message) {
+      message = hasTests
+        ? `Execucao concluida. ${testResults.length} caso(s) de teste processados.`
+        : 'Execucao concluida com sucesso.';
+    }
+
+    return {
+      success: allPassed && json?.success !== false,
+      message,
+      testResults,
+      successRate,
+      raw: json
+    };
   }
 
   private parseOutputs(outputs: any[]): TestCaseResult[] {

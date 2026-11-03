@@ -1,21 +1,13 @@
 import { TestCaseInput, TestCaseResult } from '../../core/entities/TestCase';
+import { BaseStageRequest, BaseStageResponse } from '../../core/entities/StageContract';
 
-export interface ExecuteRequest {
-  language: string;
-  code: string;
-  statement?: string;
+export interface ExecuteRequest extends BaseStageRequest {
   tests: TestCaseInput[];
-  apiKey?: string;
-  engine?: string;
-  model?: string;
 }
 
-export interface ExecuteResponse {
-  success: boolean;
-  message: string;
+export interface ExecuteResponse extends BaseStageResponse {
   testResults: TestCaseResult[];
   successRate?: number;
-  raw?: any;
 }
 
 export interface IExecuteGateway {

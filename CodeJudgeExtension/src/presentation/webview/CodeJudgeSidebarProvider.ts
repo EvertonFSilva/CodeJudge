@@ -53,23 +53,12 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
       });
     });
 
-    this.syncLanguagesUseCase.execute().then(() => {
-      this.postMessage({
-        type: 'active-editor-changed',
-        payload: this.editorAdapter.getState()
-      });
-    }).catch(() => {
-      this.postMessage({
-        type: 'active-editor-changed',
-        payload: this.editorAdapter.getState()
-      });
+    this.syncLanguagesUseCase.execute().finally(() => {
+      this.updateActiveEditorState();
     });
 
     setTimeout(() => {
-      this.postMessage({
-        type: 'active-editor-changed',
-        payload: this.editorAdapter.getState()
-      });
+      this.updateActiveEditorState();
     }, 100);
   }
 
@@ -93,10 +82,7 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
     switch (message.type) {
       case 'request-active-editor': {
         await this.syncLanguagesUseCase.execute();
-        this.postMessage({
-          type: 'active-editor-changed',
-          payload: this.editorAdapter.getState()
-        });
+        this.updateActiveEditorState();
         break;
       }
 
@@ -109,10 +95,7 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
           type: 'health-status',
           payload: health
         });
-        this.postMessage({
-          type: 'active-editor-changed',
-          payload: this.editorAdapter.getState()
-        });
+        this.updateActiveEditorState();
         break;
       }
 
