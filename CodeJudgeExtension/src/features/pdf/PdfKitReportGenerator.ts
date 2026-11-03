@@ -58,28 +58,44 @@ function extractMetadata(rawLines: string[]): { meta: SubmissionMetadata; bodyLi
 
     if (trimmed.startsWith('>')) {
       const content = trimmed.replace(/^>\s*/, '');
-      if (content.includes('Aluno(a):') || content.includes('Arquivo:') || content.includes('Status:')) {
+      const lower = content.toLowerCase();
+      if (
+        lower.includes('aluno(a):') ||
+        lower.includes('aluno:') ||
+        lower.includes('curso:') ||
+        lower.includes('instituição:') ||
+        lower.includes('instituicao:') ||
+        lower.includes('e-mail:') ||
+        lower.includes('email:') ||
+        lower.includes('usuário moodle:') ||
+        lower.includes('usuario moodle:') ||
+        lower.includes('arquivo:') ||
+        lower.includes('linguagem:') ||
+        lower.includes('data:') ||
+        lower.includes('status:')
+      ) {
         const parts = content.split('|').map(p => p.trim());
         for (const part of parts) {
           const cleanPart = cleanMarkdown(part);
-          if (cleanPart.startsWith('Aluno(a):')) {
-            meta.studentName = cleanPart.replace('Aluno(a):', '').trim();
-          } else if (cleanPart.startsWith('Curso:')) {
-            meta.course = cleanPart.replace('Curso:', '').trim();
-          } else if (cleanPart.startsWith('Instituição:')) {
-            meta.institution = cleanPart.replace('Instituição:', '').trim();
-          } else if (cleanPart.startsWith('E-mail:')) {
-            meta.email = cleanPart.replace('E-mail:', '').trim();
-          } else if (cleanPart.startsWith('Usuário Moodle:')) {
-            meta.moodleUser = cleanPart.replace('Usuário Moodle:', '').trim();
-          } else if (cleanPart.startsWith('Arquivo:')) {
-            meta.fileName = cleanPart.replace('Arquivo:', '').trim();
-          } else if (cleanPart.startsWith('Linguagem:')) {
-            meta.language = cleanPart.replace('Linguagem:', '').trim();
-          } else if (cleanPart.startsWith('Data:')) {
-            meta.date = cleanPart.replace('Data:', '').trim();
-          } else if (cleanPart.startsWith('Status:')) {
-            meta.status = cleanPart.replace('Status:', '').trim();
+          const lowerPart = cleanPart.toLowerCase();
+          if (lowerPart.startsWith('aluno(a):') || lowerPart.startsWith('aluno:')) {
+            meta.studentName = cleanPart.replace(/^aluno(\(a\))?:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('curso:')) {
+            meta.course = cleanPart.replace(/^curso:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('instituição:') || lowerPart.startsWith('instituicao:')) {
+            meta.institution = cleanPart.replace(/^institui[çc][ãa]o:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('e-mail:') || lowerPart.startsWith('email:')) {
+            meta.email = cleanPart.replace(/^e-?mail:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('usuário moodle:') || lowerPart.startsWith('usuario moodle:')) {
+            meta.moodleUser = cleanPart.replace(/^usu[áa]rio moodle:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('arquivo:')) {
+            meta.fileName = cleanPart.replace(/^arquivo:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('linguagem:')) {
+            meta.language = cleanPart.replace(/^linguagem:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('data:')) {
+            meta.date = cleanPart.replace(/^data:\s*/i, '').trim();
+          } else if (lowerPart.startsWith('status:')) {
+            meta.status = cleanPart.replace(/^status:\s*/i, '').trim();
           }
         }
         continue;
@@ -87,6 +103,13 @@ function extractMetadata(rawLines: string[]): { meta: SubmissionMetadata; bodyLi
     }
 
     bodyLines.push(l);
+  }
+
+  while (
+    bodyLines.length > 0 &&
+    (bodyLines[0].trim() === '' || bodyLines[0].trim() === '---')
+  ) {
+    bodyLines.shift();
   }
 
   while (
@@ -287,7 +310,7 @@ export class PdfKitReportGenerator implements IPdfGenerator {
           .fillColor('#ccfbf1')
           .fontSize(8.5)
           .font('Helvetica')
-          .text('Plataforma de Avaliação & Diagnóstico Técnico de Código', 102, 73, { lineBreak: false });
+          .text('Extensão de Avaliação & Diagnóstico Técnico de Código', 102, 73, { lineBreak: false });
 
         doc
           .fillColor('#ffffff')
@@ -303,7 +326,7 @@ export class PdfKitReportGenerator implements IPdfGenerator {
           .fillColor('#5eead4')
           .fontSize(7)
           .font('Helvetica')
-          .text('Everton • CodeJudge v2.0', 350, 79, { width: 195, align: 'right', lineBreak: false });
+          .text('Everton • CodeJudge v2.0.0', 350, 79, { width: 195, align: 'right', lineBreak: false });
 
         doc.y = 112;
 
@@ -338,7 +361,12 @@ export class PdfKitReportGenerator implements IPdfGenerator {
           doc.font('Helvetica').fillColor('#334155').text(meta.institution || 'Instituto Federal Fluminense (IFF)', { width: 230, lineBreak: false });
 
           doc.font('Helvetica-Bold').fillColor(textDark).text('E-mail: ', 54, cardY + 64, { continued: true, lineBreak: false });
-          doc.font('Helvetica').fillColor('#334155').text(meta.email || '-', { width: 230, lineBreak: false });
+          const baseEmail = meta.email || (meta.moodleUser && meta.moodleUser !== '-' ? meta.moodleUser : '-');
+          const fullEmailWithUser = meta.email && meta.moodleUser && meta.moodleUser !== '-'
+            ? `${meta.email} (${meta.moodleUser})`
+            : baseEmail;
+          const finalEmail = doc.widthOfString(fullEmailWithUser) <= 195 ? fullEmailWithUser : (meta.email || '-');
+          doc.font('Helvetica').fillColor('#334155').text(finalEmail, { width: 230, lineBreak: false });
         } else {
           doc.fontSize(8.5);
           doc.font('Helvetica-Bold').fillColor(textDark).text('Origem: ', 54, cardY + 22, { continued: true, lineBreak: false });
