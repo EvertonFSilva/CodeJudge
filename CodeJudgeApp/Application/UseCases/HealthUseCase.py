@@ -49,11 +49,13 @@ class HealthUseCase:
 
             compilersStatus[key] = languageInfo
 
-        aiAvailable = self.aiEngine.isAvailable()
+        userKeyRequired = self.configManager.isUserKeyRequired()
+        aiAvailable = True if userKeyRequired else self.aiEngine.isAvailable()
         engineName = self.configManager.getDefaultEngineName()
         engineConfig = self.configManager.getDefaultEngineConfig()
         engineArgs = engineConfig.get("args", {})
         modelName = str(engineArgs.get("model", "unknown"))
+        supportedModels = self.configManager.getSupportedModels(engineName)
 
         overallStatus = "healthy" if (allLanguagesAvailable and aiAvailable) else "warning"
 
@@ -64,11 +66,15 @@ class HealthUseCase:
                 "engine": engineName,
                 "provider": engineName,
                 "available": aiAvailable,
-                "model": modelName
+                "model": modelName,
+                "isUserKeyRequired": userKeyRequired,
+                "supportedModels": supportedModels
             }
         }
 
-        self.logger.info(f"Health check executed: status={overallStatus}, engine={engineName}, aiAvailable={aiAvailable}, languagesChecked={list(compilersStatus.keys())}.")
+        self.logger.info(
+            f"Health check executed: status={overallStatus}, engine={engineName}, aiAvailable={aiAvailable}, isUserKeyRequired={userKeyRequired}."
+        )
         return statusReport
 
     def isExecutableAvailable(self, executable: str) -> bool:

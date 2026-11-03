@@ -1,20 +1,40 @@
 {
   "ai": {
     "default": "ollama",
+    "isUserKeyRequired": false,
     "adapters": {
       "GeminiAdapter": "Infrastructure.Engines.GeminiAdapter.GeminiAdapter",
       "OllamaAdapter": "Infrastructure.Engines.OllamaAdapter.OllamaAdapter"
     },
     "engines": {
       "gemini": {
+        "name": "Google Gemini",
         "adapter": "GeminiAdapter",
+        "requiresApiKey": true,
+        "supportedModels": [
+          "gemini-2.5-flash",
+          "gemini-2.5-pro",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash",
+          "gemini-1.5-pro"
+        ],
         "args": {
           "apiKey": "AIzaSyA09MlWiUecQtuXR0n6scO0ef2mwxbwYxc",
           "model": "gemini-2.5-flash"
         }
       },
       "ollama": {
+        "name": "Ollama (Local)",
         "adapter": "OllamaAdapter",
+        "requiresApiKey": false,
+        "supportedModels": [
+          "llama3:latest",
+          "llama3.1:latest",
+          "llama3.2:latest",
+          "codellama:latest",
+          "deepseek-coder:latest",
+          "qwen2.5-coder:latest"
+        ],
         "args": {
           "endpoint": "http://localhost:11434/v1",
           "model": "llama3:latest",

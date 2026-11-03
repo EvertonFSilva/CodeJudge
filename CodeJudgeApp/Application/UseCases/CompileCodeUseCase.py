@@ -1,8 +1,11 @@
+from typing import Optional
 from Domain.Contracts.ICompilerRegistry import ICompilerRegistry
 from Domain.Contracts.ILanguageRepository import ILanguageRepository
 from Domain.Entities.SourceCode import SourceCode
 from Domain.Reports.CompilationReport import CompilationReport
 from Domain.Exceptions.DomainException import UnsupportedLanguageException, EmptySourceCodeException
+from Infrastructure.Config.ConfigurationManager import ConfigurationManager
+from Infrastructure.Factories.EngineFactory import EngineFactory
 from Infrastructure.Logging.Logger import Logger
 from Application.UseCases.DiagnoseErrorUseCase import DiagnoseErrorUseCase
 
@@ -11,14 +14,32 @@ class CompileCodeUseCase:
         self,
         compilerRegistry: ICompilerRegistry,
         languageRepository: ILanguageRepository,
-        diagnoseErrorUseCase: DiagnoseErrorUseCase
+        diagnoseErrorUseCase: DiagnoseErrorUseCase,
+        configManager: Optional[ConfigurationManager] = None
     ):
         self.compilerRegistry = compilerRegistry
         self.languageRepository = languageRepository
         self.diagnoseErrorUseCase = diagnoseErrorUseCase
+        self.configManager = configManager or ConfigurationManager.get()
         self.logger = Logger.get()
 
-    def execute(self, statement: str, language: str, code: str) -> CompilationReport:
+    def execute(
+        self,
+        statement: str,
+        language: str,
+        code: str,
+        apiKey: Optional[str] = None,
+        engine: Optional[str] = None,
+        model: Optional[str] = None
+    ) -> CompilationReport:
+        EngineFactory.resolveForRequest(
+            config=self.configManager,
+            fallbackEngine=self.diagnoseErrorUseCase.aiEngine,
+            apiKey=apiKey,
+            engine=engine,
+            model=model
+        )
+
         if not self.languageRepository.isLanguageSupported(language):
             self.logger.warning(f"Compilation requested for unsupported language: '{language}'.")
             raise UnsupportedLanguageException(language)
@@ -45,7 +66,10 @@ class CompileCodeUseCase:
                 statement=statement,
                 language=language,
                 code=code,
-                logs=report.logs
+                logs=report.logs,
+                apiKey=apiKey,
+                engine=engine,
+                model=model
             )
             if feedback:
                 report.message = f"{report.message}\n\nFeedback:\n{feedback}"

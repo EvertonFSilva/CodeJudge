@@ -1,12 +1,18 @@
 import os
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from Domain.Entities.Language import Language
+from Domain.Entities.AiModelProvider import AiModelProvider
 from Domain.Contracts.ILanguageRepository import ILanguageRepository
-from Domain.Exceptions.DomainException import DomainException
+from Domain.Contracts.IAiProviderRepository import IAiProviderRepository
+from Domain.Exceptions.DomainException import (
+    DomainException,
+    UnsupportedAiEngineException,
+    UnsupportedAiModelException
+)
 
-class ConfigurationManager(ILanguageRepository):
+class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
     _instance = None
 
     def __init__(self, configPath: Optional[str] = None):
@@ -39,8 +45,19 @@ class ConfigurationManager(ILanguageRepository):
                 return default
         return current
 
+    def isUserKeyRequired(self) -> bool:
+        val = self.getSetting("ai.isUserKeyRequired")
+        if val is None:
+            val = self.getSetting("ai.isApiKeyRequired")
+        if val is None:
+            val = self.getSetting("ai.requireUserKey", False)
+        return bool(val)
+
     def getAiAdapters(self) -> Dict[str, str]:
         return self.getSetting("ai.adapters", {})
+
+    def getAiEnginesRaw(self) -> Dict[str, Any]:
+        return self.getSetting("ai.engines", {})
 
     def getDefaultEngineName(self) -> str:
         defaultEngine = self.getSetting("ai.default")
@@ -48,12 +65,116 @@ class ConfigurationManager(ILanguageRepository):
             raise DomainException("Property 'ai.default' is not configured in Configuration.json.")
         return str(defaultEngine)
 
+    def getEngineConfig(self, engineName: Optional[str] = None) -> Dict[str, Any]:
+        targetName = (engineName or self.getDefaultEngineName()).strip().lower()
+        engines = self.getAiEnginesRaw()
+        engineConfig = engines.get(targetName)
+        if not engineConfig:
+            raise UnsupportedAiEngineException(targetName, list(engines.keys()))
+        return engineConfig
+
     def getDefaultEngineConfig(self) -> Dict[str, Any]:
         defaultName = self.getDefaultEngineName()
         engineConfig = self.getSetting(f"ai.engines.{defaultName}")
         if not engineConfig:
             raise DomainException(f"Configuration for AI engine '{defaultName}' is missing in Configuration.json.")
         return engineConfig
+
+    def getAiProvider(self, engineKey: str) -> Optional[AiModelProvider]:
+        key = engineKey.strip().lower()
+        rawEngines = self.getAiEnginesRaw()
+        engineCfg = rawEngines.get(key)
+        if not engineCfg or not isinstance(engineCfg, dict):
+            return None
+
+        args = engineCfg.get("args", {})
+        defaultModel = str(args.get("model", "")).strip()
+        rawSupported = engineCfg.get("supportedModels", engineCfg.get("models", []))
+
+        supportedModels: List[str] = []
+        if isinstance(rawSupported, list):
+            for item in rawSupported:
+                modelStr = str(item).strip()
+                if modelStr and modelStr not in supportedModels:
+                    supportedModels.append(modelStr)
+
+        if defaultModel and defaultModel not in supportedModels:
+            supportedModels.insert(0, defaultModel)
+
+        defaultEngineName = self.getDefaultEngineName().strip().lower()
+        requiresApiKey = bool(engineCfg.get("requiresApiKey", "ollama" not in key))
+
+        return AiModelProvider(
+            key=key,
+            name=str(engineCfg.get("name", key.capitalize())),
+            adapter=str(engineCfg.get("adapter", "")),
+            defaultModel=defaultModel,
+            supportedModels=supportedModels,
+            requiresApiKey=requiresApiKey,
+            isDefault=(key == defaultEngineName)
+        )
+
+    def getAllAiProviders(self) -> Dict[str, AiModelProvider]:
+        rawEngines = self.getAiEnginesRaw()
+        providers: Dict[str, AiModelProvider] = {}
+        for key in rawEngines:
+            provider = self.getAiProvider(key)
+            if provider:
+                providers[key.strip().lower()] = provider
+        return providers
+
+    def getSupportedModels(self, engineKey: Optional[str] = None) -> List[str]:
+        if engineKey:
+            provider = self.getAiProvider(engineKey)
+            if not provider:
+                raise UnsupportedAiEngineException(engineKey, list(self.getAllAiProviders().keys()))
+            return list(provider.supportedModels)
+
+        allModels: List[str] = []
+        for provider in self.getAllAiProviders().values():
+            for model in provider.supportedModels:
+                if model not in allModels:
+                    allModels.append(model)
+        return allModels
+
+    def resolveEngineAndModel(
+        self,
+        requestedEngine: Optional[str] = None,
+        requestedModel: Optional[str] = None
+    ) -> Tuple[str, str]:
+        providers = self.getAllAiProviders()
+        supportedKeys = list(providers.keys())
+
+        cleanEngine = requestedEngine.strip().lower() if requestedEngine and requestedEngine.strip() else None
+        cleanModel = requestedModel.strip() if requestedModel and requestedModel.strip() else None
+
+        if cleanEngine:
+            provider = providers.get(cleanEngine)
+            if not provider:
+                raise UnsupportedAiEngineException(cleanEngine, supportedKeys)
+            if cleanModel:
+                if cleanModel not in provider.supportedModels:
+                    raise UnsupportedAiModelException(cleanModel, cleanEngine, provider.supportedModels)
+                return (cleanEngine, cleanModel)
+            return (cleanEngine, provider.defaultModel)
+
+        if cleanModel:
+            defaultKey = self.getDefaultEngineName().strip().lower()
+            defaultProvider = providers.get(defaultKey)
+            if defaultProvider and cleanModel in defaultProvider.supportedModels:
+                return (defaultKey, cleanModel)
+
+            for key, provider in providers.items():
+                if cleanModel in provider.supportedModels:
+                    return (key, cleanModel)
+
+            raise UnsupportedAiModelException(cleanModel, "all", self.getSupportedModels())
+
+        defaultKey = self.getDefaultEngineName().strip().lower()
+        defaultProvider = providers.get(defaultKey)
+        if not defaultProvider:
+            raise UnsupportedAiEngineException(defaultKey, supportedKeys)
+        return (defaultKey, defaultProvider.defaultModel)
 
     def getLanguagesRaw(self) -> Dict[str, Any]:
         return self.getSetting("languages", {})

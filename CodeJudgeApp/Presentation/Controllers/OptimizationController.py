@@ -10,7 +10,10 @@ class OptimizationController:
         report = self.optimizeCodeUseCase.execute(
             statement=request.statement or "",
             language=request.language,
-            code=request.code
+            code=request.code,
+            apiKey=request.apiKey,
+            engine=request.engine,
+            model=request.model
         )
         return OptimizationResponse(
             success=report.success,

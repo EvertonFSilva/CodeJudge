@@ -21,6 +21,7 @@ from Application.UseCases.OptimizeCodeUseCase import OptimizeCodeUseCase
 from Application.UseCases.PromptUseCase import PromptUseCase
 from Application.UseCases.HealthUseCase import HealthUseCase
 from Application.UseCases.GetLanguagesUseCase import GetLanguagesUseCase
+from Application.UseCases.GetAiModelsUseCase import GetAiModelsUseCase
 
 from Presentation.Controllers.CompilationController import CompilationController
 from Presentation.Controllers.ExecutionController import ExecutionController
@@ -30,6 +31,7 @@ from Presentation.Controllers.OptimizationController import OptimizationControll
 from Presentation.Controllers.PromptController import PromptController
 from Presentation.Controllers.HealthController import HealthController
 from Presentation.Controllers.LanguageController import LanguageController
+from Presentation.Controllers.AiController import AiController
 
 from Presentation.Routers.HealthRouter import createHealthRouter
 from Presentation.Routers.CompilationRouter import createCompilationRouter
@@ -39,6 +41,7 @@ from Presentation.Routers.AnalysisRouter import createAnalysisRouter
 from Presentation.Routers.OptimizationRouter import createOptimizationRouter
 from Presentation.Routers.PromptRouter import createPromptRouter
 from Presentation.Routers.LanguageRouter import createLanguageRouter
+from Presentation.Routers.AiRouter import createAiRouter
 
 from Domain.Exceptions.DomainException import DomainException
 
@@ -109,13 +112,15 @@ def createApp() -> FastAPI:
 
     diagnoseErrorUseCase = DiagnoseErrorUseCase(
         promptRepository=promptRepository,
-        aiEngine=aiEngine
+        aiEngine=aiEngine,
+        configManager=config
     )
 
     compileUseCase = CompileCodeUseCase(
         compilerRegistry=compilerRegistry,
         languageRepository=config,
-        diagnoseErrorUseCase=diagnoseErrorUseCase
+        diagnoseErrorUseCase=diagnoseErrorUseCase,
+        configManager=config
     )
 
     executeUseCase = ExecuteCodeUseCase(
@@ -128,13 +133,15 @@ def createApp() -> FastAPI:
     analyzeUseCase = AnalyzeCodeUseCase(
         aiEngine=aiEngine,
         promptRepository=promptRepository,
-        languageRepository=config
+        languageRepository=config,
+        configManager=config
     )
 
     optimizeUseCase = OptimizeCodeUseCase(
         aiEngine=aiEngine,
         promptRepository=promptRepository,
-        languageRepository=config
+        languageRepository=config,
+        configManager=config
     )
 
     promptUseCase = PromptUseCase(
@@ -151,6 +158,10 @@ def createApp() -> FastAPI:
         languageRepository=config
     )
 
+    getAiModelsUseCase = GetAiModelsUseCase(
+        aiProviderRepository=config
+    )
+
     compilationController = CompilationController(compileUseCase)
     executionController = ExecutionController(executeUseCase)
     diagnosticController = DiagnosticController(diagnoseErrorUseCase)
@@ -159,6 +170,7 @@ def createApp() -> FastAPI:
     promptController = PromptController(promptUseCase)
     healthController = HealthController(healthUseCase)
     languageController = LanguageController(getLanguagesUseCase)
+    aiController = AiController(getAiModelsUseCase)
 
     app.include_router(createHealthRouter(healthController))
     app.include_router(createCompilationRouter(compilationController))
@@ -168,6 +180,7 @@ def createApp() -> FastAPI:
     app.include_router(createOptimizationRouter(optimizationController))
     app.include_router(createPromptRouter(promptController))
     app.include_router(createLanguageRouter(languageController))
+    app.include_router(createAiRouter(aiController))
 
     logger.info("Application routes registered successfully.")
     return app

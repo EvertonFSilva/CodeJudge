@@ -7,3 +7,6 @@ class DiagnosticRequest(BaseModel):
     code: str
     logs: Optional[str] = ""
     errorType: Optional[str] = "compilation"
+    apiKey: Optional[str] = None
+    engine: Optional[str] = None
+    model: Optional[str] = None

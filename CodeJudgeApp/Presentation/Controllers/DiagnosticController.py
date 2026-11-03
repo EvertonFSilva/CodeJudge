@@ -13,21 +13,30 @@ class DiagnosticController:
                 statement=request.statement or "",
                 language=request.language,
                 code=request.code,
-                errorMessage=request.logs or ""
+                errorMessage=request.logs or "",
+                apiKey=request.apiKey,
+                engine=request.engine,
+                model=request.model
             )
         elif errorType in ("logic", "mismatch", "logicmismatch"):
             feedback = self.diagnoseErrorUseCase.diagnoseLogicMismatch(
                 statement=request.statement or "",
                 language=request.language,
                 code=request.code,
-                mismatchDetails=request.logs or ""
+                mismatchDetails=request.logs or "",
+                apiKey=request.apiKey,
+                engine=request.engine,
+                model=request.model
             )
         else:
             feedback = self.diagnoseErrorUseCase.diagnoseCompilationError(
                 statement=request.statement or "",
                 language=request.language,
                 code=request.code,
-                logs=request.logs or ""
+                logs=request.logs or "",
+                apiKey=request.apiKey,
+                engine=request.engine,
+                model=request.model
             )
 
         return DiagnosticResponse(

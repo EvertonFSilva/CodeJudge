@@ -25,7 +25,10 @@ class ExecutionController:
             statement=request.statement or "",
             language=request.language,
             code=request.code,
-            scenarios=scenarios
+            scenarios=scenarios,
+            apiKey=request.apiKey,
+            engine=request.engine,
+            model=request.model
         )
 
         return ExecutionResponse(

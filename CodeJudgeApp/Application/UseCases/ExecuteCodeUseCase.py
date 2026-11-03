@@ -29,7 +29,10 @@ class ExecuteCodeUseCase:
         statement: str,
         language: str,
         code: str,
-        scenarios: Optional[List[TestScenario]] = None
+        scenarios: Optional[List[TestScenario]] = None,
+        apiKey: Optional[str] = None,
+        engine: Optional[str] = None,
+        model: Optional[str] = None
     ) -> ExecutionReport:
         if not self.languageRepository.isLanguageSupported(language):
             self.logger.warning(f"Execution requested for unsupported language: '{language}'.")
@@ -43,7 +46,10 @@ class ExecuteCodeUseCase:
         buildReport = self.compileUseCase.execute(
             statement=statement,
             language=language,
-            code=code
+            code=code,
+            apiKey=apiKey,
+            engine=engine,
+            model=model
         )
 
         workspaceDirectory = os.path.dirname(buildReport.binaryPath) if buildReport.binaryPath else None
@@ -81,7 +87,10 @@ class ExecuteCodeUseCase:
                         statement=statement,
                         language=language,
                         code=code,
-                        errorMessage=executionReport.message
+                        errorMessage=executionReport.message,
+                        apiKey=apiKey,
+                        engine=engine,
+                        model=model
                     )
                     if feedback:
                         executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
@@ -97,7 +106,10 @@ class ExecuteCodeUseCase:
                         statement=statement,
                         language=language,
                         code=code,
-                        mismatchDetails=details
+                        mismatchDetails=details,
+                        apiKey=apiKey,
+                        engine=engine,
+                        model=model
                     )
                     if feedback:
                         executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"

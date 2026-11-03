@@ -10,7 +10,10 @@ class CompilationController:
         report = self.compileCodeUseCase.execute(
             statement=request.statement or "",
             language=request.language,
-            code=request.code
+            code=request.code,
+            apiKey=request.apiKey,
+            engine=request.engine,
+            model=request.model
         )
         return CompilationResponse(
             success=report.success,

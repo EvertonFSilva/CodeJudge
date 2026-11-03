@@ -7,9 +7,14 @@ from Infrastructure.Logging.Logger import Logger
 class OllamaAdapter(IAiEngine):
     def __init__(self, args: Dict[str, Any]):
         self.isLocal = True
+        ignoreServerKey = bool(args.get("ignoreServerKey", False))
         self.endpoint = (os.environ.get("OLLAMA_ENDPOINT") or args.get("endpoint") or "").rstrip("/")
-        self.model = os.environ.get("OLLAMA_MODEL") or args.get("model", "llama3:latest")
-        self.apiKey = os.environ.get("OLLAMA_API_KEY") or args.get("apiKey", "")
+        if ignoreServerKey:
+            self.model = str(args.get("model", "llama3:latest")).strip()
+            self.apiKey = str(args.get("apiKey", "")).strip()
+        else:
+            self.model = os.environ.get("OLLAMA_MODEL") or args.get("model", "llama3:latest")
+            self.apiKey = os.environ.get("OLLAMA_API_KEY") or args.get("apiKey", "")
         configuredTimeout = float(os.environ.get("OLLAMA_TIMEOUT_SECONDS") or args.get("timeoutSeconds", 300.0))
         self.timeoutSeconds = max(configuredTimeout, 180.0)
         self.logger = Logger.get()
