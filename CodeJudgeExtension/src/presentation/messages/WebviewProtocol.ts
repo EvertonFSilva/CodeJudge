@@ -8,7 +8,7 @@ export type WebviewIncomingMessage =
   | { type: 'request-active-editor' }
   | { type: 'request-health' }
   | { type: 'request-moodle-session' }
-  | { type: 'moodle-login'; payload: { username: string; password: string } }
+  | { type: 'moodle-login'; payload: { username: string; password: string; courseOverride?: string } }
   | { type: 'moodle-update-course'; payload: { course: string } }
   | { type: 'moodle-logout' }
   | { type: 'start-process'; payload: RunProcessRequest }

@@ -18,6 +18,7 @@
     model: savedVsState.model || ''
   };
   let moodleProfile = savedVsState.moodleProfile || null;
+  let moodleLoginTimeoutId = null;
   let serverAiConfig = null;
 
   const buttonLabels = {
@@ -551,6 +552,22 @@
         elements.moodleAuthFeedback.className = 'moodle-feedback-msg';
       }
 
+      if (moodleLoginTimeoutId) {
+        clearTimeout(moodleLoginTimeoutId);
+      }
+      moodleLoginTimeoutId = setTimeout(() => {
+        moodleLoginTimeoutId = null;
+        if (elements.moodleLoginSubmitBtn) {
+          elements.moodleLoginSubmitBtn.disabled = false;
+          elements.moodleLoginSubmitBtn.textContent = 'Entrar com Moodle IFF';
+        }
+        if (elements.moodleAuthFeedback) {
+          elements.moodleAuthFeedback.textContent =
+            'Sem resposta do host da extensão. Recarregue a janela do VS Code (Ctrl+R / Reload Window) e tente novamente.';
+          elements.moodleAuthFeedback.className = 'moodle-feedback-msg error';
+        }
+      }, 15000);
+
       vscode.postMessage({
         type: 'moodle-login',
         payload: {
@@ -655,12 +672,18 @@
   }
 
   function handleMoodleLoginResult(result) {
-    if (elements.moodleLoginSubmitBtn) {
-      elements.moodleLoginSubmitBtn.disabled = false;
-      elements.moodleLoginSubmitBtn.textContent = 'Conectar ao Moodle';
+    if (moodleLoginTimeoutId) {
+      clearTimeout(moodleLoginTimeoutId);
+      moodleLoginTimeoutId = null;
     }
 
-    if (result.authenticated && result.profile) {
+    if (elements.moodleLoginSubmitBtn) {
+      elements.moodleLoginSubmitBtn.disabled = false;
+      elements.moodleLoginSubmitBtn.textContent = 'Entrar com Moodle IFF';
+    }
+
+    const isSuccess = Boolean((result?.success || result?.authenticated) && result?.profile);
+    if (isSuccess) {
       if (elements.moodlePasswordInput) {
         elements.moodlePasswordInput.value = '';
       }
@@ -670,7 +693,8 @@
       }
       renderMoodleSession(result.profile);
     } else if (elements.moodleAuthFeedback) {
-      elements.moodleAuthFeedback.textContent = result.error || 'Falha ao autenticar no Moodle.';
+      elements.moodleAuthFeedback.textContent =
+        result?.message || result?.error || 'Falha ao autenticar no Moodle IFF.';
       elements.moodleAuthFeedback.className = 'moodle-feedback-msg error';
     }
   }

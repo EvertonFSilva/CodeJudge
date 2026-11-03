@@ -121,14 +121,27 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
       }
 
       case 'moodle-login': {
-        const result = await this.authController.login(
-          message.payload.username,
-          message.payload.password
-        );
-        this.postMessage({
-          type: 'moodle-login-result',
-          payload: result
-        });
+        try {
+          const result = await this.authController.login(
+            message.payload?.username || '',
+            message.payload?.password || '',
+            message.payload?.courseOverride
+          );
+          this.postMessage({
+            type: 'moodle-login-result',
+            payload: result
+          });
+        } catch (err: any) {
+          this.postMessage({
+            type: 'moodle-login-result',
+            payload: {
+              success: false,
+              authenticated: false,
+              message: err?.message || 'Erro ao autenticar no Moodle IFF.',
+              error: err?.message || 'Erro ao autenticar no Moodle IFF.'
+            }
+          });
+        }
         break;
       }
 

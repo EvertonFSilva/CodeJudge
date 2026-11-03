@@ -12,9 +12,12 @@ class AuthController {
     getSavedProfile() {
         return this.globalState.get(STORAGE_KEY);
     }
-    async login(username, password) {
+    async login(username, password, courseOverride) {
         const result = await this.authUseCase.authenticate(username, password);
         if (result.success && result.profile) {
+            if (courseOverride && courseOverride.trim()) {
+                result.profile.course = courseOverride.trim();
+            }
             await this.globalState.update(STORAGE_KEY, result.profile);
         }
         return result;

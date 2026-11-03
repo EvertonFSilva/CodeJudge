@@ -13,9 +13,12 @@ export class AuthController {
     return this.globalState.get<MoodleUserProfile>(STORAGE_KEY);
   }
 
-  public async login(username: string, password: string): Promise<MoodleLoginResult> {
+  public async login(username: string, password: string, courseOverride?: string): Promise<MoodleLoginResult> {
     const result = await this.authUseCase.authenticate(username, password);
     if (result.success && result.profile) {
+      if (courseOverride && courseOverride.trim()) {
+        result.profile.course = courseOverride.trim();
+      }
       await this.globalState.update(STORAGE_KEY, result.profile);
     }
     return result;

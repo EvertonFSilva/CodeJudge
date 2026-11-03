@@ -3,42 +3,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MoodleAuthUseCase = void 0;
 class MoodleAuthUseCase {
     logger;
-    baseUrl = 'https://ead2.iff.edu.br';
     loginUrl = 'https://ead2.iff.edu.br/login/index.php';
     profileUrl = 'https://ead2.iff.edu.br/user/profile.php';
-    dashboardUrl = 'https://ead2.iff.edu.br/my/';
     userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
     constructor(logger) {
         this.logger = logger;
     }
-    extractCookies(response) {
+    extractCookieString(response) {
         const headersAny = response.headers;
+        let rawList = [];
         if (typeof headersAny.getSetCookie === 'function') {
-            const list = headersAny.getSetCookie();
-            if (Array.isArray(list) && list.length > 0) {
-                return list;
+            const setCookies = headersAny.getSetCookie();
+            if (Array.isArray(setCookies) && setCookies.length > 0) {
+                rawList = setCookies;
             }
         }
-        const raw = response.headers.get('set-cookie');
-        return raw ? [raw] : [];
-    }
-    mergeCookieHeader(existing, setCookieHeaders) {
-        const map = new Map();
-        const feed = (cookiePart) => {
-            const clean = (cookiePart || '').split(';')[0].trim();
-            const eqIdx = clean.indexOf('=');
-            if (eqIdx > 0) {
-                const key = clean.substring(0, eqIdx).trim();
-                map.set(key.toLowerCase(), clean);
+        if (rawList.length === 0) {
+            const single = response.headers.get('set-cookie');
+            if (single) {
+                rawList = single.split(/,(?=\s*[A-Za-z0-9_\-]+=)/);
             }
-        };
-        if (existing) {
-            existing.split(';').forEach(feed);
         }
-        setCookieHeaders.forEach(header => {
-            header.split(/,(?=\s*[A-Za-z0-9_\-]+=)/).forEach(feed);
-        });
-        return Array.from(map.values()).join('; ');
+        return rawList
+            .map(c => (c || '').split(';')[0].trim())
+            .filter(Boolean)
+            .join('; ');
     }
     stripHtml(raw) {
         if (!raw)
@@ -56,168 +45,127 @@ class MoodleAuthUseCase {
             .replace(/\s+/g, ' ')
             .trim();
     }
+    normalizeUsername(rawUsername) {
+        const trimmed = (rawUsername || '').trim();
+        if (/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(trimmed)) {
+            return trimmed.replace(/[.\-\s]/g, '');
+        }
+        return trimmed;
+    }
+    fail(message) {
+        return {
+            success: false,
+            authenticated: false,
+            message,
+            error: message
+        };
+    }
     async authenticate(username, password) {
-        const cleanUsername = (username || '').replace(/[.\-\s]/g, '').trim();
-        if (!cleanUsername || !password) {
-            return {
-                success: false,
-                message: 'Informe seu usuário/CPF e senha do Moodle IFF.'
-            };
+        const normalizedUser = this.normalizeUsername(username);
+        if (!normalizedUser || !password) {
+            return this.fail('Informe seu usuário/CPF e senha do Moodle IFF.');
         }
         try {
-            this.logger.info(`Autenticando usuario '${cleanUsername}' no Moodle IFF...`);
-            const getRes = await fetch(this.loginUrl, {
+            this.logger.info(`Autenticando usuario '${normalizedUser}' no Moodle IFF...`);
+            const getResponse = await fetch(this.loginUrl, {
                 method: 'GET',
                 headers: {
                     'User-Agent': this.userAgent,
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                }
+                },
+                signal: AbortSignal.timeout(15000)
             });
-            if (!getRes.ok) {
-                return { success: false, message: 'Não foi possível conectar ao portal Moodle IFF.' };
+            if (!getResponse.ok) {
+                return this.fail('Não foi possível conectar ao Moodle IFF.');
             }
-            const loginHtml = await getRes.text();
-            const tokenMatch = loginHtml.match(/name=["']logintoken["']\s+value=["']([^"']+)["']/i) ||
-                loginHtml.match(/value=["']([^"']+)["']\s+name=["']logintoken["']/i);
+            const getHtml = await getResponse.text();
+            const tokenMatch = getHtml.match(/name=["']logintoken["']\s+value=["']([^"']+)["']/i) ||
+                getHtml.match(/value=["']([^"']+)["']\s+name=["']logintoken["']/i);
             if (!tokenMatch || !tokenMatch[1]) {
-                return { success: false, message: 'Não foi possível obter o token de sessão do Moodle IFF.' };
+                return this.fail('Falha ao obter token de login do Moodle IFF.');
             }
             const loginToken = tokenMatch[1];
-            let cookieHeader = this.mergeCookieHeader('', this.extractCookies(getRes));
-            const formParams = new URLSearchParams();
-            formParams.append('anchor', '');
-            formParams.append('logintoken', loginToken);
-            formParams.append('username', cleanUsername);
-            formParams.append('password', password);
-            const postRes = await fetch(this.loginUrl, {
+            let cookieHeader = this.extractCookieString(getResponse);
+            const params = new URLSearchParams();
+            params.append('logintoken', loginToken);
+            params.append('username', normalizedUser);
+            params.append('password', password);
+            const postResponse = await fetch(this.loginUrl, {
                 method: 'POST',
                 headers: {
-                    'Origin': this.baseUrl,
+                    'Origin': 'https://ead2.iff.edu.br',
                     'Referer': this.loginUrl,
                     'User-Agent': this.userAgent,
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Cookie': cookieHeader
                 },
-                body: formParams.toString(),
-                redirect: 'manual'
+                body: params.toString(),
+                redirect: 'manual',
+                signal: AbortSignal.timeout(15000)
             });
-            const postCookies = this.extractCookies(postRes);
-            cookieHeader = this.mergeCookieHeader(cookieHeader, postCookies);
-            let redirectLocation = postRes.headers.get('location') || '';
-            if (redirectLocation.includes('loginredirect=1') || !cookieHeader.includes('MoodleSession=')) {
-                return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+            const redirectLocation = postResponse.headers.get('location') || '';
+            if (redirectLocation.includes('loginredirect=1')) {
+                return this.fail('Usuário ou senha inválidos no Moodle IFF.');
             }
-            if (redirectLocation.includes('testsession')) {
-                const testUrl = redirectLocation.startsWith('http')
-                    ? redirectLocation
-                    : `${this.baseUrl}${redirectLocation.startsWith('/') ? '' : '/'}${redirectLocation}`;
-                const testRes = await fetch(testUrl, {
-                    method: 'GET',
-                    headers: {
-                        'User-Agent': this.userAgent,
-                        'Cookie': cookieHeader
-                    },
-                    redirect: 'manual'
-                });
-                cookieHeader = this.mergeCookieHeader(cookieHeader, this.extractCookies(testRes));
+            const postCookieHeader = this.extractCookieString(postResponse);
+            if (!postCookieHeader.includes('MoodleSession=')) {
+                return this.fail('Usuário ou senha inválidos no Moodle IFF.');
             }
-            const profileRes = await fetch(this.profileUrl, {
+            cookieHeader = postCookieHeader;
+            const profileResponse = await fetch(this.profileUrl, {
                 method: 'GET',
                 headers: {
                     'User-Agent': this.userAgent,
                     'Referer': this.loginUrl,
                     'Cookie': cookieHeader
                 },
-                redirect: 'manual'
+                redirect: 'manual',
+                signal: AbortSignal.timeout(15000)
             });
-            let profileHtml = '';
-            if (profileRes.status === 200) {
-                profileHtml = await profileRes.text();
+            if (profileResponse.status !== 200) {
+                return this.fail('Usuário ou senha inválidos no Moodle IFF.');
             }
+            const profileHtml = await profileResponse.text();
             if (!profileHtml.includes('card-profile')) {
-                const dashRes = await fetch(this.dashboardUrl, {
-                    method: 'GET',
-                    headers: {
-                        'User-Agent': this.userAgent,
-                        'Cookie': cookieHeader
-                    },
-                    redirect: 'manual'
-                });
-                const dashHtml = dashRes.status === 200 ? await dashRes.text() : '';
-                if (!dashHtml || dashHtml.includes('loginerrormessage') || dashHtml.includes('id="login"')) {
-                    return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
-                }
-                const userIdMatch = dashHtml.match(/data-userid=["'](\d+)["']/i) ||
-                    dashHtml.match(/"userid"\s*:\s*(\d+)/i);
-                if (userIdMatch && userIdMatch[1]) {
-                    const byIdRes = await fetch(`${this.profileUrl}?id=${userIdMatch[1]}`, {
-                        method: 'GET',
-                        headers: {
-                            'User-Agent': this.userAgent,
-                            'Cookie': cookieHeader
-                        }
-                    });
-                    if (byIdRes.ok) {
-                        profileHtml = await byIdRes.text();
-                    }
-                }
-                if (!profileHtml) {
-                    profileHtml = dashHtml;
-                }
+                return this.fail('Usuário ou senha inválidos no Moodle IFF.');
             }
-            const parsed = this.parseMoodleProfile(profileHtml, cleanUsername);
-            if (!parsed || !parsed.name) {
-                return { success: false, message: 'Usuário ou senha inválidos no Moodle IFF.' };
+            const profileData = this.parseProfile(profileHtml, normalizedUser);
+            if (!profileData || !profileData.name || profileData.name === normalizedUser) {
+                return this.fail('Usuário ou senha inválidos no Moodle IFF.');
             }
-            this.logger.info(`Login Moodle IFF concluido para '${parsed.name}'.`);
+            this.logger.info(`Login Moodle IFF realizado com sucesso para '${profileData.name}'.`);
             return {
                 success: true,
-                message: 'Autenticado com sucesso via Moodle IFF.',
-                profile: parsed
+                authenticated: true,
+                message: 'Login realizado com sucesso via Moodle IFF.',
+                profile: profileData
             };
         }
         catch (err) {
-            this.logger.error('Erro na autenticacao com o Moodle IFF', err);
-            return {
-                success: false,
-                message: `Erro ao conectar ao Moodle IFF: ${err?.message || 'Falha de rede'}`
-            };
+            this.logger.error('Erro na comunicacao com o Moodle IFF', err);
+            return this.fail(`Erro na comunicação com o Moodle IFF: ${err?.message || 'Tempo limite excedido'}`);
         }
     }
-    parseMoodleProfile(html, fallbackUsername) {
-        if (!html)
+    parseProfile(html, fallbackUsername) {
+        if (!html || !html.includes('card-profile')) {
             return null;
+        }
         let name = '';
-        const cardProfileMatch = html.match(/<div[^>]*class=["'][^"']*card-profile[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/i) || html.match(/<div[^>]*class=["'][^"']*card-profile[^"']*["'][^>]*>([\s\S]*?)(?:<section|<\/div>)/i);
-        if (cardProfileMatch && cardProfileMatch[1]) {
-            const h3Match = cardProfileMatch[1].match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+        const cardIdx = html.indexOf('card-profile');
+        if (cardIdx !== -1) {
+            const cardSlice = html.substring(cardIdx, cardIdx + 4000);
+            const h3Match = cardSlice.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
             if (h3Match && h3Match[1]) {
                 name = this.stripHtml(h3Match[1]).split(' [')[0].trim();
             }
         }
         if (!name) {
-            const altMatch = html.match(/class=["']usertext[^"']*["'][^>]*>([^<]+)</i) ||
-                html.match(/<h1[^>]*class=["'][^"']*h2[^"']*["'][^>]*>\s*Olá,\s*([^!<]+)/i) ||
-                html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
-            if (altMatch && altMatch[1]) {
-                const candidate = this.stripHtml(altMatch[1]).split(' [')[0].trim();
-                if (candidate && !candidate.toLowerCase().includes('moodle')) {
-                    name = candidate;
-                }
-            }
-        }
-        if (!name || name === fallbackUsername) {
             return null;
         }
-        let email = `${fallbackUsername}@iff.edu.br`;
-        const mailMatch = html.match(/href=["']mailto:([^"'>\s?]+)/i);
-        if (mailMatch && mailMatch[1]) {
-            try {
-                email = decodeURIComponent(mailMatch[1].trim());
-            }
-            catch {
-                email = mailMatch[1].trim();
-            }
+        let email = '';
+        const mailMatch = html.match(/<a[^>]+href=["']mailto:([^"'>\s?]+)["'][^>]*>([\s\S]*?)<\/a>/i);
+        if (mailMatch) {
+            email = this.stripHtml(mailMatch[2]) || mailMatch[1].trim();
         }
         const details = {};
         const dlRegex = /<dl[^>]*>([\s\S]*?)<\/dl>/gi;
@@ -227,24 +175,43 @@ class MoodleAuthUseCase {
             const dtMatch = dlBody.match(/<dt[^>]*>([\s\S]*?)<\/dt>/i);
             const ddMatch = dlBody.match(/<dd[^>]*>([\s\S]*?)<\/dd>/i);
             if (dtMatch && ddMatch) {
-                const key = this.stripHtml(dtMatch[1])
+                const dt = this.stripHtml(dtMatch[1])
                     .toLowerCase()
                     .replace(/:/g, '')
                     .replace(/\s+/g, '_')
                     .trim();
-                const val = this.stripHtml(ddMatch[1]);
-                if (key && val) {
-                    details[key] = val;
+                const dd = this.stripHtml(ddMatch[1]);
+                if (dt && dd) {
+                    details[dt] = dd;
                 }
             }
         }
         const courses = [];
-        const courseLinkRegex = /<a[^>]+href=["'][^"']*\/course\/view\.php\?[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
-        let cMatch;
-        while ((cMatch = courseLinkRegex.exec(html)) !== null) {
-            const title = this.stripHtml(cMatch[1]);
-            if (title && !courses.includes(title)) {
-                courses.push(title);
+        const sectionRegex = /<section[^>]*class=["'][^"']*node_category[^"']*["'][^>]*>([\s\S]*?)<\/section>/gi;
+        let secMatch;
+        while ((secMatch = sectionRegex.exec(html)) !== null) {
+            const secHtml = secMatch[1];
+            const h3Match = secHtml.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+            const headerText = h3Match ? this.stripHtml(h3Match[1]).toLowerCase() : '';
+            if (headerText.includes('curso') || headerText.includes('detalhes do curso')) {
+                const linkRegex = /<a[^>]+href=["'][^"']+["'][^>]*>([\s\S]*?)<\/a>/gi;
+                let lMatch;
+                while ((lMatch = linkRegex.exec(secHtml)) !== null) {
+                    const courseTitle = this.stripHtml(lMatch[1]);
+                    if (courseTitle && !courses.includes(courseTitle)) {
+                        courses.push(courseTitle);
+                    }
+                }
+            }
+        }
+        if (courses.length === 0) {
+            const courseViewRegex = /<a[^>]+href=["'][^"']*\/course\/view\.php\?[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+            let cMatch;
+            while ((cMatch = courseViewRegex.exec(html)) !== null) {
+                const courseTitle = this.stripHtml(cMatch[1]);
+                if (courseTitle && !courses.includes(courseTitle)) {
+                    courses.push(courseTitle);
+                }
             }
         }
         const campus = details['campus'] ||
@@ -260,7 +227,7 @@ class MoodleAuthUseCase {
         return {
             username: fallbackUsername,
             name,
-            email,
+            email: email || `${fallbackUsername}@iff.edu.br`,
             campus,
             city,
             course: primaryCourse,
