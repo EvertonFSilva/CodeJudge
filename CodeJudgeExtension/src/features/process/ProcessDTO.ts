@@ -1,4 +1,5 @@
 import { TestCaseInput, TestCaseResult } from '../../core/entities/TestCase';
+import { MoodleUserProfile } from '../auth/MoodleAuthUseCase';
 
 export type ProcessStage = 'compile' | 'execute' | 'analyze' | 'optimize';
 export type StageStatus = 'pending' | 'running' | 'success' | 'failed' | 'skipped';
@@ -25,6 +26,7 @@ export interface RunProcessRequest {
   apiKey?: string;
   engine?: string;
   model?: string;
+  studentProfile?: MoodleUserProfile;
 }
 
 export interface ProcessResult {

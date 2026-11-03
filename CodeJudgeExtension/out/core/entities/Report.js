@@ -17,10 +17,17 @@ class Report {
         this.props = props;
     }
     toMarkdown() {
-        const { fileName, language, code, statement, compilation, execution, analysis, optimization, hasTests, allSucceeded, stoppedEarly } = this.props;
+        const { fileName, language, code, statement, studentProfile, compilation, execution, analysis, optimization, hasTests, allSucceeded, stoppedEarly } = this.props;
         const lines = [];
         lines.push(`# CodeJudge`);
         lines.push(`## Relatório Técnico de Execução`);
+        if (studentProfile && studentProfile.name) {
+            const courseLabel = studentProfile.course ||
+                (Array.isArray(studentProfile.courses) && studentProfile.courses.length > 0 ? studentProfile.courses[0] : 'Moodle IFF');
+            const campusLabel = studentProfile.campus || 'Instituto Federal Fluminense (IFF)';
+            lines.push(`> **Aluno(a):** ${studentProfile.name} | **Curso:** ${courseLabel} | **Instituição:** ${campusLabel}`);
+            lines.push(`> **E-mail:** ${studentProfile.email || '-'} | **Usuário Moodle:** \`${studentProfile.username || '-'}\``);
+        }
         lines.push(`> **Arquivo:** \`${fileName}\` | **Linguagem:** \`${language.toUpperCase()}\` | **Data:** ${new Date().toLocaleString('pt-BR')}`);
         lines.push(`> **Status:** ${allSucceeded ? '[Concluído com Sucesso]' : stoppedEarly ? '[Interrompido na Compilação]' : '[Concluído com Observações]'}`);
         if (statement && statement.trim()) {

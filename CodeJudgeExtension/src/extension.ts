@@ -33,6 +33,9 @@ import { PromptController } from './presentation/controllers/PromptController';
 import { CheckHealthUseCase } from './features/health/CheckHealthUseCase';
 import { HealthController } from './presentation/controllers/HealthController';
 
+import { MoodleAuthUseCase } from './features/auth/MoodleAuthUseCase';
+import { AuthController } from './presentation/controllers/AuthController';
+
 import { PdfKitReportGenerator } from './features/pdf/PdfKitReportGenerator';
 import { PdfExportUseCase } from './features/pdf/PdfExportUseCase';
 
@@ -88,6 +91,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const healthUseCase = new CheckHealthUseCase(getApiUrl, logger);
   const healthController = new HealthController(healthUseCase, getApiUrl);
 
+  const moodleAuthUseCase = new MoodleAuthUseCase(logger);
+  const authController = new AuthController(moodleAuthUseCase, context.globalState);
+
   const pdfGenerator = new PdfKitReportGenerator();
   const pdfExportUseCase = new PdfExportUseCase(pdfGenerator, editorAdapter, logger);
 
@@ -96,6 +102,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     processController,
     promptController,
     healthController,
+    authController,
     pdfExportUseCase,
     editorAdapter,
     syncLanguagesUseCase,

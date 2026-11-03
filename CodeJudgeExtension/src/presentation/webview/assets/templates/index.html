@@ -20,6 +20,10 @@
       <span class="brand-title">CodeJudge</span>
     </div>
     <div class="header-right-actions">
+      <div class="api-status" id="apiStatusBtn" title="Verificar conectividade com a API">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Conectando...</span>
+      </div>
       <button type="button" class="ai-discreet-btn" id="aiConfigToggleBtn" title="Configurar Modelo de IA e API Key">
         <svg class="ai-key-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path>
@@ -27,9 +31,90 @@
         </svg>
         <span class="ai-key-dot" id="aiKeyDot"></span>
       </button>
-      <div class="api-status" id="apiStatusBtn" title="Verificar conectividade com a API">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">Conectando...</span>
+      <button type="button" class="ai-discreet-btn" id="moodleAuthToggleBtn" title="Login Acadêmico via Moodle IFF">
+        <svg class="ai-key-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span class="ai-key-dot" id="moodleAuthDot"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ai-discreet-drawer" id="moodleAuthDrawer">
+    <div class="ai-drawer-top">
+      <div class="ai-drawer-heading">
+        <svg class="ai-drawer-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+        </svg>
+        <span class="ai-drawer-title">Conta Acadêmica Moodle IFF</span>
+      </div>
+      <button type="button" class="ai-drawer-reset moodle-logout-btn" id="moodleLogoutBtn" style="display:none" title="Desconectar conta Moodle">Sair</button>
+    </div>
+
+    <div id="moodleLoginFormView">
+      <div class="ai-drawer-section">
+        <div class="form-label">
+          <span>Usuário ou CPF</span>
+          <span class="form-hint">Moodle IFF</span>
+        </div>
+        <div class="ai-key-input-wrap">
+          <svg class="ai-input-leading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <input type="text" class="ai-compact-input moodle-text-input" id="moodleUsernameInput" placeholder="Digite seu CPF ou matrícula..." autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+
+      <div class="ai-drawer-section">
+        <div class="form-label">
+          <span>Senha</span>
+          <span class="form-hint">Credencial institucional</span>
+        </div>
+        <div class="ai-key-input-wrap">
+          <svg class="ai-input-leading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input type="password" class="ai-compact-input" id="moodlePasswordInput" placeholder="Digite sua senha do Moodle..." autocomplete="off" spellcheck="false" />
+          <button type="button" class="ai-eye-btn" id="moodlePassVisBtn" title="Mostrar ou ocultar senha">
+            <svg class="ai-eye-icon" id="moodleEyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="moodle-submit-btn" id="moodleLoginSubmitBtn">Entrar com Moodle IFF</button>
+      <div class="moodle-feedback-msg" id="moodleAuthFeedback"></div>
+    </div>
+
+    <div id="moodleProfileView" style="display:none">
+      <div class="moodle-profile-card">
+        <div class="moodle-profile-name-row">
+          <span class="moodle-profile-name" id="moodleProfileName">-</span>
+          <span class="moodle-verified-badge">Autenticado</span>
+        </div>
+        <div class="moodle-profile-meta" id="moodleProfileEmail">-</div>
+        <div class="moodle-profile-meta" id="moodleProfileCampus">Instituto Federal Fluminense (IFF)</div>
+      </div>
+
+      <div class="ai-drawer-section" style="margin-top:8px">
+        <div class="form-label">
+          <span>Curso / Disciplina (Cabeçalho)</span>
+          <span class="form-hint">Exibido no .md e .pdf</span>
+        </div>
+        <div class="ai-key-input-wrap">
+          <svg class="ai-input-leading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <input type="text" class="ai-compact-input moodle-text-input" id="moodleCourseInput" placeholder="Curso ou disciplina..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="moodle-courses-chips" id="moodleCoursesChips"></div>
       </div>
     </div>
   </div>

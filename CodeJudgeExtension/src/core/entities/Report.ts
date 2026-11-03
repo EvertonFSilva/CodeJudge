@@ -8,6 +8,7 @@ export function normalizeMarkdownCodeFences(text: string): string {
 }
 
 import { TestCaseResult } from './TestCase';
+import { MoodleUserProfile } from '../../features/auth/MoodleAuthUseCase';
 
 export interface StageExecutionResult {
   success: boolean;
@@ -21,6 +22,7 @@ export interface ReportProps {
   language: string;
   code?: string;
   statement?: string;
+  studentProfile?: MoodleUserProfile;
   compilation?: StageExecutionResult;
   execution?: StageExecutionResult & { testResults?: TestCaseResult[]; successRate?: number };
   analysis?: StageExecutionResult;
@@ -41,6 +43,7 @@ export class Report {
       language,
       code,
       statement,
+      studentProfile,
       compilation,
       execution,
       analysis,
@@ -54,6 +57,14 @@ export class Report {
 
     lines.push(`# CodeJudge`);
     lines.push(`## Relatório Técnico de Execução`);
+    if (studentProfile && studentProfile.name) {
+      const courseLabel =
+        studentProfile.course ||
+        (Array.isArray(studentProfile.courses) && studentProfile.courses.length > 0 ? studentProfile.courses[0] : 'Moodle IFF');
+      const campusLabel = studentProfile.campus || 'Instituto Federal Fluminense (IFF)';
+      lines.push(`> **Aluno(a):** ${studentProfile.name} | **Curso:** ${courseLabel} | **Instituição:** ${campusLabel}`);
+      lines.push(`> **E-mail:** ${studentProfile.email || '-'} | **Usuário Moodle:** \`${studentProfile.username || '-'}\``);
+    }
     lines.push(`> **Arquivo:** \`${fileName}\` | **Linguagem:** \`${language.toUpperCase()}\` | **Data:** ${new Date().toLocaleString('pt-BR')}`);
     lines.push(`> **Status:** ${allSucceeded ? '[Concluído com Sucesso]' : stoppedEarly ? '[Interrompido na Compilação]' : '[Concluído com Observações]'}`);
 

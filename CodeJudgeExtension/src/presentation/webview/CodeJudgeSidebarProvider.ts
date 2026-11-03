@@ -5,6 +5,7 @@ import { IVsCodeEditorAdapter } from '../../infrastructure/vscode/IVsCodeEditorA
 import { ProcessController } from '../controllers/ProcessController';
 import { PromptController } from '../controllers/PromptController';
 import { HealthController } from '../controllers/HealthController';
+import { AuthController } from '../controllers/AuthController';
 import { PdfExportUseCase } from '../../features/pdf/PdfExportUseCase';
 import { SyncLanguagesUseCase } from '../../features/languages/SyncLanguagesUseCase';
 import { WebviewIncomingMessage } from '../messages/WebviewProtocol';
@@ -21,6 +22,7 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
     private readonly processController: ProcessController,
     private readonly promptController: PromptController,
     private readonly healthController: HealthController,
+    private readonly authController: AuthController,
     private readonly pdfExportUseCase: PdfExportUseCase,
     private readonly editorAdapter: IVsCodeEditorAdapter,
     private readonly syncLanguagesUseCase: SyncLanguagesUseCase,
@@ -60,6 +62,10 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
       this.postMessage({
         type: 'health-status',
         payload: health
+      });
+      this.postMessage({
+        type: 'moodle-session-status',
+        payload: { profile: this.authController.getSavedProfile() }
       });
       this.updateActiveEditorState();
     });
@@ -106,15 +112,58 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
         break;
       }
 
+      case 'request-moodle-session': {
+        this.postMessage({
+          type: 'moodle-session-status',
+          payload: { profile: this.authController.getSavedProfile() }
+        });
+        break;
+      }
+
+      case 'moodle-login': {
+        const result = await this.authController.login(
+          message.payload.username,
+          message.payload.password
+        );
+        this.postMessage({
+          type: 'moodle-login-result',
+          payload: result
+        });
+        break;
+      }
+
+      case 'moodle-update-course': {
+        const updated = await this.authController.updateCourse(message.payload.course);
+        this.postMessage({
+          type: 'moodle-session-status',
+          payload: { profile: updated }
+        });
+        break;
+      }
+
+      case 'moodle-logout': {
+        await this.authController.logout();
+        this.postMessage({
+          type: 'moodle-session-status',
+          payload: { profile: undefined }
+        });
+        break;
+      }
+
       case 'start-process': {
         try {
+          const payloadWithProfile = {
+            ...message.payload,
+            studentProfile: message.payload.studentProfile || this.authController.getSavedProfile()
+          };
+
           this.postMessage({
             type: 'process-started',
-            payload: { config: message.payload.config }
+            payload: { config: payloadWithProfile.config }
           });
 
           const result = await this.processController.handleRun(
-            message.payload,
+            payloadWithProfile,
             progress => {
               this.postMessage({
                 type: 'stage-progress',

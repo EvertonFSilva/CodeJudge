@@ -211,6 +211,7 @@ export class ProcessUseCase {
       language,
       code,
       statement,
+      studentProfile: request.studentProfile,
       compilation: compilationResult,
       execution: executionResult,
       analysis: analysisResult,

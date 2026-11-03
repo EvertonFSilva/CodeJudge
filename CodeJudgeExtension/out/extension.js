@@ -59,6 +59,8 @@ const ViewPromptUseCase_1 = require("./features/prompts/ViewPromptUseCase");
 const PromptController_1 = require("./presentation/controllers/PromptController");
 const CheckHealthUseCase_1 = require("./features/health/CheckHealthUseCase");
 const HealthController_1 = require("./presentation/controllers/HealthController");
+const MoodleAuthUseCase_1 = require("./features/auth/MoodleAuthUseCase");
+const AuthController_1 = require("./presentation/controllers/AuthController");
 const PdfKitReportGenerator_1 = require("./features/pdf/PdfKitReportGenerator");
 const PdfExportUseCase_1 = require("./features/pdf/PdfExportUseCase");
 const CodeJudgeSidebarProvider_1 = require("./presentation/webview/CodeJudgeSidebarProvider");
@@ -90,9 +92,11 @@ async function activate(context) {
     const promptController = new PromptController_1.PromptController(loadPromptsUseCase, viewPromptUseCase, editorAdapter);
     const healthUseCase = new CheckHealthUseCase_1.CheckHealthUseCase(getApiUrl, logger);
     const healthController = new HealthController_1.HealthController(healthUseCase, getApiUrl);
+    const moodleAuthUseCase = new MoodleAuthUseCase_1.MoodleAuthUseCase(logger);
+    const authController = new AuthController_1.AuthController(moodleAuthUseCase, context.globalState);
     const pdfGenerator = new PdfKitReportGenerator_1.PdfKitReportGenerator();
     const pdfExportUseCase = new PdfExportUseCase_1.PdfExportUseCase(pdfGenerator, editorAdapter, logger);
-    const sidebarProvider = new CodeJudgeSidebarProvider_1.CodeJudgeSidebarProvider(context.extensionUri, processController, promptController, healthController, pdfExportUseCase, editorAdapter, syncLanguagesUseCase, logger);
+    const sidebarProvider = new CodeJudgeSidebarProvider_1.CodeJudgeSidebarProvider(context.extensionUri, processController, promptController, healthController, authController, pdfExportUseCase, editorAdapter, syncLanguagesUseCase, logger);
     const exportPdfCommand = vscode.commands.registerCommand('codejudge.exportPdf', async (base64Data) => {
         await pdfExportUseCase.execute(base64Data);
     });

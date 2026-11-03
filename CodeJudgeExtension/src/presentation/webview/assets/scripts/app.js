@@ -17,6 +17,7 @@
     engine: savedVsState.engine || '',
     model: savedVsState.model || ''
   };
+  let moodleProfile = savedVsState.moodleProfile || null;
   let serverAiConfig = null;
 
   const buttonLabels = {
@@ -48,6 +49,24 @@
     aiKeyInput: document.getElementById('aiKeyInput'),
     aiKeyVisBtn: document.getElementById('aiKeyVisBtn'),
     aiEyeIcon: document.getElementById('aiEyeIcon'),
+
+    moodleAuthToggleBtn: document.getElementById('moodleAuthToggleBtn'),
+    moodleAuthDot: document.getElementById('moodleAuthDot'),
+    moodleAuthDrawer: document.getElementById('moodleAuthDrawer'),
+    moodleLogoutBtn: document.getElementById('moodleLogoutBtn'),
+    moodleLoginFormView: document.getElementById('moodleLoginFormView'),
+    moodleProfileView: document.getElementById('moodleProfileView'),
+    moodleUsernameInput: document.getElementById('moodleUsernameInput'),
+    moodlePasswordInput: document.getElementById('moodlePasswordInput'),
+    moodlePassVisBtn: document.getElementById('moodlePassVisBtn'),
+    moodleEyeIcon: document.getElementById('moodleEyeIcon'),
+    moodleLoginSubmitBtn: document.getElementById('moodleLoginSubmitBtn'),
+    moodleAuthFeedback: document.getElementById('moodleAuthFeedback'),
+    moodleProfileName: document.getElementById('moodleProfileName'),
+    moodleProfileEmail: document.getElementById('moodleProfileEmail'),
+    moodleProfileCampus: document.getElementById('moodleProfileCampus'),
+    moodleCourseInput: document.getElementById('moodleCourseInput'),
+    moodleCoursesChips: document.getElementById('moodleCoursesChips'),
 
     tabProcessBtn: document.getElementById('tabProcessBtn'),
     tabPromptsBtn: document.getElementById('tabPromptsBtn'),
@@ -122,9 +141,11 @@
     setupModal();
     setupApiStatus();
     setupDiscreetAiConfig();
+    setupMoodleAuth();
 
     vscode.postMessage({ type: 'request-active-editor' });
     vscode.postMessage({ type: 'request-health' });
+    vscode.postMessage({ type: 'request-moodle-session' });
   }
 
   function persistAiPreferences() {
@@ -132,7 +153,8 @@
       ...vscode.getState(),
       apiKey: aiPreferences.apiKey,
       engine: aiPreferences.engine,
-      model: aiPreferences.model
+      model: aiPreferences.model,
+      moodleProfile
     });
     updateAiIndicator();
   }
@@ -411,10 +433,14 @@
     elements.aiConfigToggleBtn.addEventListener('click', () => {
       const isOpen = elements.aiConfigDrawer.classList.toggle('open');
       elements.aiConfigToggleBtn.classList.toggle('open', isOpen);
-      if (!isOpen) {
+      if (isOpen) {
+        elements.moodleAuthDrawer?.classList.remove('open');
+        elements.moodleAuthToggleBtn?.classList.remove('open');
+        if (!serverAiConfig) {
+          vscode.postMessage({ type: 'request-health' });
+        }
+      } else {
         elements.aiModelDropdownContainer?.classList.remove('open');
-      } else if (!serverAiConfig) {
-        vscode.postMessage({ type: 'request-health' });
       }
     });
 
@@ -474,6 +500,179 @@
       populateAiModelSelect(serverAiConfig);
       persistAiPreferences();
     });
+  }
+
+  function setupMoodleAuth() {
+    if (!elements.moodleAuthToggleBtn || !elements.moodleAuthDrawer) return;
+
+    renderMoodleSession(moodleProfile);
+
+    elements.moodleAuthToggleBtn.addEventListener('click', () => {
+      const isOpen = elements.moodleAuthDrawer.classList.toggle('open');
+      elements.moodleAuthToggleBtn.classList.toggle('open', isOpen);
+      if (isOpen) {
+        elements.aiConfigDrawer?.classList.remove('open');
+        elements.aiConfigToggleBtn?.classList.remove('open');
+        elements.aiModelDropdownContainer?.classList.remove('open');
+      }
+    });
+
+    if (elements.moodlePassVisBtn && elements.moodlePasswordInput) {
+      elements.moodlePassVisBtn.addEventListener('click', () => {
+        const isPwd = elements.moodlePasswordInput.type === 'password';
+        elements.moodlePasswordInput.type = isPwd ? 'text' : 'password';
+        if (elements.moodleEyeIcon) {
+          elements.moodleEyeIcon.innerHTML = isPwd
+            ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+            : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+      });
+    }
+
+    const triggerMoodleLogin = () => {
+      const username = (elements.moodleUsernameInput?.value || '').trim();
+      const password = elements.moodlePasswordInput?.value || '';
+      const courseOverride = (elements.moodleCourseInput?.value || '').trim();
+
+      if (!username || !password) {
+        if (elements.moodleAuthFeedback) {
+          elements.moodleAuthFeedback.textContent = 'Preencha sua matrícula/usuário e senha do Moodle.';
+          elements.moodleAuthFeedback.className = 'moodle-feedback-msg error';
+        }
+        return;
+      }
+
+      if (elements.moodleLoginSubmitBtn) {
+        elements.moodleLoginSubmitBtn.disabled = true;
+        elements.moodleLoginSubmitBtn.textContent = 'Autenticando no Moodle...';
+      }
+      if (elements.moodleAuthFeedback) {
+        elements.moodleAuthFeedback.textContent = '';
+        elements.moodleAuthFeedback.className = 'moodle-feedback-msg';
+      }
+
+      vscode.postMessage({
+        type: 'moodle-login',
+        payload: {
+          username,
+          password,
+          courseOverride: courseOverride || undefined
+        }
+      });
+    };
+
+    elements.moodleLoginSubmitBtn?.addEventListener('click', triggerMoodleLogin);
+    elements.moodlePasswordInput?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        triggerMoodleLogin();
+      }
+    });
+
+    elements.moodleLogoutBtn?.addEventListener('click', () => {
+      moodleProfile = null;
+      persistAiPreferences();
+      renderMoodleSession(null);
+      vscode.postMessage({ type: 'moodle-logout' });
+    });
+
+    elements.moodleCourseInput?.addEventListener('change', () => {
+      const courseVal = elements.moodleCourseInput.value.trim();
+      if (moodleProfile && courseVal) {
+        moodleProfile.course = courseVal;
+        persistAiPreferences();
+        vscode.postMessage({
+          type: 'moodle-update-course',
+          payload: { course: courseVal }
+        });
+      }
+    });
+  }
+
+  function renderMoodleSession(profile) {
+    moodleProfile = profile || null;
+    persistAiPreferences();
+
+    const isLogged = Boolean(moodleProfile && moodleProfile.name);
+    if (elements.moodleAuthDot) {
+      elements.moodleAuthDot.className = isLogged ? 'ai-key-dot configured' : 'ai-key-dot';
+    }
+    if (elements.moodleAuthToggleBtn) {
+      elements.moodleAuthToggleBtn.title = isLogged
+        ? `Moodle Conectado: ${moodleProfile.name}`
+        : 'Login Acadêmico (Moodle IFF)';
+    }
+
+    if (elements.moodleLoginFormView) {
+      elements.moodleLoginFormView.style.display = isLogged ? 'none' : 'flex';
+    }
+    if (elements.moodleProfileView) {
+      elements.moodleProfileView.style.display = isLogged ? 'flex' : 'none';
+    }
+    if (elements.moodleLogoutBtn) {
+      elements.moodleLogoutBtn.style.display = isLogged ? 'inline-block' : 'none';
+    }
+
+    if (isLogged) {
+      if (elements.moodleProfileName) {
+        elements.moodleProfileName.textContent = moodleProfile.name || '-';
+      }
+      if (elements.moodleProfileEmail) {
+        elements.moodleProfileEmail.textContent = moodleProfile.email || moodleProfile.username || '-';
+      }
+      if (elements.moodleProfileCampus) {
+        elements.moodleProfileCampus.textContent = moodleProfile.campus || 'IFFluminense';
+      }
+      if (elements.moodleCourseInput) {
+        elements.moodleCourseInput.value = moodleProfile.course || '';
+      }
+      if (elements.moodleCoursesChips) {
+        elements.moodleCoursesChips.innerHTML = '';
+        const list = Array.isArray(moodleProfile.courses) ? moodleProfile.courses : [];
+        list.slice(0, 6).forEach(courseTitle => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'moodle-course-chip' + (moodleProfile.course === courseTitle ? ' active' : '');
+          chip.textContent = courseTitle;
+          chip.title = 'Usar como Curso / Disciplina no cabeçalho';
+          chip.addEventListener('click', () => {
+            if (elements.moodleCourseInput) {
+              elements.moodleCourseInput.value = courseTitle;
+            }
+            moodleProfile.course = courseTitle;
+            persistAiPreferences();
+            elements.moodleCoursesChips.querySelectorAll('.moodle-course-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            vscode.postMessage({
+              type: 'moodle-update-course',
+              payload: { course: courseTitle }
+            });
+          });
+          elements.moodleCoursesChips.appendChild(chip);
+        });
+      }
+    }
+  }
+
+  function handleMoodleLoginResult(result) {
+    if (elements.moodleLoginSubmitBtn) {
+      elements.moodleLoginSubmitBtn.disabled = false;
+      elements.moodleLoginSubmitBtn.textContent = 'Conectar ao Moodle';
+    }
+
+    if (result.authenticated && result.profile) {
+      if (elements.moodlePasswordInput) {
+        elements.moodlePasswordInput.value = '';
+      }
+      if (elements.moodleAuthFeedback) {
+        elements.moodleAuthFeedback.textContent = '';
+        elements.moodleAuthFeedback.className = 'moodle-feedback-msg';
+      }
+      renderMoodleSession(result.profile);
+    } else if (elements.moodleAuthFeedback) {
+      elements.moodleAuthFeedback.textContent = result.error || 'Falha ao autenticar no Moodle.';
+      elements.moodleAuthFeedback.className = 'moodle-feedback-msg error';
+    }
   }
 
   function setupTabs() {
@@ -699,7 +898,8 @@
           tests,
           apiKey: aiPreferences.apiKey || undefined,
           engine: aiPreferences.engine || undefined,
-          model: aiPreferences.model || undefined
+          model: aiPreferences.model || undefined,
+          studentProfile: moodleProfile || undefined
         }
       });
     });
@@ -833,6 +1033,14 @@
 
       case 'prompts-error':
         elements.promptsListContainer.innerHTML = `<div class="prompts-loading-text">Não foi possível carregar os prompts da API.</div>`;
+        break;
+
+      case 'moodle-session-status':
+        renderMoodleSession(message.payload?.profile || null);
+        break;
+
+      case 'moodle-login-result':
+        handleMoodleLoginResult(message.payload);
         break;
     }
   });

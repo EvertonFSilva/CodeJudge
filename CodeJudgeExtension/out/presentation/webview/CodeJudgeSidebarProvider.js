@@ -41,6 +41,7 @@ class CodeJudgeSidebarProvider {
     processController;
     promptController;
     healthController;
+    authController;
     pdfExportUseCase;
     editorAdapter;
     syncLanguagesUseCase;
@@ -48,11 +49,12 @@ class CodeJudgeSidebarProvider {
     static viewType = 'codejudge.sidebarView';
     view;
     editorChangeSubscription;
-    constructor(extensionUri, processController, promptController, healthController, pdfExportUseCase, editorAdapter, syncLanguagesUseCase, logger) {
+    constructor(extensionUri, processController, promptController, healthController, authController, pdfExportUseCase, editorAdapter, syncLanguagesUseCase, logger) {
         this.extensionUri = extensionUri;
         this.processController = processController;
         this.promptController = promptController;
         this.healthController = healthController;
+        this.authController = authController;
         this.pdfExportUseCase = pdfExportUseCase;
         this.editorAdapter = editorAdapter;
         this.syncLanguagesUseCase = syncLanguagesUseCase;
@@ -82,6 +84,10 @@ class CodeJudgeSidebarProvider {
             this.postMessage({
                 type: 'health-status',
                 payload: health
+            });
+            this.postMessage({
+                type: 'moodle-session-status',
+                payload: { profile: this.authController.getSavedProfile() }
             });
             this.updateActiveEditorState();
         });
@@ -122,13 +128,48 @@ class CodeJudgeSidebarProvider {
                 this.updateActiveEditorState();
                 break;
             }
+            case 'request-moodle-session': {
+                this.postMessage({
+                    type: 'moodle-session-status',
+                    payload: { profile: this.authController.getSavedProfile() }
+                });
+                break;
+            }
+            case 'moodle-login': {
+                const result = await this.authController.login(message.payload.username, message.payload.password);
+                this.postMessage({
+                    type: 'moodle-login-result',
+                    payload: result
+                });
+                break;
+            }
+            case 'moodle-update-course': {
+                const updated = await this.authController.updateCourse(message.payload.course);
+                this.postMessage({
+                    type: 'moodle-session-status',
+                    payload: { profile: updated }
+                });
+                break;
+            }
+            case 'moodle-logout': {
+                await this.authController.logout();
+                this.postMessage({
+                    type: 'moodle-session-status',
+                    payload: { profile: undefined }
+                });
+                break;
+            }
             case 'start-process': {
                 try {
+                    const payloadWithProfile = {
+                        ...message.payload,
+                        studentProfile: message.payload.studentProfile || this.authController.getSavedProfile()
+                    };
                     this.postMessage({
                         type: 'process-started',
-                        payload: { config: message.payload.config }
+                        payload: { config: payloadWithProfile.config }
                     });
-                    const result = await this.processController.handleRun(message.payload, progress => {
+                    const result = await this.processController.handleRun(payloadWithProfile, progress => {
                         this.postMessage({
                             type: 'stage-progress',
                             payload: progress

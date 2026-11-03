@@ -96,27 +96,42 @@ class PdfKitReportGenerator {
                 const textMuted = '#475569';
                 const bgCode = '#f8fafc';
                 const borderLine = '#cbd5e1';
+                const maxContentY = doc.page.height - 55;
                 doc.rect(40, 40, 515, 48).fill(primaryColor);
                 doc
                     .fillColor('#ffffff')
                     .fontSize(14)
                     .font('Helvetica-Bold')
-                    .text('CODEJUDGE', 52, 49, { width: 490 });
+                    .text('CODEJUDGE', 52, 49, { width: 490, lineBreak: false });
                 doc
                     .fillColor('#d1fae5')
                     .fontSize(9.5)
                     .font('Helvetica')
-                    .text('Relatório Técnico de Execução e Análise de Código', 52, 68, { width: 490 });
+                    .text('Relatório Técnico de Execução e Análise de Código', 52, 68, { width: 490, lineBreak: false });
                 doc.y = 100;
                 const normalized = (0, Report_1.normalizeMarkdownCodeFences)(markdownContent);
                 const sanitized = sanitizeForPdf(normalized);
                 const rawLines = sanitized.split('\n');
+                let studentMeta = '';
+                let contactMeta = '';
                 let fileMeta = '';
                 let statusMeta = '';
                 const filteredLines = [];
                 for (const l of rawLines) {
                     const trimmed = l.trim();
-                    if (trimmed === '# CodeJudge' || trimmed === '## Relatório Técnico de Execução') {
+                    if (trimmed === '# CodeJudge' ||
+                        trimmed === '## Relatório Técnico de Execução' ||
+                        trimmed === '*CodeJudge • Desenvolvido por Everton*' ||
+                        trimmed === 'CodeJudge - Desenvolvido por Everton' ||
+                        trimmed === '*CodeJudge - Desenvolvido por Everton*') {
+                        continue;
+                    }
+                    if (trimmed.startsWith('>') && trimmed.includes('Aluno(a):')) {
+                        studentMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
+                        continue;
+                    }
+                    if (trimmed.startsWith('>') && trimmed.includes('E-mail:') && trimmed.includes('Moodle')) {
+                        contactMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
                         continue;
                     }
                     if (trimmed.startsWith('>') && trimmed.includes('Arquivo:') && trimmed.includes('Linguagem:')) {
@@ -129,22 +144,58 @@ class PdfKitReportGenerator {
                     }
                     filteredLines.push(l);
                 }
-                if (fileMeta || statusMeta) {
+                while (filteredLines.length > 0 &&
+                    (filteredLines[filteredLines.length - 1].trim() === '' ||
+                        filteredLines[filteredLines.length - 1].trim() === '---')) {
+                    filteredLines.pop();
+                }
+                const metaRows = [];
+                if (studentMeta)
+                    metaRows.push({ type: 'student', text: studentMeta.replace(/\|/g, '  •  ') });
+                if (contactMeta)
+                    metaRows.push({ type: 'contact', text: contactMeta.replace(/\|/g, '  •  ') });
+                if (fileMeta)
+                    metaRows.push({ type: 'file', text: fileMeta.replace(/\|/g, '  •  ') });
+                if (statusMeta)
+                    metaRows.push({ type: 'status', text: statusMeta });
+                if (metaRows.length > 0) {
                     const cardY = doc.y;
-                    const cardHeight = statusMeta ? 46 : 30;
+                    const cardHeight = metaRows.length * 15 + 14;
                     doc.rect(40, cardY, 515, cardHeight).fill('#f8fafc');
                     doc.rect(40, cardY, 515, cardHeight).strokeColor('#cbd5e1').lineWidth(1).stroke();
                     doc.rect(40, cardY, 4, cardHeight).fill(primaryColor);
-                    if (fileMeta) {
-                        const formattedMeta = fileMeta.replace(/\|/g, '  •  ');
-                        doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(formattedMeta, 52, cardY + 9, { width: 495 });
-                    }
-                    if (statusMeta) {
-                        const isSuccess = statusMeta.includes('[Concluído com Sucesso]') || statusMeta.includes('[Aprovado]');
-                        const isError = statusMeta.includes('[Interrompido') || statusMeta.includes('[Falha]');
-                        const statusColor = isSuccess ? '#059669' : isError ? '#dc2626' : '#d97706';
-                        doc.fillColor(textMuted).fontSize(8.5).font('Helvetica-Bold').text('Status da Avaliação: ', 52, cardY + 26, { continued: true });
-                        doc.fillColor(statusColor).font('Helvetica-Bold').text(statusMeta.replace(/Status:\s*/, ''));
+                    let rowY = cardY + 8;
+                    for (const row of metaRows) {
+                        if (row.type === 'student') {
+                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica-Bold').text(row.text, 52, rowY, {
+                                width: 495,
+                                lineBreak: false
+                            });
+                        }
+                        else if (row.type === 'contact') {
+                            doc.fillColor(textMuted).fontSize(8).font('Helvetica').text(row.text, 52, rowY, {
+                                width: 495,
+                                lineBreak: false
+                            });
+                        }
+                        else if (row.type === 'file') {
+                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(row.text, 52, rowY, {
+                                width: 495,
+                                lineBreak: false
+                            });
+                        }
+                        else if (row.type === 'status') {
+                            const isSuccess = row.text.includes('[Concluído com Sucesso]') || row.text.includes('[Aprovado]');
+                            const isError = row.text.includes('[Interrompido') || row.text.includes('[Falha]');
+                            const statusColor = isSuccess ? '#059669' : isError ? '#dc2626' : '#d97706';
+                            doc.fillColor(textMuted).fontSize(8.5).font('Helvetica-Bold').text('Status da Avaliação: ', 52, rowY, {
+                                continued: true
+                            });
+                            doc.fillColor(statusColor).font('Helvetica-Bold').text(row.text.replace(/Status:\s*/, ''), {
+                                lineBreak: false
+                            });
+                        }
+                        rowY += 15;
                     }
                     doc.y = cardY + cardHeight + 14;
                 }
@@ -153,23 +204,48 @@ class PdfKitReportGenerator {
                 const flushCodeBlock = () => {
                     if (!doc || codeBlockLines.length === 0)
                         return;
-                    const codeText = codeBlockLines.join('\n');
                     doc.fontSize(8).font('Courier');
-                    const textHeight = doc.heightOfString(codeText, { width: 495 });
-                    const codeHeight = Math.min(textHeight + 14, 500);
-                    if (doc.y + codeHeight > doc.page.height - 60) {
-                        doc.addPage();
-                    }
-                    const startY = doc.y;
-                    doc.rect(40, startY, 515, codeHeight).fill(bgCode);
-                    doc.rect(40, startY, 515, codeHeight).strokeColor(borderLine).stroke();
-                    doc
-                        .fillColor('#0f172a')
-                        .font('Courier')
-                        .fontSize(8)
-                        .text(codeText, 48, startY + 7, { width: 495 });
-                    doc.y = startY + codeHeight + 8;
+                    let remaining = [...codeBlockLines];
                     codeBlockLines = [];
+                    while (remaining.length > 0) {
+                        if (doc.y > maxContentY - 30) {
+                            doc.addPage();
+                        }
+                        const availableHeight = maxContentY - doc.y - 14;
+                        let chunk = [];
+                        let chunkHeight = 0;
+                        for (let idx = 0; idx < remaining.length; idx++) {
+                            const candidateLines = [...chunk, remaining[idx]];
+                            const candidateText = candidateLines.join('\n');
+                            const h = doc.heightOfString(candidateText, { width: 495 });
+                            if (h > availableHeight && chunk.length > 0) {
+                                break;
+                            }
+                            chunk.push(remaining[idx]);
+                            chunkHeight = h;
+                            if (h > availableHeight) {
+                                break;
+                            }
+                        }
+                        remaining = remaining.slice(chunk.length);
+                        const chunkText = chunk.join('\n');
+                        const boxHeight = Math.min(chunkHeight + 14, maxContentY - doc.y);
+                        const startY = doc.y;
+                        doc.rect(40, startY, 515, boxHeight).fill(bgCode);
+                        doc.rect(40, startY, 515, boxHeight).strokeColor(borderLine).stroke();
+                        const prevBottom = doc.page.margins.bottom;
+                        doc.page.margins.bottom = 20;
+                        doc
+                            .fillColor('#0f172a')
+                            .font('Courier')
+                            .fontSize(8)
+                            .text(chunkText, 48, startY + 7, { width: 495 });
+                        doc.page.margins.bottom = prevBottom;
+                        doc.y = startY + boxHeight + 8;
+                        if (remaining.length > 0) {
+                            doc.addPage();
+                        }
+                    }
                 };
                 let inTable = false;
                 let tableHeaderDone = false;
@@ -203,7 +279,7 @@ class PdfKitReportGenerator {
                             .map(c => cleanMarkdown(c))
                             .filter(c => c !== '');
                         if (cells.length >= 4) {
-                            if (doc.y > doc.page.height - 50)
+                            if (doc.y > maxContentY - 20)
                                 doc.addPage();
                             const rowH = 18;
                             const startY = doc.y;
@@ -240,16 +316,22 @@ class PdfKitReportGenerator {
                             doc.moveDown(0.4);
                         }
                     }
-                    if (doc.y > doc.page.height - 65) {
+                    if (line === '') {
+                        if (doc.y < maxContentY - 15) {
+                            doc.moveDown(0.2);
+                        }
+                        continue;
+                    }
+                    if (doc.y > maxContentY - 15) {
                         doc.addPage();
                     }
                     if (line.startsWith('# ')) {
-                        doc.moveDown(0.6);
+                        doc.moveDown(0.5);
                         doc
                             .fillColor(primaryColor)
                             .fontSize(12)
                             .font('Helvetica-Bold')
-                            .text(cleanMarkdown(line.replace('# ', '')));
+                            .text(cleanMarkdown(line.replace('# ', '')), 40, doc.y, { width: 515 });
                         doc.moveDown(0.2);
                     }
                     else if (line.startsWith('## ')) {
@@ -258,7 +340,7 @@ class PdfKitReportGenerator {
                             .fillColor(textDark)
                             .fontSize(10.5)
                             .font('Helvetica-Bold')
-                            .text(cleanMarkdown(line.replace('## ', '')));
+                            .text(cleanMarkdown(line.replace('## ', '')), 40, doc.y, { width: 515 });
                         doc.moveDown(0.2);
                     }
                     else if (line.startsWith('### ')) {
@@ -267,7 +349,7 @@ class PdfKitReportGenerator {
                             .fillColor(primaryColor)
                             .fontSize(9.5)
                             .font('Helvetica-Bold')
-                            .text(cleanMarkdown(line.replace('### ', '')));
+                            .text(cleanMarkdown(line.replace('### ', '')), 40, doc.y, { width: 515 });
                         doc.moveDown(0.2);
                     }
                     else if (line.startsWith('#### ')) {
@@ -276,14 +358,17 @@ class PdfKitReportGenerator {
                             .fillColor(textDark)
                             .fontSize(9)
                             .font('Helvetica-Bold')
-                            .text(cleanMarkdown(line.replace('#### ', '')));
+                            .text(cleanMarkdown(line.replace('#### ', '')), 40, doc.y, { width: 515 });
                         doc.moveDown(0.1);
                     }
                     else if (line.startsWith('> ')) {
                         const quoteText = cleanMarkdown(line.replace(/^>\s*/, ''));
-                        const quoteY = doc.y;
                         doc.fontSize(8.5).font('Helvetica-Oblique');
                         const textH = doc.heightOfString(quoteText, { width: 485 });
+                        if (doc.y + textH + 8 > maxContentY) {
+                            doc.addPage();
+                        }
+                        const quoteY = doc.y;
                         doc.rect(40, quoteY, 3, textH + 4).fill(accentColor);
                         doc.fillColor('#334155').text(quoteText, 48, quoteY + 2, { width: 485 });
                         doc.y = quoteY + textH + 6;
@@ -291,24 +376,23 @@ class PdfKitReportGenerator {
                     else if (line.startsWith('- ') || line.startsWith('* ')) {
                         const clean = cleanMarkdown(line.substring(2));
                         if (clean.startsWith('Resultado:')) {
-                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica-Bold').text('  •  Resultado: ', { continued: true });
+                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica-Bold').text('  •  Resultado: ', 40, doc.y, { continued: true, width: 515 });
                             doc.font('Helvetica').text(clean.replace('Resultado:', '').trim());
                         }
                         else {
-                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(`  •  ${clean}`);
+                            doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(`  •  ${clean}`, 40, doc.y, { width: 515 });
                         }
                     }
                     else if (line.startsWith('---')) {
-                        doc.moveDown(0.3);
-                        doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor(borderLine).lineWidth(0.8).stroke();
-                        doc.moveDown(0.4);
-                    }
-                    else if (line !== '') {
-                        const clean = cleanMarkdown(line);
-                        doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(clean);
+                        if (doc.y < maxContentY - 20) {
+                            doc.moveDown(0.3);
+                            doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor(borderLine).lineWidth(0.8).stroke();
+                            doc.moveDown(0.4);
+                        }
                     }
                     else {
-                        doc.moveDown(0.2);
+                        const clean = cleanMarkdown(line);
+                        doc.fillColor(textDark).fontSize(8.5).font('Helvetica').text(clean, 40, doc.y, { width: 515 });
                     }
                 }
                 if (inCodeBlock) {
@@ -317,11 +401,14 @@ class PdfKitReportGenerator {
                 const range = doc.bufferedPageRange();
                 for (let i = range.start; i < range.start + range.count; i++) {
                     doc.switchToPage(i);
+                    const prevBottomMargin = doc.page.margins.bottom;
+                    doc.page.margins.bottom = 0;
                     doc
                         .fillColor(textMuted)
                         .fontSize(8)
                         .font('Helvetica')
-                        .text(`CodeJudge • Desenvolvido por Everton • Página ${i - range.start + 1} de ${range.count}`, 40, doc.page.height - 30, { align: 'center', width: 515 });
+                        .text(`CodeJudge • Desenvolvido por Everton • Página ${i - range.start + 1} de ${range.count}`, 40, doc.page.height - 28, { align: 'center', width: 515, lineBreak: false });
+                    doc.page.margins.bottom = prevBottomMargin;
                 }
                 doc.end();
             }
