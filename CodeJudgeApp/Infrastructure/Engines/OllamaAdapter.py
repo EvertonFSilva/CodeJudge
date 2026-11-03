@@ -21,6 +21,9 @@ class OllamaAdapter(IAiEngine):
         self.logger = Logger.get()
         self.logger.info(f"OllamaAdapter initialized with endpoint '{self.endpoint}', model '{self.model}', timeout: {self.timeoutSeconds}s.")
 
+    def isLocalEngine(self) -> bool:
+        return True
+
     def complete(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
         if not self.endpoint or not self.model:
             return "Ollama adapter configuration error: 'endpoint' and 'model' must be defined in Configuration.json."

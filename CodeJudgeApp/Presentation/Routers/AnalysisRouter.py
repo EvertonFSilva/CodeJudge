@@ -15,12 +15,7 @@ def createAnalysisRouter(controller: AnalysisController) -> APIRouter:
         model: Optional[str] = Query(default=None),
         xApiKey: Optional[str] = Header(default=None, alias="X-Api-Key")
     ) -> AnalysisResponse:
-        if not request.apiKey:
-            request.apiKey = apiKey or xApiKey
-        if not request.engine and engine:
-            request.engine = engine
-        if not request.model and model:
-            request.model = model
+        request.applyOverrides(apiKey=apiKey, engine=engine, model=model, xApiKey=xApiKey)
         return controller.analyze(request)
 
     return router

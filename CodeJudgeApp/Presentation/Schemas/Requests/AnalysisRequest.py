@@ -1,10 +1,4 @@
-from pydantic import BaseModel
-from typing import Optional
+from Presentation.Schemas.Requests.BaseCodeRequest import BaseCodeRequest
 
-class AnalysisRequest(BaseModel):
-    statement: Optional[str] = ""
-    language: str
-    code: str
-    apiKey: Optional[str] = None
-    engine: Optional[str] = None
-    model: Optional[str] = None
+class AnalysisRequest(BaseCodeRequest):
+    pass

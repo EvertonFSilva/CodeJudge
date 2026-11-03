@@ -1,10 +1,6 @@
-import re
 from dataclasses import dataclass, field
 from typing import List, Optional
-import javalang
-
-_PUBLIC_CLASS_RE = re.compile(r"public\s+class\s+([A-Za-z_]\w*)")
-_GENERAL_CLASS_RE = re.compile(r"class\s+([A-Za-z_]\w*)")
+from Domain.Entities.SourceCode import SourceCode
 
 @dataclass(slots=True)
 class Language:
@@ -24,25 +20,7 @@ class Language:
     def detectMainClassName(self, code: str) -> str:
         if self.entryNamingStrategy != "className":
             return "Main"
-        try:
-            syntaxTree = javalang.parse.parse(code)
-            for _, node in syntaxTree.filter(javalang.tree.ClassDeclaration):
-                if any(method.name == "main" for method in node.methods):
-                    return node.name
-            for _, node in syntaxTree.filter(javalang.tree.ClassDeclaration):
-                if "public" in node.modifiers:
-                    return node.name
-            for _, node in syntaxTree.filter(javalang.tree.ClassDeclaration):
-                return node.name
-        except Exception:
-            pass
-
-        publicMatch = _PUBLIC_CLASS_RE.search(code)
-        if publicMatch:
-            return publicMatch.group(1)
-
-        generalMatch = _GENERAL_CLASS_RE.search(code)
-        return generalMatch.group(1) if generalMatch else "Main"
+        return SourceCode.extractMainClassName(code)
 
     def resolveEntryName(self, code: str) -> str:
         if self.entryNamingStrategy == "className":

@@ -1,11 +1,5 @@
-from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from Presentation.Schemas.Requests.BaseCodeRequest import BaseCodeRequest
 
-class ExecutionRequest(BaseModel):
-    statement: Optional[str] = ""
-    language: str
-    code: str
+class ExecutionRequest(BaseCodeRequest):
     tests: Optional[List[Dict[str, Any]]] = []
-    apiKey: Optional[str] = None
-    engine: Optional[str] = None
-    model: Optional[str] = None

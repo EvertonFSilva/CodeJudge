@@ -49,24 +49,24 @@ class UvicornAccessFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return False
 
-LOGGING_CONFIG["loggers"]["uvicorn"]["level"] = "WARNING"
-LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"] = "WARNING"
-LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"] = "WARNING"
-LOGGING_CONFIG["loggers"]["uvicorn.access"]["handlers"] = []
+def configureUvicornLogging():
+    LOGGING_CONFIG["loggers"]["uvicorn"]["level"] = "WARNING"
+    LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"] = "WARNING"
+    LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"] = "WARNING"
+    LOGGING_CONFIG["loggers"]["uvicorn.access"]["handlers"] = []
 
-logging.getLogger("uvicorn.access").addFilter(UvicornAccessFilter())
-logging.getLogger("uvicorn.access").disabled = True
-logging.getLogger("uvicorn.access").propagate = False
-logging.getLogger("uvicorn").setLevel(logging.WARNING)
-logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    accessLogger = logging.getLogger("uvicorn.access")
+    accessLogger.addFilter(UvicornAccessFilter())
+    accessLogger.disabled = True
+    accessLogger.propagate = False
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+
+configureUvicornLogging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.getLogger("uvicorn.access").addFilter(UvicornAccessFilter())
-    logging.getLogger("uvicorn.access").disabled = True
-    logging.getLogger("uvicorn.access").propagate = False
-    logging.getLogger("uvicorn").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    configureUvicornLogging()
     yield
 
 def createApp() -> FastAPI:

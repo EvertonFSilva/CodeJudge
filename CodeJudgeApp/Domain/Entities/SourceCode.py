@@ -11,9 +11,10 @@ class SourceCode:
     language: str
     extension: str = ""
 
-    def detectMainClassName(self) -> str:
+    @staticmethod
+    def extractMainClassName(code: str) -> str:
         try:
-            tree = javalang.parse.parse(self.code)
+            tree = javalang.parse.parse(code)
             for _, node in tree.filter(javalang.tree.ClassDeclaration):
                 if any(method.name == "main" for method in node.methods):
                     return node.name
@@ -25,12 +26,15 @@ class SourceCode:
         except Exception:
             pass
 
-        publicMatch = _PUBLIC_CLASS_RE.search(self.code)
+        publicMatch = _PUBLIC_CLASS_RE.search(code)
         if publicMatch:
             return publicMatch.group(1)
 
-        generalMatch = _GENERAL_CLASS_RE.search(self.code)
+        generalMatch = _GENERAL_CLASS_RE.search(code)
         return generalMatch.group(1) if generalMatch else "Main"
+
+    def detectMainClassName(self) -> str:
+        return self.extractMainClassName(self.code)
 
     def isEmpty(self) -> bool:
         return not self.code or not self.code.strip()

@@ -125,12 +125,15 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         return self.getAllAiProviders().get(key)
 
     def getAllAiProviders(self) -> Dict[str, AiModelProvider]:
+        if self._providersCache is not None:
+            return self._providersCache
         rawEngines = self.getAiEnginesRaw()
         providers: Dict[str, AiModelProvider] = {}
         for key in rawEngines:
             provider = self._buildAiProvider(key)
             if provider:
                 providers[key.strip().lower()] = provider
+        self._providersCache = providers
         return providers
 
     def getSupportedModels(self, engineKey: Optional[str] = None) -> List[str]:

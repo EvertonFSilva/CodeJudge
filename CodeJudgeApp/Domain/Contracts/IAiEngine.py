@@ -9,3 +9,6 @@ class IAiEngine(ABC):
     @abstractmethod
     def isAvailable(self) -> bool:
         pass
+
+    def isLocalEngine(self) -> bool:
+        return False
