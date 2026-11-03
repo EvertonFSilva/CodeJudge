@@ -2,6 +2,9 @@ from dataclasses import dataclass
 import re
 import javalang
 
+_PUBLIC_CLASS_RE = re.compile(r"public\s+class\s+([A-Za-z_]\w*)")
+_GENERAL_CLASS_RE = re.compile(r"class\s+([A-Za-z_]\w*)")
+
 @dataclass(slots=True)
 class SourceCode:
     code: str
@@ -22,11 +25,11 @@ class SourceCode:
         except Exception:
             pass
 
-        publicMatch = re.search(r"public\s+class\s+([A-Za-z_]\w*)", self.code)
+        publicMatch = _PUBLIC_CLASS_RE.search(self.code)
         if publicMatch:
             return publicMatch.group(1)
 
-        generalMatch = re.search(r"class\s+([A-Za-z_]\w*)", self.code)
+        generalMatch = _GENERAL_CLASS_RE.search(self.code)
         return generalMatch.group(1) if generalMatch else "Main"
 
     def isEmpty(self) -> bool:

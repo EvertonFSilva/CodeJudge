@@ -1,13 +1,24 @@
 import importlib
-from typing import Optional, Type
+import threading
+from collections import OrderedDict
+from typing import Optional, Tuple, Type
 from Domain.Contracts.IAiEngine import IAiEngine
 from Domain.Exceptions.DomainException import DomainException, MissingUserApiKeyException
 from Infrastructure.Config.ConfigurationManager import ConfigurationManager
 from Infrastructure.Logging.Logger import Logger
 
 class EngineFactory:
+    _classCache: dict[str, Type[IAiEngine]] = {}
+    _adapterCache: "OrderedDict[Tuple[str, str, str, bool], IAiEngine]" = OrderedDict()
+    _cacheLock = threading.Lock()
+    _MAX_CACHE_SIZE = 32
+
     @classmethod
     def resolveAdapterClass(cls, classPath: str) -> Type[IAiEngine]:
+        cached = cls._classCache.get(classPath)
+        if cached is not None:
+            return cached
+
         parts = classPath.rsplit(".", 1)
         if len(parts) != 2:
             raise DomainException(f"Invalid adapter class path: '{classPath}'. Expected format: 'package.module.ClassName'.")
@@ -15,6 +26,7 @@ class EngineFactory:
         try:
             module = importlib.import_module(moduleName)
             adapterClass = getattr(module, className)
+            cls._classCache[classPath] = adapterClass
             return adapterClass
         except (ImportError, AttributeError) as exc:
             raise DomainException(f"Failed to load AI adapter class '{classPath}': {str(exc)}")
@@ -67,8 +79,16 @@ class EngineFactory:
             return fallbackEngine
 
         resolvedEngineKey, resolvedModel = config.resolveEngineAndModel(cleanEngine, cleanModel)
-        engineConfig = config.getEngineConfig(resolvedEngineKey)
+        ignoreServerKey = bool(userKeyRequired or cleanKey)
+        cacheKey = (resolvedEngineKey, resolvedModel, cleanKey, ignoreServerKey)
 
+        with cls._cacheLock:
+            cachedEngine = cls._adapterCache.get(cacheKey)
+            if cachedEngine is not None:
+                cls._adapterCache.move_to_end(cacheKey)
+                return cachedEngine
+
+        engineConfig = config.getEngineConfig(resolvedEngineKey)
         adapterIdentifier = engineConfig.get("adapter")
         if not adapterIdentifier:
             raise DomainException(f"AI engine '{resolvedEngineKey}' has no 'adapter' property defined in Configuration.json.")
@@ -80,8 +100,16 @@ class EngineFactory:
         args = dict(engineConfig.get("args", {}))
         args["model"] = resolvedModel
 
-        if userKeyRequired or cleanKey:
+        if ignoreServerKey:
             args["apiKey"] = cleanKey
             args["ignoreServerKey"] = True
 
-        return adapterClass(args)
+        instance = adapterClass(args)
+
+        with cls._cacheLock:
+            cls._adapterCache[cacheKey] = instance
+            cls._adapterCache.move_to_end(cacheKey)
+            while len(cls._adapterCache) > cls._MAX_CACHE_SIZE:
+                cls._adapterCache.popitem(last=False)
+
+        return instance

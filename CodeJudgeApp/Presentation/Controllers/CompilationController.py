@@ -13,7 +13,8 @@ class CompilationController:
             code=request.code,
             apiKey=request.apiKey,
             engine=request.engine,
-            model=request.model
+            model=request.model,
+            disposeWorkspace=True
         )
         return CompilationResponse(
             success=report.success,

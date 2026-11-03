@@ -17,6 +17,7 @@ class OllamaAdapter(IAiEngine):
             self.apiKey = os.environ.get("OLLAMA_API_KEY") or args.get("apiKey", "")
         configuredTimeout = float(os.environ.get("OLLAMA_TIMEOUT_SECONDS") or args.get("timeoutSeconds", 300.0))
         self.timeoutSeconds = max(configuredTimeout, 180.0)
+        self._httpClient = httpx.Client(timeout=httpx.Timeout(self.timeoutSeconds, connect=15.0))
         self.logger = Logger.get()
         self.logger.info(f"OllamaAdapter initialized with endpoint '{self.endpoint}', model '{self.model}', timeout: {self.timeoutSeconds}s.")
 
@@ -38,35 +39,33 @@ class OllamaAdapter(IAiEngine):
         self.logger.debug(f"Dispatching prompt to Ollama ({chatUrl}), model: {self.model}.")
 
         try:
-            timeoutConfig = httpx.Timeout(self.timeoutSeconds, connect=15.0)
-            with httpx.Client(timeout=timeoutConfig) as client:
-                response = client.post(chatUrl, json=payload, headers=headers)
+            response = self._httpClient.post(chatUrl, json=payload, headers=headers)
 
-                if response.status_code == 200:
-                    data = response.json()
-                    choices = data.get("choices", [])
-                    if choices and "message" in choices[0]:
-                        content = choices[0]["message"].get("content", "")
-                        self.logger.debug(f"Ollama response received ({len(content)} characters).")
-                        return content
-                    if "response" in data:
-                        return data["response"]
-                    return str(data)
+            if response.status_code == 200:
+                data = response.json()
+                choices = data.get("choices", [])
+                if choices and "message" in choices[0]:
+                    content = choices[0]["message"].get("content", "")
+                    self.logger.debug(f"Ollama response received ({len(content)} characters).")
+                    return content
+                if "response" in data:
+                    return data["response"]
+                return str(data)
 
-                if "/api/generate" in self.endpoint or "11434" in self.endpoint:
-                    fallbackUrl = f"{self.endpoint.replace('/v1', '')}/api/generate"
-                    fallbackPayload = {
-                        "model": self.model,
-                        "prompt": prompt,
-                        "stream": False
-                    }
-                    resFall = client.post(fallbackUrl, json=fallbackPayload, headers=headers)
-                    if resFall.status_code == 200:
-                        return resFall.json().get("response", "")
+            if "/api/generate" in self.endpoint or "11434" in self.endpoint:
+                fallbackUrl = f"{self.endpoint.replace('/v1', '')}/api/generate"
+                fallbackPayload = {
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False
+                }
+                resFall = self._httpClient.post(fallbackUrl, json=fallbackPayload, headers=headers)
+                if resFall.status_code == 200:
+                    return resFall.json().get("response", "")
 
-                errorMessage = f"HTTP Error {response.status_code} from Ollama: {response.text}"
-                self.logger.error(errorMessage)
-                return errorMessage
+            errorMessage = f"HTTP Error {response.status_code} from Ollama: {response.text}"
+            self.logger.error(errorMessage)
+            return errorMessage
 
         except httpx.ConnectError:
             message = f"Ollama server at {self.endpoint} unreachable. Ensure Ollama service is active and model '{self.model}' is installed."
@@ -85,14 +84,12 @@ class OllamaAdapter(IAiEngine):
             return False
         testUrl = f"{self.endpoint}/models"
         try:
-            with httpx.Client(timeout=2.0) as client:
-                response = client.get(testUrl)
-                return response.status_code == 200
+            response = self._httpClient.get(testUrl, timeout=2.0)
+            return response.status_code == 200
         except Exception:
             try:
                 baseHost = self.endpoint.replace("/v1", "")
-                with httpx.Client(timeout=2.0) as client:
-                    response = client.get(baseHost)
-                    return response.status_code in (200, 404)
+                response = self._httpClient.get(baseHost, timeout=2.0)
+                return response.status_code in (200, 404)
             except Exception:
                 return False

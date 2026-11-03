@@ -86,17 +86,16 @@ class AnalyzeCodeUseCase:
             else:
                 workerCount = min(len(orderedDocs), 4)
                 with concurrent.futures.ThreadPoolExecutor(max_workers=workerCount) as executor:
-                    futureToDoc = {
-                        executor.submit(self._executePromptTemplate, activeEngine, doc, statement, language, code): doc
+                    futures = [
+                        (doc, executor.submit(self._executePromptTemplate, activeEngine, doc, statement, language, code))
                         for doc in orderedDocs
-                    }
-                    for future in futureToDoc:
+                    ]
+                    for doc, future in futures:
                         try:
                             res = future.result()
                             if res and res.strip():
                                 results.append(res.strip())
                         except Exception as err:
-                            doc = futureToDoc[future]
                             self.logger.error(f"Error executing template '{doc.name}': {str(err)}", err)
 
             feedback = PromptBuilder.normalizeCodeFences("\n\n---\n\n".join(results))

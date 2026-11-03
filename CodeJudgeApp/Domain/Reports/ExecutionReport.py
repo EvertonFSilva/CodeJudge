@@ -11,3 +11,7 @@ class ExecutionReport:
     details: Dict[str, Any] = field(default_factory=dict)
     rawOutput: str = ""
     durationMs: float = 0.0
+
+    @property
+    def testResults(self) -> List[Any]:
+        return self.outputs

@@ -49,10 +49,17 @@ class ExecuteCodeUseCase:
             code=code,
             apiKey=apiKey,
             engine=engine,
-            model=model
+            model=model,
+            disposeWorkspace=False
         )
 
-        workspaceDirectory = os.path.dirname(buildReport.binaryPath) if buildReport.binaryPath else None
+        workspaceDirectory = buildReport.workspaceDirectory
+        if not workspaceDirectory and buildReport.binaryPath:
+            workspaceDirectory = (
+                buildReport.binaryPath
+                if os.path.isdir(buildReport.binaryPath)
+                else os.path.dirname(buildReport.binaryPath)
+            )
 
         if not buildReport.success:
             if workspaceDirectory and os.path.isdir(workspaceDirectory):
@@ -96,8 +103,8 @@ class ExecuteCodeUseCase:
                         executionReport.message = f"{executionReport.message}\n\nFeedback:\n{feedback}"
                 else:
                     mismatches = []
-                    for idx, res in enumerate(executionReport.testResults or []):
-                        if not res.get("passed", False):
+                    for idx, res in enumerate(executionReport.outputs or []):
+                        if isinstance(res, dict) and not res.get("passed", False):
                             mismatches.append(
                                 f"Caso #{idx + 1}: Entrada='{res.get('input', '')}' | Esperado='{res.get('expected', '')}' | Obtido='{res.get('actual', '')}'"
                             )

@@ -19,6 +19,8 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         self.baseDirectory = Path(__file__).resolve().parent.parent.parent
         self.configPath = configPath or str(self.baseDirectory / "Configuration.json")
         self.settings: Dict[str, Any] = {}
+        self._languagesCache: Optional[Dict[str, Language]] = None
+        self._providersCache: Optional[Dict[str, AiModelProvider]] = None
         self.loadConfiguration()
 
     @classmethod
@@ -28,6 +30,8 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         return cls._instance
 
     def loadConfiguration(self):
+        self._languagesCache = None
+        self._providersCache = None
         if os.path.isfile(self.configPath):
             try:
                 with open(self.configPath, "r", encoding="utf-8") as file:
@@ -80,7 +84,7 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
             raise DomainException(f"Configuration for AI engine '{defaultName}' is missing in Configuration.json.")
         return engineConfig
 
-    def getAiProvider(self, engineKey: str) -> Optional[AiModelProvider]:
+    def _buildAiProvider(self, engineKey: str) -> Optional[AiModelProvider]:
         key = engineKey.strip().lower()
         rawEngines = self.getAiEnginesRaw()
         engineCfg = rawEngines.get(key)
@@ -92,13 +96,15 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
         rawSupported = engineCfg.get("supportedModels", engineCfg.get("models", []))
 
         supportedModels: List[str] = []
+        seen = set()
         if isinstance(rawSupported, list):
             for item in rawSupported:
                 modelStr = str(item).strip()
-                if modelStr and modelStr not in supportedModels:
+                if modelStr and modelStr not in seen:
+                    seen.add(modelStr)
                     supportedModels.append(modelStr)
 
-        if defaultModel and defaultModel not in supportedModels:
+        if defaultModel and defaultModel not in seen:
             supportedModels.insert(0, defaultModel)
 
         defaultEngineName = self.getDefaultEngineName().strip().lower()
@@ -114,11 +120,15 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
             isDefault=(key == defaultEngineName)
         )
 
+    def getAiProvider(self, engineKey: str) -> Optional[AiModelProvider]:
+        key = engineKey.strip().lower()
+        return self.getAllAiProviders().get(key)
+
     def getAllAiProviders(self) -> Dict[str, AiModelProvider]:
         rawEngines = self.getAiEnginesRaw()
         providers: Dict[str, AiModelProvider] = {}
         for key in rawEngines:
-            provider = self.getAiProvider(key)
+            provider = self._buildAiProvider(key)
             if provider:
                 providers[key.strip().lower()] = provider
         return providers
@@ -131,9 +141,11 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
             return list(provider.supportedModels)
 
         allModels: List[str] = []
+        seen = set()
         for provider in self.getAllAiProviders().values():
             for model in provider.supportedModels:
-                if model not in allModels:
+                if model not in seen:
+                    seen.add(model)
                     allModels.append(model)
         return allModels
 
@@ -179,7 +191,7 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
     def getLanguagesRaw(self) -> Dict[str, Any]:
         return self.getSetting("languages", {})
 
-    def getLanguage(self, language: str) -> Optional[Language]:
+    def _buildLanguage(self, language: str) -> Optional[Language]:
         key = language.strip().lower()
         languageConfig = self.getLanguagesRaw().get(key)
         if not languageConfig:
@@ -200,13 +212,20 @@ class ConfigurationManager(ILanguageRepository, IAiProviderRepository):
             executorArguments=executorConfig.get("arguments", [])
         )
 
+    def getLanguage(self, language: str) -> Optional[Language]:
+        key = language.strip().lower()
+        return self.getAllLanguages().get(key)
+
     def getAllLanguages(self) -> Dict[str, Language]:
+        if self._languagesCache is not None:
+            return self._languagesCache
         rawLanguages = self.getLanguagesRaw()
-        languages = {}
+        languages: Dict[str, Language] = {}
         for key in rawLanguages:
-            lang = self.getLanguage(key)
+            lang = self._buildLanguage(key)
             if lang:
-                languages[key] = lang
+                languages[key.strip().lower()] = lang
+        self._languagesCache = languages
         return languages
 
     def isLanguageSupported(self, language: str) -> bool:

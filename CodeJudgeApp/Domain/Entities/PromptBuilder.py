@@ -1,6 +1,10 @@
 from typing import List
 import re
 
+_FENCE_START_RE = re.compile(r'^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)$', flags=re.MULTILINE)
+_FENCE_INLINE_RE = re.compile(r'^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)[ \t]+([^\r\n]+)$', flags=re.MULTILINE)
+_FENCE_END_RE = re.compile(r'^(?!```)(.+?)[ \t]*(```\s*)$', flags=re.MULTILINE)
+
 class PromptBuilder:
     def __init__(self, guideline: str = ""):
         self.guideline: str = guideline.strip()
@@ -29,9 +33,9 @@ class PromptBuilder:
     def normalizeCodeFences(text: str) -> str:
         if not text:
             return ""
-        res = re.sub(r'^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)$', r'\1\n\2', text, flags=re.MULTILINE)
-        res = re.sub(r'^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)[ \t]+([^\r\n]+)$', r'\1\n\2\n\3', res, flags=re.MULTILINE)
-        res = re.sub(r'^(?!```)(.+?)[ \t]*(```\s*)$', r'\1\n```', res, flags=re.MULTILINE)
+        res = _FENCE_START_RE.sub(r'\1\n\2', text)
+        res = _FENCE_INLINE_RE.sub(r'\1\n\2\n\3', res)
+        res = _FENCE_END_RE.sub(r'\1\n```', res)
         return res
 
     def build(self) -> str:

@@ -3,6 +3,9 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 import javalang
 
+_PUBLIC_CLASS_RE = re.compile(r"public\s+class\s+([A-Za-z_]\w*)")
+_GENERAL_CLASS_RE = re.compile(r"class\s+([A-Za-z_]\w*)")
+
 @dataclass(slots=True)
 class Language:
     key: str
@@ -19,6 +22,8 @@ class Language:
         return bool(self.compilerCommand and self.compilerCommand.strip())
 
     def detectMainClassName(self, code: str) -> str:
+        if self.entryNamingStrategy != "className":
+            return "Main"
         try:
             syntaxTree = javalang.parse.parse(code)
             for _, node in syntaxTree.filter(javalang.tree.ClassDeclaration):
@@ -32,11 +37,11 @@ class Language:
         except Exception:
             pass
 
-        publicMatch = re.search(r"public\s+class\s+([A-Za-z_]\w*)", code)
+        publicMatch = _PUBLIC_CLASS_RE.search(code)
         if publicMatch:
             return publicMatch.group(1)
 
-        generalMatch = re.search(r"class\s+([A-Za-z_]\w*)", code)
+        generalMatch = _GENERAL_CLASS_RE.search(code)
         return generalMatch.group(1) if generalMatch else "Main"
 
     def resolveEntryName(self, code: str) -> str:
