@@ -1,6 +1,7 @@
 import { IPdfGenerator } from './IPdfGenerator';
 import { normalizeMarkdownCodeFences } from '../../core/entities/Report';
 import * as fs from 'fs';
+import * as path from 'path';
 import PDFDocument from 'pdfkit';
 
 function cleanMarkdown(text: string): string {
@@ -25,6 +26,170 @@ function sanitizeForPdf(text: string): string {
     .replace(/[\u2190]/g, '<-')
     .replace(/[\u2705\u2713\u2714]/g, '[OK]')
     .replace(/[\u274C\u2715\u2716]/g, '[X]');
+}
+
+interface SubmissionMetadata {
+  studentName?: string;
+  course?: string;
+  institution?: string;
+  email?: string;
+  moodleUser?: string;
+  fileName?: string;
+  language?: string;
+  date?: string;
+  status?: string;
+}
+
+function extractMetadata(rawLines: string[]): { meta: SubmissionMetadata; bodyLines: string[] } {
+  const meta: SubmissionMetadata = {};
+  const bodyLines: string[] = [];
+
+  for (const l of rawLines) {
+    const trimmed = l.trim();
+    if (
+      trimmed === '# CodeJudge' ||
+      trimmed === '## Relatório Técnico de Execução' ||
+      trimmed === '*CodeJudge • Desenvolvido por Everton*' ||
+      trimmed === 'CodeJudge - Desenvolvido por Everton' ||
+      trimmed === '*CodeJudge - Desenvolvido por Everton*'
+    ) {
+      continue;
+    }
+
+    if (trimmed.startsWith('>')) {
+      const content = trimmed.replace(/^>\s*/, '');
+      if (content.includes('Aluno(a):') || content.includes('Arquivo:') || content.includes('Status:')) {
+        const parts = content.split('|').map(p => p.trim());
+        for (const part of parts) {
+          const cleanPart = cleanMarkdown(part);
+          if (cleanPart.startsWith('Aluno(a):')) {
+            meta.studentName = cleanPart.replace('Aluno(a):', '').trim();
+          } else if (cleanPart.startsWith('Curso:')) {
+            meta.course = cleanPart.replace('Curso:', '').trim();
+          } else if (cleanPart.startsWith('Instituição:')) {
+            meta.institution = cleanPart.replace('Instituição:', '').trim();
+          } else if (cleanPart.startsWith('E-mail:')) {
+            meta.email = cleanPart.replace('E-mail:', '').trim();
+          } else if (cleanPart.startsWith('Usuário Moodle:')) {
+            meta.moodleUser = cleanPart.replace('Usuário Moodle:', '').trim();
+          } else if (cleanPart.startsWith('Arquivo:')) {
+            meta.fileName = cleanPart.replace('Arquivo:', '').trim();
+          } else if (cleanPart.startsWith('Linguagem:')) {
+            meta.language = cleanPart.replace('Linguagem:', '').trim();
+          } else if (cleanPart.startsWith('Data:')) {
+            meta.date = cleanPart.replace('Data:', '').trim();
+          } else if (cleanPart.startsWith('Status:')) {
+            meta.status = cleanPart.replace('Status:', '').trim();
+          }
+        }
+        continue;
+      }
+    }
+
+    bodyLines.push(l);
+  }
+
+  while (
+    bodyLines.length > 0 &&
+    (bodyLines[bodyLines.length - 1].trim() === '' || bodyLines[bodyLines.length - 1].trim() === '---')
+  ) {
+    bodyLines.pop();
+  }
+
+  return { meta, bodyLines };
+}
+
+function renderInlineSpans(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  width: number,
+  lineGap: number,
+  defaultColor = '#334155'
+) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  if (parts.length === 1) {
+    doc.font('Helvetica').fontSize(9.5).fillColor(defaultColor).text(cleanMarkdown(text), {
+      width,
+      lineGap
+    });
+    return;
+  }
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (!part) continue;
+    const isLast = i === parts.length - 1;
+    const isBold = part.startsWith('**') && part.endsWith('**');
+    const clean = cleanMarkdown(part);
+    if (!clean) continue;
+
+    if (isBold) {
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#0f172a').text(clean, {
+        continued: !isLast,
+        lineGap,
+        width: !isLast ? undefined : width
+      });
+    } else {
+      doc.font('Helvetica').fontSize(9.5).fillColor(defaultColor).text(clean, {
+        continued: !isLast,
+        lineGap,
+        width: !isLast ? undefined : width
+      });
+    }
+  }
+}
+
+function renderRichLine(
+  doc: PDFKit.PDFDocument,
+  rawText: string,
+  x: number,
+  width: number,
+  options?: { isBullet?: boolean; lineGap?: number }
+) {
+  const lineGap = options?.lineGap ?? 4.5;
+  const isBullet = Boolean(options?.isBullet);
+  const textDark = '#0f172a';
+  const textBody = '#334155';
+  const primaryColor = '#0f766e';
+
+  const kvMatch = rawText.match(/^([*-]\s*)?\*\*?([A-Za-zÀ-ÖØ-öø-ÿ\s/()_-]+?)\*\*?\s*:\s*(.*)$/);
+
+  if (kvMatch) {
+    const bulletPrefix = kvMatch[1] || (isBullet ? '- ' : '');
+    const label = kvMatch[2].trim();
+    const value = kvMatch[3].trim();
+    const isNota = label.toLowerCase() === 'nota' || label.toLowerCase().startsWith('nota');
+
+    if (bulletPrefix) {
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryColor).text('  •  ', x, doc.y, { continued: true, lineGap });
+    }
+
+    const labelColor = isNota ? primaryColor : textDark;
+    doc.font('Helvetica-Bold').fontSize(isNota ? 10 : 9.5).fillColor(labelColor).text(`${label}: `, {
+      continued: Boolean(value),
+      lineGap
+    });
+
+    if (value) {
+      if (isNota) {
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#047857').text(cleanMarkdown(value), {
+          width,
+          lineGap
+        });
+      } else {
+        renderInlineSpans(doc, value, width, lineGap, textBody);
+      }
+    }
+    return;
+  }
+
+  let textToRender = rawText;
+  if (textToRender.startsWith('- ') || textToRender.startsWith('* ')) {
+    textToRender = textToRender.substring(2).trim();
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryColor).text('  •  ', x, doc.y, { continued: true, lineGap });
+  }
+
+  renderInlineSpans(doc, textToRender, width, lineGap, textBody);
 }
 
 export class PdfKitReportGenerator implements IPdfGenerator {
@@ -69,123 +234,143 @@ export class PdfKitReportGenerator implements IPdfGenerator {
         const borderLine = '#cbd5e1';
         const maxContentY = doc.page.height - 55;
 
-        doc.rect(40, 40, 515, 52).fill(primaryColor);
+        const candidateIconPaths = [
+          path.join(__dirname, '..', '..', '..', 'media', 'icon.png'),
+          path.join(__dirname, '..', '..', 'media', 'icon.png'),
+          path.join(process.cwd(), 'media', 'icon.png'),
+          path.join(process.cwd(), 'CodeJudgeExtension', 'media', 'icon.png')
+        ];
+        let iconPath: string | null = null;
+        for (const p of candidateIconPaths) {
+          if (fs.existsSync(p)) {
+            iconPath = p;
+            break;
+          }
+        }
+
+        doc.rect(40, 40, 515, 62).fill(primaryColor);
+        doc.rect(40, 40, 515, 3).fill(accentColor);
+
+        doc.roundedRect(52, 48, 40, 40, 6).fill('#042f2e');
+        if (iconPath) {
+          try {
+            doc.image(iconPath, 54, 50, { width: 36, height: 36 });
+          } catch {
+            doc.lineWidth(2).strokeColor('#ffffff');
+            doc.moveTo(63, 62).lineTo(58, 68).lineTo(63, 74).stroke();
+            doc.moveTo(81, 62).lineTo(86, 68).lineTo(81, 74).stroke();
+            doc.strokeColor(accentColor);
+            doc.moveTo(74, 59).lineTo(70, 77).stroke();
+          }
+        } else {
+          doc.lineWidth(2).strokeColor('#ffffff');
+          doc.moveTo(63, 62).lineTo(58, 68).lineTo(63, 74).stroke();
+          doc.moveTo(81, 62).lineTo(86, 68).lineTo(81, 74).stroke();
+          doc.strokeColor(accentColor);
+          doc.moveTo(74, 59).lineTo(70, 77).stroke();
+        }
+
         doc
           .fillColor('#ffffff')
-          .fontSize(15)
+          .fontSize(16)
           .font('Helvetica-Bold')
-          .text('CODEJUDGE', 54, 48, { width: 490, lineBreak: false });
-        doc
-          .fillColor('#d1fae5')
-          .fontSize(9.5)
-          .font('Helvetica')
-          .text('Relatório Técnico de Execução e Análise de Código', 54, 70, { width: 490, lineBreak: false });
+          .text('CodeJudge', 102, 51, { lineBreak: false });
 
-        doc.y = 104;
+        doc.roundedRect(192, 53, 108, 14, 3).fill('#134e4a');
+        doc
+          .fillColor('#34d399')
+          .fontSize(7.5)
+          .font('Helvetica-Bold')
+          .text('AVALIAÇÃO FORMATIVA', 198, 56.5, { lineBreak: false });
+
+        doc
+          .fillColor('#ccfbf1')
+          .fontSize(8.5)
+          .font('Helvetica')
+          .text('Plataforma de Avaliação & Diagnóstico Técnico de Código', 102, 73, { lineBreak: false });
+
+        doc
+          .fillColor('#ffffff')
+          .fontSize(8.5)
+          .font('Helvetica-Bold')
+          .text('Instituto Federal Fluminense', 350, 52, { width: 195, align: 'right', lineBreak: false });
+        doc
+          .fillColor('#a7f3d0')
+          .fontSize(7.5)
+          .font('Helvetica')
+          .text('Ambiente Acadêmico Moodle IFF', 350, 66, { width: 195, align: 'right', lineBreak: false });
+        doc
+          .fillColor('#5eead4')
+          .fontSize(7)
+          .font('Helvetica')
+          .text('Everton • CodeJudge v2.0', 350, 79, { width: 195, align: 'right', lineBreak: false });
+
+        doc.y = 112;
 
         const normalized = normalizeMarkdownCodeFences(markdownContent);
         const sanitized = sanitizeForPdf(normalized);
         const rawLines = sanitized.split('\n');
 
-        let studentMeta = '';
-        let contactMeta = '';
-        let fileMeta = '';
-        let statusMeta = '';
-        const filteredLines: string[] = [];
+        const { meta, bodyLines } = extractMetadata(rawLines);
+        const hasStudent = Boolean(meta.studentName && meta.studentName.trim());
+        const cardY = doc.y;
+        const cardHeight = hasStudent ? 78 : 50;
 
-        for (const l of rawLines) {
-          const trimmed = l.trim();
-          if (
-            trimmed === '# CodeJudge' ||
-            trimmed === '## Relatório Técnico de Execução' ||
-            trimmed === '*CodeJudge • Desenvolvido por Everton*' ||
-            trimmed === 'CodeJudge - Desenvolvido por Everton' ||
-            trimmed === '*CodeJudge - Desenvolvido por Everton*'
-          ) {
-            continue;
-          }
-          if (trimmed.startsWith('>') && trimmed.includes('Aluno(a):')) {
-            studentMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
-            continue;
-          }
-          if (trimmed.startsWith('>') && trimmed.includes('E-mail:') && (trimmed.includes('Moodle') || trimmed.includes('@'))) {
-            contactMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
-            continue;
-          }
-          if (trimmed.startsWith('>') && trimmed.includes('Arquivo:') && trimmed.includes('Linguagem:')) {
-            fileMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
-            continue;
-          }
-          if (trimmed.startsWith('>') && trimmed.includes('Status:')) {
-            statusMeta = cleanMarkdown(trimmed.replace(/^>\s*/, ''));
-            continue;
-          }
-          filteredLines.push(l);
+        doc.rect(40, cardY, 515, cardHeight).fill('#f8fafc');
+        doc.rect(40, cardY, 515, cardHeight).strokeColor(borderLine).lineWidth(1).stroke();
+        doc.rect(40, cardY, 4, cardHeight).fill(primaryColor);
+
+        doc.moveTo(295, cardY + 7).lineTo(295, cardY + cardHeight - 7).strokeColor('#e2e8f0').lineWidth(0.8).stroke();
+
+        doc.fillColor(primaryColor).fontSize(7.5).font('Helvetica-Bold');
+        doc.text('IDENTIFICAÇÃO ACADÊMICA', 54, cardY + 8, { lineBreak: false });
+        doc.text('DADOS DA SUBMISSÃO', 308, cardY + 8, { lineBreak: false });
+
+        if (hasStudent) {
+          doc.fontSize(8.5);
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Aluno(a): ', 54, cardY + 22, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.studentName || '-', { width: 230, lineBreak: false });
+
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Curso / Disc.: ', 54, cardY + 36, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.course || '-', { width: 230, lineBreak: false });
+
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Instituição: ', 54, cardY + 50, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.institution || 'Instituto Federal Fluminense (IFF)', { width: 230, lineBreak: false });
+
+          doc.font('Helvetica-Bold').fillColor(textDark).text('E-mail: ', 54, cardY + 64, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.email || '-', { width: 230, lineBreak: false });
+        } else {
+          doc.fontSize(8.5);
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Origem: ', 54, cardY + 22, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text('Ambiente Local / VS Code', { width: 230, lineBreak: false });
+
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Instituição: ', 54, cardY + 36, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text('Instituto Federal Fluminense (IFF)', { width: 230, lineBreak: false });
         }
 
-        while (
-          filteredLines.length > 0 &&
-          (filteredLines[filteredLines.length - 1].trim() === '' ||
-            filteredLines[filteredLines.length - 1].trim() === '---')
-        ) {
-          filteredLines.pop();
+        doc.fontSize(8.5);
+        doc.font('Helvetica-Bold').fillColor(textDark).text('Arquivo: ', 308, cardY + 22, { continued: true, lineBreak: false });
+        doc.font('Helvetica').fillColor('#334155').text(meta.fileName || '-', { width: 235, lineBreak: false });
+
+        doc.font('Helvetica-Bold').fillColor(textDark).text('Linguagem: ', 308, cardY + 36, { continued: true, lineBreak: false });
+        doc.font('Helvetica-Bold').fillColor(primaryColor).text(meta.language || '-', { width: 235, lineBreak: false });
+
+        if (hasStudent) {
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Data: ', 308, cardY + 50, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.date || '-', { width: 235, lineBreak: false });
+
+          const isSuccess = (meta.status || '').includes('[Concluído com Sucesso]') || (meta.status || '').includes('[Aprovado]');
+          const isError = (meta.status || '').includes('[Interrompido') || (meta.status || '').includes('[Falha]');
+          const statusColor = isSuccess ? '#059669' : isError ? '#dc2626' : '#d97706';
+
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Status: ', 308, cardY + 64, { continued: true, lineBreak: false });
+          doc.font('Helvetica-Bold').fillColor(statusColor).text(meta.status || '-', { width: 235, lineBreak: false });
+        } else {
+          doc.font('Helvetica-Bold').fillColor(textDark).text('Data: ', 308, cardY + 50, { continued: true, lineBreak: false });
+          doc.font('Helvetica').fillColor('#334155').text(meta.date || '-', { width: 235, lineBreak: false });
         }
 
-        const metaRows: Array<{ type: 'student' | 'contact' | 'file' | 'status'; text: string }> = [];
-        if (studentMeta) metaRows.push({ type: 'student', text: studentMeta.replace(/\|/g, '  •  ') });
-        if (contactMeta) metaRows.push({ type: 'contact', text: contactMeta.replace(/\|/g, '  •  ') });
-        if (fileMeta) metaRows.push({ type: 'file', text: fileMeta.replace(/\|/g, '  •  ') });
-        if (statusMeta) metaRows.push({ type: 'status', text: statusMeta });
-
-        if (metaRows.length > 0) {
-          const cardY = doc.y;
-          let measuredCardHeight = 16;
-          for (const row of metaRows) {
-            doc.fontSize(8.5).font(row.type === 'student' ? 'Helvetica-Bold' : 'Helvetica');
-            const h = doc.heightOfString(row.text, { width: 495, lineGap: 2 });
-            measuredCardHeight += Math.max(h + 6, 17);
-          }
-
-          doc.rect(40, cardY, 515, measuredCardHeight).fill('#f8fafc');
-          doc.rect(40, cardY, 515, measuredCardHeight).strokeColor(borderLine).lineWidth(1).stroke();
-          doc.rect(40, cardY, 4, measuredCardHeight).fill(primaryColor);
-
-          let rowY = cardY + 9;
-          for (const row of metaRows) {
-            if (row.type === 'student') {
-              doc.fillColor(textDark).fontSize(8.5).font('Helvetica-Bold');
-              const h = doc.heightOfString(row.text, { width: 495, lineGap: 2 });
-              doc.text(row.text, 54, rowY, { width: 495, lineGap: 2 });
-              rowY += Math.max(h + 6, 17);
-            } else if (row.type === 'contact') {
-              doc.fillColor(textMuted).fontSize(8.5).font('Helvetica');
-              const h = doc.heightOfString(row.text, { width: 495, lineGap: 2 });
-              doc.text(row.text, 54, rowY, { width: 495, lineGap: 2 });
-              rowY += Math.max(h + 6, 17);
-            } else if (row.type === 'file') {
-              doc.fillColor(textDark).fontSize(8.5).font('Helvetica');
-              const h = doc.heightOfString(row.text, { width: 495, lineGap: 2 });
-              doc.text(row.text, 54, rowY, { width: 495, lineGap: 2 });
-              rowY += Math.max(h + 6, 17);
-            } else if (row.type === 'status') {
-              const isSuccess = row.text.includes('[Concluído com Sucesso]') || row.text.includes('[Aprovado]');
-              const isError = row.text.includes('[Interrompido') || row.text.includes('[Falha]');
-              const statusColor = isSuccess ? '#059669' : isError ? '#dc2626' : '#d97706';
-
-              doc.fillColor(textMuted).fontSize(8.5).font('Helvetica-Bold').text('Status da Avaliação: ', 54, rowY, {
-                continued: true,
-                lineGap: 2
-              });
-              doc.fillColor(statusColor).font('Helvetica-Bold').text(row.text.replace(/Status:\s*/, ''), {
-                width: 495,
-                lineGap: 2
-              });
-              rowY += 17;
-            }
-          }
-
-          doc.y = cardY + measuredCardHeight + 20;
-        }
+        doc.y = cardY + cardHeight + 18;
 
         let inCodeBlock = false;
         let codeBlockLines: string[] = [];
@@ -198,50 +383,33 @@ export class PdfKitReportGenerator implements IPdfGenerator {
           codeBlockLines = [];
 
           while (remaining.length > 0) {
-            if (doc.y > maxContentY - 35) {
+            const currentY = doc.y;
+            const availableSpace = maxContentY - currentY;
+
+            if (availableSpace < 45) {
               doc.addPage();
+              continue;
             }
 
-            const availableHeight = maxContentY - doc.y - 14;
-            let chunk: string[] = [];
-            let chunkHeight = 0;
+            const maxLinesFit = Math.max(1, Math.floor((availableSpace - 14) / 12));
+            const chunk = remaining.slice(0, maxLinesFit);
+            remaining = remaining.slice(maxLinesFit);
 
-            for (let idx = 0; idx < remaining.length; idx++) {
-              const candidateLines = [...chunk, remaining[idx]];
-              const candidateText = candidateLines.join('\n');
-              const h = doc.heightOfString(candidateText, { width: 495, lineGap: 2.5 });
-              if (h > availableHeight && chunk.length > 0) {
-                break;
-              }
-              chunk.push(remaining[idx]);
-              chunkHeight = h;
-              if (h > availableHeight) {
-                break;
-              }
+            const chunkH = chunk.length * 12 + 10;
+            doc.rect(40, currentY, 515, chunkH).fill(bgCode);
+            doc.rect(40, currentY, 515, chunkH).strokeColor(borderLine).lineWidth(0.8).stroke();
+
+            let lineY = currentY + 6;
+            for (let idx = 0; idx < chunk.length; idx++) {
+              doc
+                .fillColor('#0f172a')
+                .font('Courier')
+                .fontSize(8)
+                .text(chunk[idx], 48, lineY, { width: 495, lineBreak: false });
+              lineY += 12;
             }
 
-            remaining = remaining.slice(chunk.length);
-            const chunkText = chunk.join('\n');
-            const boxHeight = Math.min(chunkHeight + 14, maxContentY - doc.y);
-            const startY = doc.y;
-
-            doc.rect(40, startY, 515, boxHeight).fill(bgCode);
-            doc.rect(40, startY, 515, boxHeight).strokeColor(borderLine).stroke();
-
-            const prevBottom = doc.page.margins.bottom;
-            doc.page.margins.bottom = 20;
-            doc
-              .fillColor('#0f172a')
-              .font('Courier')
-              .fontSize(8.5)
-              .text(chunkText, 48, startY + 7, { width: 495, lineGap: 2.5 });
-            doc.page.margins.bottom = prevBottom;
-
-            doc.y = startY + boxHeight + 14;
-
-            if (remaining.length > 0) {
-              doc.addPage();
-            }
+            doc.y = currentY + chunkH + 12;
           }
         };
 
@@ -250,8 +418,8 @@ export class PdfKitReportGenerator implements IPdfGenerator {
         const colWidths = [45, 110, 130, 130, 100];
         const colX = [40, 85, 195, 325, 455];
 
-        for (let i = 0; i < filteredLines.length; i++) {
-          const rawLine = filteredLines[i];
+        for (let i = 0; i < bodyLines.length; i++) {
+          const rawLine = bodyLines[i];
           const line = rawLine.trim();
 
           if (line.includes('command:codejudge.exportPdf') || line.includes('command:codejudge.exportPDF')) continue;
@@ -347,7 +515,7 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             doc.moveDown(0.8);
             doc
               .fillColor(primaryColor)
-              .fontSize(11)
+              .fontSize(10.5)
               .font('Helvetica-Bold')
               .text(cleanMarkdown(line.replace('### ', '')), 40, doc.y, { width: 515, lineGap: 2.5 });
             doc.moveDown(0.5);
@@ -356,7 +524,7 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             doc.moveDown(0.7);
             doc
               .fillColor(textDark)
-              .fontSize(10)
+              .fontSize(9.5)
               .font('Helvetica-Bold')
               .text(cleanMarkdown(line.replace('#### ', '')), 40, doc.y, { width: 515, lineGap: 2 });
             doc.moveDown(0.4);
@@ -372,19 +540,6 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             doc.rect(40, quoteY, 3, textH + 14).fill(accentColor);
             doc.fillColor('#334155').text(quoteText, 50, quoteY + 7, { width: 495, lineGap: 4 });
             doc.y = quoteY + textH + 20;
-          } else if (line.startsWith('- ') || line.startsWith('* ')) {
-            if (doc.y > maxContentY - 25) doc.addPage();
-            const clean = cleanMarkdown(line.substring(2));
-            if (clean.startsWith('Resultado:')) {
-              doc.fillColor(textDark).fontSize(9.5).font('Helvetica-Bold').text('  •  Resultado: ', 40, doc.y, {
-                continued: true,
-                lineGap: 4
-              });
-              doc.font('Helvetica').text(clean.replace('Resultado:', '').trim(), { width: 515, lineGap: 4 });
-            } else {
-              doc.fillColor(textDark).fontSize(9.5).font('Helvetica').text(`  •  ${clean}`, 40, doc.y, { width: 515, lineGap: 4 });
-            }
-            doc.moveDown(0.35);
           } else if (line.startsWith('---')) {
             if (doc.y < maxContentY - 25) {
               doc.moveDown(0.5);
@@ -393,9 +548,8 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             }
           } else {
             if (doc.y > maxContentY - 25) doc.addPage();
-            const clean = cleanMarkdown(line);
-            doc.fillColor(textDark).fontSize(9.5).font('Helvetica').text(clean, 40, doc.y, { width: 515, lineGap: 4.5 });
-            doc.moveDown(0.6);
+            renderRichLine(doc, line, 40, 515);
+            doc.moveDown(0.45);
           }
         }
 
@@ -413,7 +567,7 @@ export class PdfKitReportGenerator implements IPdfGenerator {
             .fontSize(8)
             .font('Helvetica')
             .text(
-              `CodeJudge • Desenvolvido por Everton • Página ${i - range.start + 1} de ${range.count}`,
+              `CodeJudge • Instituto Federal Fluminense • Página ${i - range.start + 1} de ${range.count}`,
               40,
               doc.page.height - 28,
               { align: 'center', width: 515, lineBreak: false }

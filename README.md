@@ -5,7 +5,7 @@ Plataforma educacional e profissional modular para **compilação, execução, d
 O ecossistema é estruturado em quatro módulos independentes e integrados sob os princípios da **Clean Architecture**:
 1. **`CodeJudgeApp`**: Servidor backend em **Python (FastAPI)** com execução em sandbox isolado, suporte multi-motor de IA (**Google Gemini** e **Ollama Local**), templates objetivos de avaliação universitária (notas de 0 a 10 com explicações diretas e sem sermões conversacionais) e política flexível de chave de API (`isUserKeyRequired`).
 2. **`CodeJudgeWeb`**: Aplicação Web em **React 18 + TypeScript + Bootstrap 5** com autenticação institucional integrada ao **Moodle IFF**, seletor de modelos com barra de pesquisa e modal Web de configuração de IA e API Key.
-3. **`CodeJudgeExtension`**: Extensão oficial para **Visual Studio Code (TypeScript)** com login via Moodle IFF, sincronização automática de modelos do servidor com busca integrada, gaveta discreta para API Key e geração de relatórios em PDF/Markdown com cabeçalho institucional e tipografia refinada.
+3. **`CodeJudgeExtension`**: Extensão oficial para **Visual Studio Code (TypeScript)** com login via Moodle IFF, sincronização automática de modelos do servidor com busca integrada, gaveta discreta para API Key e geração de relatórios técnicos em PDF com banner executivo (logo oficial, insígnia institucional), card estruturado de metadados acadêmicos em 2 colunas e rótulos de avaliação (`Nota:`, `Explicação:`) em negrito.
 4. **`CodeJudgeDesktop`**: Ambiente Desktop nativo para Windows (**C# .NET 8 WPF + WebView2**) no estilo **IDE**, com suporte a múltiplos arquivos em abas, compilação nativa ReadyToRun + proteção de payload AES-256 e seletor de modelo/chave na barra de status da IDE.
 
 ---
@@ -104,10 +104,14 @@ Construída com **React 18**, **TypeScript**, **Bootstrap 5** e **Express**:
 ## Extensão para Visual Studio Code (CodeJudgeExtension)
 
 Estruturada em **Clean Architecture** (`core/`, `features/`, `infrastructure/`, `presentation/`):
-- **Autenticação Institucional Moodle IFF Integrada:** Login direto pelo painel lateral com extração automática do perfil acadêmico do estudante (Nome, Curso/Disciplina, Campus e E-mail institucional), injetados de forma limpa como cabeçalho em relatórios `.md` e `.pdf`.
+- **Autenticação Institucional Moodle IFF Integrada:** Login direto pelo painel lateral com extração automática do perfil acadêmico do estudante (Nome, Curso/Disciplina, Campus e E-mail institucional), injetados de forma estruturada nos relatórios `.md` e `.pdf`.
 - **Seletor de Modelos com Barra de Pesquisa:** Dropdown com campo de busca interativo e digitação em tempo real para filtrar instantaneamente modelos de IA disponíveis no servidor.
 - **Gaveta Retrátil Discreta de Configuração de IA:** Acesso por ícone compacto de engrenagem/chave no topo da barra lateral para definição de chave de API (`apiKey`) e modelo personalizado sem poluir a área de trabalho.
-- **Gerador de Relatórios em PDF de Alta Precisão (PDFKit):** Tipografia aprimorada com espaçamento entrelinhas real 1.5, quebra segura de blocos de código sem sobreposição de cabeçalhos e eliminação definitiva de páginas em branco desnecessárias.
+- **Gerador de Relatórios em PDF Executivo de Alta Precisão (PDFKit):**
+  - **Banner de Cabeçalho Profissional:** Brasão estilizado com a logo oficial da plataforma (`media/icon.png`), insígnia institucional ("AVALIAÇÃO FORMATIVA") e subtítulo acadêmico do Instituto Federal Fluminense.
+  - **Card de Metadados Estruturado em 2 Colunas:** Substituição dos antigos separadores com marcadores ("•") por uma grade visual alinhada em duas seções: *Identificação Acadêmica* (Aluno, Curso, Campus/Instituição, E-mail) e *Dados da Submissão* (Arquivo, Linguagem, Data, Status).
+  - **Destaque Tipográfico em Negrito:** Rótulos de diagnóstico e avaliação acadêmica (`Nota:`, `Explicação:`, `Dica:`, `Tipo de Erro:`) renderizados com pesos tipográficos precisos em `Helvetica-Bold` e pontuações destacadas em verde esmeralda.
+  - **Controle Preciso de Paginação e Quebras de Bloco:** Espaçamento entrelinhas real 1.5, quebra segura de blocos de código sem sobreposição de cabeçalhos e eliminação definitiva de páginas em branco desnecessárias.
 - **Arquitetura Otimizada e Sem Redundâncias:**
   - `BaseHttpGateway`: Centraliza chamadas HTTP, controle de timeout via `AbortController`, cabeçalho `X-Api-Key` e normalização de codificação UTF-8 (`fixEncoding`).
   - `BaseStageUseCase` & `StageContract`: Padronizam telemetria de tempo, logs estruturados e repasse de parâmetros de IA (`apiKey`, `engine`, `model`) entre `CompileUseCase`, `AnalyzeUseCase` e `OptimizeUseCase`.
