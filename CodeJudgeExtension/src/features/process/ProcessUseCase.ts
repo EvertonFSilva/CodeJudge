@@ -58,6 +58,11 @@ export class ProcessUseCase {
     const statement = request.statement?.trim() || '';
     const config = request.config;
     const tests = request.tests || [];
+    const aiOptions = {
+      apiKey: request.apiKey?.trim() || undefined,
+      engine: request.engine?.trim() || undefined,
+      model: request.model?.trim() || undefined
+    };
 
     this.logger.info(`Processando codigo '${fileName}' (${language}).`);
 
@@ -83,7 +88,7 @@ export class ProcessUseCase {
       });
 
       try {
-        compilationResult = await this.compileUseCase.execute(language, code, statement);
+        compilationResult = await this.compileUseCase.execute(language, code, statement, aiOptions);
 
         if (compilationResult.success) {
           notify({
@@ -136,7 +141,7 @@ export class ProcessUseCase {
         });
 
         try {
-          executionResult = await this.executeUseCase.execute(language, code, tests, statement);
+          executionResult = await this.executeUseCase.execute(language, code, tests, statement, aiOptions);
 
           const hasTests = tests.length > 0 && tests.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0));
           const isSuccess = Boolean(executionResult.success);
@@ -175,7 +180,7 @@ export class ProcessUseCase {
         });
 
         try {
-          analysisResult = await this.analyzeUseCase.execute(language, code, statement);
+          analysisResult = await this.analyzeUseCase.execute(language, code, statement, aiOptions);
           notify({
             stage: 'analyze',
             status: analysisResult.success ? 'success' : 'failed',
@@ -203,7 +208,7 @@ export class ProcessUseCase {
         });
 
         try {
-          optimizationResult = await this.optimizeUseCase.execute(language, code, statement);
+          optimizationResult = await this.optimizeUseCase.execute(language, code, statement, aiOptions);
           notify({
             stage: 'optimize',
             status: optimizationResult.success ? 'success' : 'failed',

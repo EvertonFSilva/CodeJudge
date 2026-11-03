@@ -19,14 +19,25 @@ export class HttpExecuteGateway implements IExecuteGateway {
     this.logger.debug(`Requisitando execucao em ${url}`);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      };
+      if (request.apiKey) {
+        headers['X-Api-Key'] = request.apiKey;
+      }
+
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers,
         body: JSON.stringify({
           statement: request.statement || '',
           language: request.language,
           code: request.code,
-          tests: request.tests || []
+          tests: request.tests || [],
+          apiKey: request.apiKey || undefined,
+          engine: request.engine || undefined,
+          model: request.model || undefined
         }),
         signal: controller.signal
       });

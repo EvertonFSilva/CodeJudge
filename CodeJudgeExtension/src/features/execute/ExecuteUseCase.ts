@@ -18,13 +18,22 @@ export class ExecuteUseCase {
     language: string,
     code: string,
     tests: TestCaseInput[],
-    statement?: string
+    statement?: string,
+    aiOptions?: { apiKey?: string; engine?: string; model?: string }
   ): Promise<ExecuteResultDTO> {
     const startTime = Date.now();
     this.logger.stageStart('execute', { language, testsCount: tests.length });
 
     try {
-      const response = await this.gateway.execute({ language, code, tests, statement });
+      const response = await this.gateway.execute({
+        language,
+        code,
+        tests,
+        statement,
+        apiKey: aiOptions?.apiKey,
+        engine: aiOptions?.engine,
+        model: aiOptions?.model
+      });
       const durationMs = Date.now() - startTime;
 
       this.logger.stageEnd(

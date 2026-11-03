@@ -5,6 +5,9 @@ export interface ExecuteRequest {
   code: string;
   statement?: string;
   tests: TestCaseInput[];
+  apiKey?: string;
+  engine?: string;
+  model?: string;
 }
 
 export interface ExecuteResponse {

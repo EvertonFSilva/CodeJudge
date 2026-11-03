@@ -44,6 +44,11 @@ class ProcessUseCase {
         const statement = request.statement?.trim() || '';
         const config = request.config;
         const tests = request.tests || [];
+        const aiOptions = {
+            apiKey: request.apiKey?.trim() || undefined,
+            engine: request.engine?.trim() || undefined,
+            model: request.model?.trim() || undefined
+        };
         this.logger.info(`Processando codigo '${fileName}' (${language}).`);
         const stagesCompleted = [];
         let compilationResult;
@@ -64,7 +69,7 @@ class ProcessUseCase {
                 title: 'Compilando codigo-fonte...'
             });
             try {
-                compilationResult = await this.compileUseCase.execute(language, code, statement);
+                compilationResult = await this.compileUseCase.execute(language, code, statement, aiOptions);
                 if (compilationResult.success) {
                     notify({
                         stage: 'compile',
@@ -117,7 +122,7 @@ class ProcessUseCase {
                     title: tests.length > 0 ? `Executando com ${tests.length} caso(s)...` : 'Executando codigo...'
                 });
                 try {
-                    executionResult = await this.executeUseCase.execute(language, code, tests, statement);
+                    executionResult = await this.executeUseCase.execute(language, code, tests, statement, aiOptions);
                     const hasTests = tests.length > 0 && tests.some(t => (t.input && t.input.trim().length > 0) || (t.expected && t.expected.trim().length > 0));
                     const isSuccess = Boolean(executionResult.success);
                     notify({
@@ -153,7 +158,7 @@ class ProcessUseCase {
                     title: 'Analisando codigo...'
                 });
                 try {
-                    analysisResult = await this.analyzeUseCase.execute(language, code, statement);
+                    analysisResult = await this.analyzeUseCase.execute(language, code, statement, aiOptions);
                     notify({
                         stage: 'analyze',
                         status: analysisResult.success ? 'success' : 'failed',
@@ -180,7 +185,7 @@ class ProcessUseCase {
                     title: 'Avaliando otimizacao...'
                 });
                 try {
-                    optimizationResult = await this.optimizeUseCase.execute(language, code, statement);
+                    optimizationResult = await this.optimizeUseCase.execute(language, code, statement, aiOptions);
                     notify({
                         stage: 'optimize',
                         status: optimizationResult.success ? 'success' : 'failed',

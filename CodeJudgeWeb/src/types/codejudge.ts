@@ -35,6 +35,7 @@ export interface CompilationResult {
   sourcePath?: string | null;
   logs?: string;
   durationMs?: number | null;
+  details?: Record<string, unknown>;
 }
 
 export interface AnalysisResult {
@@ -60,4 +61,31 @@ export interface HealthStatus {
   status: string;
   compilers: Record<string, unknown>;
   ai: Record<string, unknown>;
+}
+
+export interface AiEngineItem {
+  key: string;
+  name: string;
+  adapter: string;
+  defaultModel: string;
+  supportedModels: string[];
+  requiresApiKey: boolean;
+  isDefault: boolean;
+}
+
+export interface AiModelsConfig {
+  success: boolean;
+  isUserKeyRequired: boolean;
+  allowUserKeyOverride?: boolean;
+  defaultEngine: string;
+  defaultModel: string;
+  models: string[];
+  providers: Record<string, string[]>;
+  engines: AiEngineItem[];
+}
+
+export interface AiUserPreferences {
+  apiKey: string;
+  engine: string;
+  model: string;
 }

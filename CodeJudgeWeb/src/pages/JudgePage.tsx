@@ -7,7 +7,9 @@ import {
   ExecutionResult,
   CompilationResult,
   AnalysisResult,
-  OptimizationResult
+  OptimizationResult,
+  AiModelsConfig,
+  AiUserPreferences
 } from "../types/codejudge";
 import { CodeJudgeService } from "../services/CodeJudgeService";
 import { LanguageDetectionService } from "../services/LanguageDetectionService";
@@ -127,6 +129,13 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const [improvedViewMode, setImprovedViewMode] = useState<"code" | "diff">("code");
   const [appliedToast, setAppliedToast] = useState<boolean>(false);
 
+  const [aiConfig, setAiConfig] = useState<AiModelsConfig | null>(null);
+  const [aiPrefs, setAiPrefs] = useState<AiUserPreferences>(() => CodeJudgeService.getStoredAiPreferences());
+  const [draftAiPrefs, setDraftAiPrefs] = useState<AiUserPreferences>(() => CodeJudgeService.getStoredAiPreferences());
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
+  const [showApiKeyText, setShowApiKeyText] = useState<boolean>(false);
+  const [aiSavedToast, setAiSavedToast] = useState<boolean>(false);
+
   const improvedCode = useMemo(() => {
     const rawText = optimizationResult?.recommendations || analysisResult?.feedback;
     if (!rawText) return null;
@@ -179,7 +188,7 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const outputFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchLanguages = async () => {
+    const fetchInitialData = async () => {
       try {
         const langs = await CodeJudgeService.getLanguages();
         setAvailableLanguages(langs);
@@ -187,9 +196,54 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
         setDetectedLang(auto);
       } catch {
       }
+      try {
+        const modelsData = await CodeJudgeService.getAiModels();
+        setAiConfig(modelsData);
+      } catch {
+      }
     };
-    fetchLanguages();
+    fetchInitialData();
   }, []);
+
+  const openAiConfigModal = () => {
+    const current = CodeJudgeService.getStoredAiPreferences();
+    if (aiConfig?.isUserKeyRequired && !current.engine) {
+      const defEng = aiConfig.engines.find((e) => e.requiresApiKey)?.key || aiConfig.defaultEngine || "gemini";
+      const engObj = aiConfig.engines.find((e) => e.key === defEng);
+      setDraftAiPrefs({
+        apiKey: current.apiKey,
+        engine: defEng,
+        model: current.model || engObj?.defaultModel || ""
+      });
+    } else {
+      setDraftAiPrefs(current);
+    }
+    setShowApiKeyText(false);
+    setIsAiModalOpen(true);
+  };
+
+  const handleSaveAiPrefs = () => {
+    const cleaned: AiUserPreferences = {
+      apiKey: draftAiPrefs.apiKey.trim(),
+      engine: draftAiPrefs.engine.trim(),
+      model: draftAiPrefs.model.trim()
+    };
+    CodeJudgeService.saveAiPreferences(cleaned);
+    setAiPrefs(cleaned);
+    setIsAiModalOpen(false);
+    setAiSavedToast(true);
+    setTimeout(() => setAiSavedToast(false), 3500);
+  };
+
+  const handleResetAiPrefs = () => {
+    const empty: AiUserPreferences = { apiKey: "", engine: "", model: "" };
+    CodeJudgeService.saveAiPreferences(empty);
+    setDraftAiPrefs(empty);
+    setAiPrefs(empty);
+    if (!aiConfig?.isUserKeyRequired) {
+      setIsAiModalOpen(false);
+    }
+  };
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -295,6 +349,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
   const handleRunProcess = async () => {
     if (!code.trim()) {
       setErrorMessage("O código-fonte está vazio. Digite ou carregue um arquivo.");
+      return;
+    }
+
+    if (aiConfig?.isUserKeyRequired && !aiPrefs.apiKey.trim()) {
+      setErrorMessage("O servidor exige que você informe sua própria API Key de IA para processar solicitações.");
+      openAiConfigModal();
       return;
     }
 
@@ -511,7 +571,123 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
             Compilação, execução, análise do código e otimização automatizada com IA.
           </p>
         </div>
+
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <div
+            className="d-flex align-items-center gap-2 px-3 py-1 rounded-pill small"
+            style={{
+              backgroundColor:
+                aiConfig?.isUserKeyRequired && !aiPrefs.apiKey
+                  ? "rgba(239, 68, 68, 0.14)"
+                  : aiPrefs.apiKey || aiPrefs.model || aiPrefs.engine
+                  ? "rgba(16, 185, 129, 0.14)"
+                  : "rgba(255, 255, 255, 0.05)",
+              border:
+                aiConfig?.isUserKeyRequired && !aiPrefs.apiKey
+                  ? "1px solid rgba(239, 68, 68, 0.4)"
+                  : aiPrefs.apiKey || aiPrefs.model || aiPrefs.engine
+                  ? "1px solid rgba(16, 185, 129, 0.35)"
+                  : "1px solid var(--border-color)",
+              color:
+                aiConfig?.isUserKeyRequired && !aiPrefs.apiKey
+                  ? "#fca5a5"
+                  : aiPrefs.apiKey || aiPrefs.model || aiPrefs.engine
+                  ? "#6ee7b7"
+                  : "#9ca3af"
+            }}
+          >
+            <span
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                backgroundColor:
+                  aiConfig?.isUserKeyRequired && !aiPrefs.apiKey
+                    ? "#ef4444"
+                    : aiPrefs.apiKey || aiPrefs.model || aiPrefs.engine
+                    ? "#10b981"
+                    : "#6b7280"
+              }}
+            />
+            <span className="fw-semibold">
+              {aiConfig?.isUserKeyRequired && !aiPrefs.apiKey
+                ? "API Key Obrigatória"
+                : aiPrefs.apiKey || aiPrefs.model || aiPrefs.engine
+                ? `IA Personalizada: ${aiPrefs.model || aiPrefs.engine || "Chave Própria"}`
+                : `IA do Servidor (${aiConfig?.defaultModel || "Padrão"})`}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-sm d-flex align-items-center gap-2 px-3 py-1.5 fw-semibold"
+            onClick={openAiConfigModal}
+            style={{
+              backgroundColor: "var(--bg-card)",
+              color: "#f3f4f6",
+              border: "1px solid var(--border-color)",
+              borderRadius: "8px"
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+            <span>Modelo &amp; API Key</span>
+          </button>
+        </div>
       </div>
+
+      {aiSavedToast && (
+        <div
+          className="p-2 px-3 rounded small d-flex align-items-center justify-content-between mb-3"
+          style={{
+            backgroundColor: "rgba(16, 185, 129, 0.14)",
+            border: "1px solid rgba(16, 185, 129, 0.35)",
+            color: "#a7f3d0"
+          }}
+        >
+          <span>Configurações de IA e API Key atualizadas para esta sessão web.</span>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            style={{ fontSize: "9px" }}
+            onClick={() => setAiSavedToast(false)}
+          />
+        </div>
+      )}
+
+      {aiConfig?.isUserKeyRequired && !aiPrefs.apiKey && (
+        <div
+          className="p-3 rounded small d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4"
+          style={{
+            backgroundColor: "rgba(245, 158, 11, 0.12)",
+            border: "1px solid rgba(245, 158, 11, 0.4)",
+            color: "#fde68a"
+          }}
+        >
+          <div className="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+            <span>
+              <strong>Chave de API Necessária:</strong> O servidor está configurado para exigir que cada usuário informe sua própria chave de API de um modelo suportado.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-sm fw-semibold"
+            onClick={openAiConfigModal}
+            style={{
+              backgroundColor: "#f59e0b",
+              color: "#111827",
+              border: "none",
+              borderRadius: "6px"
+            }}
+          >
+            Informar API Key
+          </button>
+        </div>
+      )}
 
       {errorMessage && (
         <div
@@ -1029,6 +1205,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     {compilationResult.logs}
                   </pre>
                 )}
+                {typeof compilationResult.details?.aiFeedback === "string" && compilationResult.details.aiFeedback.trim() && (
+                  <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border-color)" }}>
+                    <div className="fw-semibold text-warning small mb-2">Diagnóstico Formativo (IA):</div>
+                    <MarkdownRenderer content={compilationResult.details.aiFeedback} />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1073,6 +1255,12 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
                     ) : (
                       <div className="text-secondary small fst-italic">
                         Programa finalizado sem saída impressa no terminal (stdout vazio).
+                      </div>
+                    )}
+                    {typeof executionResult.details?.aiFeedback === "string" && executionResult.details.aiFeedback.trim() && (
+                      <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border-color)" }}>
+                        <div className="fw-semibold text-warning small mb-2">Diagnóstico Formativo (IA):</div>
+                        <MarkdownRenderer content={executionResult.details.aiFeedback} />
                       </div>
                     )}
                   </div>
@@ -1284,6 +1472,215 @@ export const JudgePage: React.FC<JudgePageProps> = ({ user }) => {
           )}
         </div>
       </div>
+
+      {isAiModalOpen && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+          style={{
+            backgroundColor: "rgba(3, 7, 18, 0.78)",
+            backdropFilter: "blur(4px)",
+            zIndex: 1055
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAiModalOpen(false);
+          }}
+        >
+          <div
+            className="dark-card w-100 shadow-lg"
+            style={{
+              maxWidth: "560px",
+              border: "1px solid rgba(16, 185, 129, 0.35)",
+              borderRadius: "12px",
+              overflow: "hidden"
+            }}
+          >
+            <div
+              className="dark-card-header d-flex justify-content-between align-items-center px-4 py-3"
+              style={{ backgroundColor: "rgba(16, 185, 129, 0.08)" }}
+            >
+              <div className="d-flex align-items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+                <span className="fw-bold text-white">Configuração de IA &amp; API Key</span>
+              </div>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                style={{ fontSize: "11px" }}
+                onClick={() => setIsAiModalOpen(false)}
+              />
+            </div>
+
+            <div className="dark-card-body p-4">
+              <div
+                className="p-2.5 px-3 rounded small mb-3 d-flex align-items-center justify-content-between"
+                style={{
+                  backgroundColor: aiConfig?.isUserKeyRequired
+                    ? "rgba(245, 158, 11, 0.12)"
+                    : "rgba(16, 185, 129, 0.08)",
+                  border: aiConfig?.isUserKeyRequired
+                    ? "1px solid rgba(245, 158, 11, 0.35)"
+                    : "1px solid rgba(16, 185, 129, 0.25)",
+                  color: aiConfig?.isUserKeyRequired ? "#fde68a" : "#a7f3d0"
+                }}
+              >
+                <span>
+                  {aiConfig?.isUserKeyRequired
+                    ? "Política do Servidor: Chave de API do usuário obrigatória."
+                    : "Política do Servidor: Chave opcional (você pode usar a IA do servidor ou sua própria chave)."}
+                </span>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-semibold text-light mb-1">Provedor de IA</label>
+                <select
+                  className="form-select dark-textarea small"
+                  value={draftAiPrefs.engine}
+                  onChange={(e) => {
+                    const newEngine = e.target.value;
+                    const engObj = aiConfig?.engines?.find((item) => item.key === newEngine);
+                    setDraftAiPrefs({
+                      ...draftAiPrefs,
+                      engine: newEngine,
+                      model: engObj?.defaultModel || ""
+                    });
+                  }}
+                >
+                  {!aiConfig?.isUserKeyRequired && (
+                    <option value="">
+                      Padrão do Servidor ({aiConfig?.defaultEngine || "automático"} • {aiConfig?.defaultModel || "padrão"})
+                    </option>
+                  )}
+                  {(aiConfig?.engines || [
+                    {
+                      key: "gemini",
+                      name: "Google Gemini",
+                      defaultModel: "gemini-2.5-flash",
+                      supportedModels: ["gemini-3.8-flash", "gemini-3.8-pro", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-pro"],
+                      requiresApiKey: true
+                    },
+                    {
+                      key: "ollama",
+                      name: "Ollama (Local)",
+                      defaultModel: "llama3:latest",
+                      supportedModels: ["llama3:latest", "qwen2.5-coder:latest", "deepseek-coder:latest"],
+                      requiresApiKey: false
+                    }
+                  ]).map((eng) => (
+                    <option key={eng.key} value={eng.key}>
+                      {eng.name} ({eng.key})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-semibold text-light mb-1">
+                  Modelo Suportado pelo Servidor
+                </label>
+                <select
+                  className="form-select dark-textarea small font-monospace"
+                  value={draftAiPrefs.model}
+                  onChange={(e) => setDraftAiPrefs({ ...draftAiPrefs, model: e.target.value })}
+                >
+                  <option value="">
+                    {draftAiPrefs.engine
+                      ? `Modelo padrão do provedor (${
+                          aiConfig?.engines?.find((e) => e.key === draftAiPrefs.engine)?.defaultModel || "padrão"
+                        })`
+                      : `Modelo padrão do servidor (${aiConfig?.defaultModel || "automático"})`}
+                  </option>
+                  {(draftAiPrefs.engine
+                    ? aiConfig?.providers?.[draftAiPrefs.engine] ||
+                      aiConfig?.engines?.find((e) => e.key === draftAiPrefs.engine)?.supportedModels ||
+                      []
+                    : aiConfig?.models || []
+                  ).map((mdl) => (
+                    <option key={mdl} value={mdl}>
+                      {mdl}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-secondary mt-1" style={{ fontSize: "11px" }}>
+                  Lista sincronizada diretamente do endpoint <code>/ai/models</code> do servidor CodeJudge.
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="form-label small fw-semibold text-light mb-0">
+                    Sua API Key {aiConfig?.isUserKeyRequired ? "(Obrigatória)" : "(Opcional)"}
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm p-0 text-secondary text-decoration-none"
+                    style={{ fontSize: "11px" }}
+                    onClick={() => setShowApiKeyText(!showApiKeyText)}
+                  >
+                    {showApiKeyText ? "Ocultar chave" : "Mostrar chave"}
+                  </button>
+                </div>
+                <input
+                  type={showApiKeyText ? "text" : "password"}
+                  className="form-control dark-textarea font-monospace small"
+                  placeholder={
+                    aiConfig?.isUserKeyRequired
+                      ? "Cole aqui sua API Key (ex: AIzaSy...)"
+                      : "Deixe em branco para usar a chave do servidor ou cole sua API Key..."
+                  }
+                  value={draftAiPrefs.apiKey}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const nextEngine =
+                      val.trim() && !draftAiPrefs.engine ? "gemini" : draftAiPrefs.engine;
+                    setDraftAiPrefs({
+                      ...draftAiPrefs,
+                      apiKey: val,
+                      engine: nextEngine
+                    });
+                  }}
+                />
+                <div className="text-secondary mt-1" style={{ fontSize: "11px" }}>
+                  A chave fica salva apenas no armazenamento local do seu navegador e é enviada como parâmetro seguro nas requisições de análise, otimização e diagnóstico.
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-between align-items-center gap-2 pt-2" style={{ borderTop: "1px solid var(--border-color)" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={handleResetAiPrefs}
+                >
+                  Restaurar Padrão
+                </button>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-dark"
+                    onClick={() => setIsAiModalOpen(false)}
+                    style={{ border: "1px solid var(--border-color)" }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm fw-semibold px-3"
+                    onClick={handleSaveAiPrefs}
+                    style={{
+                      backgroundColor: "#0f766e",
+                      color: "#ffffff",
+                      border: "1px solid #10b981"
+                    }}
+                  >
+                    Salvar Configuração
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { EditorFileState } from '../../infrastructure/vscode/IVsCodeEditorAdapter';
 import { RunProcessRequest, ProcessResult, StageProgress, ProcessConfig } from '../../features/process/ProcessDTO';
 import { LoadPromptsResult, ViewPromptRequest } from '../../features/prompts/PromptDTO';
+import { AiModelsPayload } from '../../features/health/CheckHealthUseCase';
 
 export type WebviewIncomingMessage =
   | { type: 'request-active-editor' }
@@ -14,7 +15,7 @@ export type WebviewIncomingMessage =
 
 export type WebviewOutgoingMessage =
   | { type: 'active-editor-changed'; payload: EditorFileState }
-  | { type: 'health-status'; payload: { online: boolean; apiUrl: string } }
+  | { type: 'health-status'; payload: { online: boolean; apiUrl: string; aiModels?: AiModelsPayload } }
   | { type: 'process-started'; payload: { config: ProcessConfig } }
   | { type: 'stage-progress'; payload: StageProgress }
   | { type: 'process-finished'; payload: ProcessResult }

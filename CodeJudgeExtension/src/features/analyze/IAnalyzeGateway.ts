@@ -2,6 +2,9 @@ export interface AnalyzeRequest {
   language: string;
   code: string;
   statement?: string;
+  apiKey?: string;
+  engine?: string;
+  model?: string;
 }
 
 export interface AnalyzeResponse {

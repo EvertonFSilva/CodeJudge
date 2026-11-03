@@ -11,6 +11,14 @@
   let processTimeoutId = null;
   const TIMEOUT_MS = 45000;
 
+  const savedVsState = vscode.getState() || {};
+  let aiPreferences = {
+    apiKey: savedVsState.apiKey || '',
+    engine: savedVsState.engine || '',
+    model: savedVsState.model || ''
+  };
+  let serverAiConfig = null;
+
   const buttonLabels = {
     full: 'Processar Código',
     compile: 'Compilar Código',
@@ -23,6 +31,15 @@
     apiStatusBtn: document.getElementById('apiStatusBtn'),
     statusDot: document.getElementById('statusDot'),
     statusText: document.getElementById('statusText'),
+
+    aiConfigToggleBtn: document.getElementById('aiConfigToggleBtn'),
+    aiKeyDot: document.getElementById('aiKeyDot'),
+    aiConfigDrawer: document.getElementById('aiConfigDrawer'),
+    aiPolicyLabel: document.getElementById('aiPolicyLabel'),
+    aiKeyResetBtn: document.getElementById('aiKeyResetBtn'),
+    aiModelSelect: document.getElementById('aiModelSelect'),
+    aiKeyInput: document.getElementById('aiKeyInput'),
+    aiKeyVisBtn: document.getElementById('aiKeyVisBtn'),
 
     tabProcessBtn: document.getElementById('tabProcessBtn'),
     tabPromptsBtn: document.getElementById('tabPromptsBtn'),
@@ -96,9 +113,149 @@
     setupProcessExecution();
     setupModal();
     setupApiStatus();
+    setupDiscreetAiConfig();
 
     vscode.postMessage({ type: 'request-active-editor' });
     vscode.postMessage({ type: 'request-health' });
+  }
+
+  function persistAiPreferences() {
+    vscode.setState({
+      ...vscode.getState(),
+      apiKey: aiPreferences.apiKey,
+      engine: aiPreferences.engine,
+      model: aiPreferences.model
+    });
+    updateAiIndicator();
+  }
+
+  function updateAiIndicator() {
+    if (!elements.aiKeyDot || !elements.aiConfigToggleBtn) return;
+    const hasCustom = Boolean(
+      (aiPreferences.apiKey && aiPreferences.apiKey.trim()) ||
+      (aiPreferences.model && aiPreferences.model.trim())
+    );
+    const isRequiredMissing = Boolean(
+      serverAiConfig &&
+      serverAiConfig.isUserKeyRequired &&
+      (!aiPreferences.apiKey || !aiPreferences.apiKey.trim())
+    );
+
+    if (isRequiredMissing) {
+      elements.aiKeyDot.className = 'ai-key-dot required';
+      elements.aiConfigToggleBtn.title = 'API Key obrigatória pelo servidor';
+    } else if (hasCustom) {
+      elements.aiKeyDot.className = 'ai-key-dot configured';
+      elements.aiConfigToggleBtn.title = `IA configurada (${aiPreferences.model || aiPreferences.engine || 'Chave própria'})`;
+    } else {
+      elements.aiKeyDot.className = 'ai-key-dot';
+      elements.aiConfigToggleBtn.title = 'Configurar API Key e Modelo de IA (Opcional)';
+    }
+  }
+
+  function populateAiModelSelect(aiModels) {
+    if (!elements.aiModelSelect) return;
+    const select = elements.aiModelSelect;
+    const currentValue =
+      aiPreferences.engine && aiPreferences.model
+        ? `${aiPreferences.engine}::${aiPreferences.model}`
+        : '';
+
+    select.innerHTML = '';
+
+    if (!aiModels || !aiModels.isUserKeyRequired) {
+      const defOpt = document.createElement('option');
+      defOpt.value = '';
+      defOpt.textContent = aiModels?.defaultModel
+        ? `Padrão do Servidor (${aiModels.defaultModel})`
+        : 'Padrão do Servidor';
+      select.appendChild(defOpt);
+    }
+
+    const engines = Array.isArray(aiModels?.engines) && aiModels.engines.length > 0
+      ? aiModels.engines
+      : [
+          {
+            key: 'gemini',
+            name: 'Google Gemini',
+            supportedModels: ['gemini-3.8-flash', 'gemini-3.8-pro', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-pro']
+          },
+          {
+            key: 'ollama',
+            name: 'Ollama (Local)',
+            supportedModels: ['llama3:latest', 'qwen2.5-coder:latest', 'deepseek-coder:latest']
+          }
+        ];
+
+    engines.forEach(eng => {
+      const group = document.createElement('optgroup');
+      group.label = eng.name || eng.key;
+      (eng.supportedModels || []).forEach(mdl => {
+        const opt = document.createElement('option');
+        opt.value = `${eng.key}::${mdl}`;
+        opt.textContent = mdl;
+        group.appendChild(opt);
+      });
+      select.appendChild(group);
+    });
+
+    if (currentValue) {
+      select.value = currentValue;
+    } else if (aiModels?.isUserKeyRequired && select.options.length > 0) {
+      select.selectedIndex = 0;
+      const parts = (select.value || '').split('::');
+      aiPreferences.engine = parts[0] || '';
+      aiPreferences.model = parts[1] || '';
+    }
+  }
+
+  function setupDiscreetAiConfig() {
+    if (!elements.aiConfigToggleBtn) return;
+
+    elements.aiKeyInput.value = aiPreferences.apiKey || '';
+    populateAiModelSelect(null);
+    updateAiIndicator();
+
+    elements.aiConfigToggleBtn.addEventListener('click', () => {
+      const isOpen = elements.aiConfigDrawer.classList.toggle('open');
+      elements.aiConfigToggleBtn.classList.toggle('open', isOpen);
+    });
+
+    elements.aiModelSelect.addEventListener('change', () => {
+      const val = elements.aiModelSelect.value;
+      if (!val) {
+        aiPreferences.engine = '';
+        aiPreferences.model = '';
+      } else {
+        const [eng, mdl] = val.split('::');
+        aiPreferences.engine = eng || '';
+        aiPreferences.model = mdl || '';
+      }
+      persistAiPreferences();
+    });
+
+    elements.aiKeyInput.addEventListener('input', () => {
+      aiPreferences.apiKey = elements.aiKeyInput.value.trim();
+      if (aiPreferences.apiKey && !aiPreferences.engine) {
+        aiPreferences.engine = 'gemini';
+      }
+      persistAiPreferences();
+    });
+
+    elements.aiKeyVisBtn.addEventListener('click', () => {
+      const isPwd = elements.aiKeyInput.type === 'password';
+      elements.aiKeyInput.type = isPwd ? 'text' : 'password';
+      elements.aiKeyVisBtn.textContent = isPwd ? 'Ocultar' : 'Ver';
+    });
+
+    elements.aiKeyResetBtn.addEventListener('click', () => {
+      aiPreferences.apiKey = '';
+      aiPreferences.engine = '';
+      aiPreferences.model = '';
+      elements.aiKeyInput.value = '';
+      elements.aiModelSelect.value = '';
+      persistAiPreferences();
+    });
   }
 
   function setupTabs() {
@@ -317,7 +474,10 @@
         payload: {
           statement,
           config,
-          tests
+          tests,
+          apiKey: aiPreferences.apiKey || undefined,
+          engine: aiPreferences.engine || undefined,
+          model: aiPreferences.model || undefined
         }
       });
     });
@@ -482,10 +642,30 @@
     }
   }
 
-  function handleHealthStatus({ online, apiUrl }) {
+  function handleHealthStatus({ online, apiUrl, aiModels }) {
     elements.statusDot.className = 'status-dot ' + (online ? 'online' : 'offline');
     elements.statusText.textContent = online ? 'Online' : 'Offline';
     elements.apiStatusBtn.title = `API: ${apiUrl} (${online ? 'Conectado' : 'Indisponível'})`;
+
+    if (aiModels) {
+      serverAiConfig = aiModels;
+      if (elements.aiPolicyLabel) {
+        elements.aiPolicyLabel.textContent = aiModels.isUserKeyRequired
+          ? 'IA & API Key (Obrigatória)'
+          : 'IA & API Key (Opcional)';
+      }
+      if (elements.aiKeyInput) {
+        elements.aiKeyInput.placeholder = aiModels.isUserKeyRequired
+          ? 'API Key obrigatória pelo servidor...'
+          : 'Cole sua API Key (opcional)...';
+      }
+      populateAiModelSelect(aiModels);
+      updateAiIndicator();
+      if (aiModels.isUserKeyRequired && (!aiPreferences.apiKey || !aiPreferences.apiKey.trim())) {
+        elements.aiConfigDrawer?.classList.add('open');
+        elements.aiConfigToggleBtn?.classList.add('open');
+      }
+    }
   }
 
   function handleStageProgress(progress) {

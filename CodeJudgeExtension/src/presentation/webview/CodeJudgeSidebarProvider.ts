@@ -218,8 +218,8 @@ export class CodeJudgeSidebarProvider implements vscode.WebviewViewProvider {
       const css = fs.readFileSync(cssPath, 'utf8');
       const js = fs.readFileSync(jsPath, 'utf8');
 
-      html = html.replace('/* {{STYLE_PLACEHOLDER}} */', css);
-      html = html.replace('// {{SCRIPT_PLACEHOLDER}}', js);
+      html = html.replace('{{STYLE_PLACEHOLDER}}', css);
+      html = html.replace('{{SCRIPT_PLACEHOLDER}}', js);
 
       return html;
     } catch (err) {

@@ -1,4 +1,4 @@
-import { CheckHealthUseCase } from '../../features/health/CheckHealthUseCase';
+import { CheckHealthUseCase, AiModelsPayload } from '../../features/health/CheckHealthUseCase';
 
 export class HealthController {
   constructor(
@@ -6,11 +6,15 @@ export class HealthController {
     private readonly getApiUrl: () => string
   ) {}
 
-  public async check(): Promise<{ online: boolean; apiUrl: string }> {
-    const online = await this.healthUseCase.execute();
+  public async check(): Promise<{ online: boolean; apiUrl: string; aiModels?: AiModelsPayload }> {
+    const [online, aiModels] = await Promise.all([
+      this.healthUseCase.execute(),
+      this.healthUseCase.fetchAiModels()
+    ]);
     return {
       online,
-      apiUrl: this.getApiUrl()
+      apiUrl: this.getApiUrl(),
+      aiModels
     };
   }
 }

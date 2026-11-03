@@ -22,6 +22,9 @@ export interface RunProcessRequest {
   statement?: string;
   config: ProcessConfig;
   tests?: TestCaseInput[];
+  apiKey?: string;
+  engine?: string;
+  model?: string;
 }
 
 export interface ProcessResult {

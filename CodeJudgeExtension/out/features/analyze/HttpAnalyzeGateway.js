@@ -18,13 +18,23 @@ class HttpAnalyzeGateway {
         const timer = setTimeout(() => controller.abort(), timeoutMs);
         this.logger.debug(`Requisitando analise em ${url}`);
         try {
+            const headers = {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            };
+            if (request.apiKey) {
+                headers['X-Api-Key'] = request.apiKey;
+            }
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                headers,
                 body: JSON.stringify({
                     statement: request.statement || '',
                     language: request.language,
-                    code: request.code
+                    code: request.code,
+                    apiKey: request.apiKey || undefined,
+                    engine: request.engine || undefined,
+                    model: request.model || undefined
                 }),
                 signal: controller.signal
             });

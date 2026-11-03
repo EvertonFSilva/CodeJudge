@@ -8,12 +8,24 @@ export class CompileUseCase {
     private readonly logger: ILogger
   ) {}
 
-  public async execute(language: string, code: string, statement?: string): Promise<StageExecutionResult> {
+  public async execute(
+    language: string,
+    code: string,
+    statement?: string,
+    aiOptions?: { apiKey?: string; engine?: string; model?: string }
+  ): Promise<StageExecutionResult> {
     const startTime = Date.now();
     this.logger.stageStart('compile', { language, codeLength: code.length });
 
     try {
-      const response = await this.gateway.compile({ language, code, statement });
+      const response = await this.gateway.compile({
+        language,
+        code,
+        statement,
+        apiKey: aiOptions?.apiKey,
+        engine: aiOptions?.engine,
+        model: aiOptions?.model
+      });
       const durationMs = Date.now() - startTime;
 
       this.logger.stageEnd('compile', durationMs, response.success, response.message);

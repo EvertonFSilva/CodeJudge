@@ -9,10 +9,14 @@ class HealthController {
         this.getApiUrl = getApiUrl;
     }
     async check() {
-        const online = await this.healthUseCase.execute();
+        const [online, aiModels] = await Promise.all([
+            this.healthUseCase.execute(),
+            this.healthUseCase.fetchAiModels()
+        ]);
         return {
             online,
-            apiUrl: this.getApiUrl()
+            apiUrl: this.getApiUrl(),
+            aiModels
         };
     }
 }

@@ -27,6 +27,31 @@ class CheckHealthUseCase {
             return false;
         }
     }
+    async fetchAiModels() {
+        const url = `${this.getApiUrl()}/ai/models`;
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 3500);
+            const res = await fetch(url, { method: 'GET', signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok)
+                return undefined;
+            const json = await res.json();
+            if (!json || typeof json !== 'object')
+                return undefined;
+            return {
+                isUserKeyRequired: Boolean(json.isUserKeyRequired),
+                defaultEngine: String(json.defaultEngine || 'ollama'),
+                defaultModel: String(json.defaultModel || 'llama3:latest'),
+                models: Array.isArray(json.models) ? json.models : [],
+                providers: json.providers && typeof json.providers === 'object' ? json.providers : {},
+                engines: Array.isArray(json.engines) ? json.engines : []
+            };
+        }
+        catch {
+            return undefined;
+        }
+    }
 }
 exports.CheckHealthUseCase = CheckHealthUseCase;
 //# sourceMappingURL=CheckHealthUseCase.js.map

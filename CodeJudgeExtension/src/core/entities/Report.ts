@@ -1,9 +1,9 @@
 export function normalizeMarkdownCodeFences(text: string): string {
   if (!text) return '';
   let str = text;
-  str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)$/gm, '$1\n$2');
-  str = str.replace(/^(?!```)(.+?)[ 	]*(```[a-zA-Z0-9_+#-]*)[ 	]+([^\r\n]+)$/gm, '$1\n$2\n$3');
-  str = str.replace(/^(?!```)(.+?)[ 	]*(```\s*)$/gm, '$1\n```');
+  str = str.replace(/^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)$/gm, '$1\n$2');
+  str = str.replace(/^(?!```)(.+?)[ \t]*(```[a-zA-Z0-9_+#-]*)[ \t]+([^\r\n]+)$/gm, '$1\n$2\n$3');
+  str = str.replace(/^(?!```)(.+?)[ \t]*(```\s*)$/gm, '$1\n```');
   return str;
 }
 
@@ -77,6 +77,13 @@ export class Report {
         lines.push(`- **Resultado:** [Falha] Erro de compilação detectado.`);
         lines.push(`\n#### Detalhes do Erro:`);
         lines.push(compilation.message || 'Verifique declarações, pontuação e tipos de variáveis no código.');
+        if (compilation.data?.logs && typeof compilation.data.logs === 'string' && compilation.data.logs.trim()) {
+          lines.push(`\n\`\`\`text\n${compilation.data.logs.trim()}\n\`\`\``);
+        }
+        if (compilation.data?.details?.aiFeedback && typeof compilation.data.details.aiFeedback === 'string' && compilation.data.details.aiFeedback.trim()) {
+          lines.push(`\n#### Diagnóstico Formativo (IA):`);
+          lines.push(compilation.data.details.aiFeedback.trim());
+        }
       }
     }
 
@@ -118,6 +125,10 @@ export class Report {
         } else {
           lines.push(`- **Status:** Programa executado com sucesso.`);
         }
+      }
+      if (execution.data?.details?.aiFeedback && typeof execution.data.details.aiFeedback === 'string' && execution.data.details.aiFeedback.trim()) {
+        lines.push(`\n#### Diagnóstico Formativo (IA):`);
+        lines.push(execution.data.details.aiFeedback.trim());
       }
     }
 

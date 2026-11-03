@@ -8,11 +8,19 @@ class ExecuteUseCase {
         this.gateway = gateway;
         this.logger = logger;
     }
-    async execute(language, code, tests, statement) {
+    async execute(language, code, tests, statement, aiOptions) {
         const startTime = Date.now();
         this.logger.stageStart('execute', { language, testsCount: tests.length });
         try {
-            const response = await this.gateway.execute({ language, code, tests, statement });
+            const response = await this.gateway.execute({
+                language,
+                code,
+                tests,
+                statement,
+                apiKey: aiOptions?.apiKey,
+                engine: aiOptions?.engine,
+                model: aiOptions?.model
+            });
             const durationMs = Date.now() - startTime;
             this.logger.stageEnd('execute', durationMs, response.success, `Taxa: ${response.successRate}% (${response.testResults.length} testes)`);
             return {
